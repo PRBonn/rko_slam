@@ -30,10 +30,14 @@ supported, same as with rko_lio.
 
 ```bash
 cd <ws>/src
-git clone https://github.com/PRBonn/rko_lio && git clone https://github.com/PRBonn/rko_slam
+git clone https://github.com/PRBonn/rko_lio # (required dependency)
+git clone https://github.com/PRBonn/rko_slam
 cd <ws> && rosdep install --from-paths src --ignore-src -y
 colcon build --packages-select rko_lio rko_slam --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
+
+Please note, as of right now using `rko_lio` via `sudo apt install ros-<distro>-rko-lio` is not supported. Please clone master into your workspace as shown above.
+
 Tests are off by default; add `-DRKO_SLAM_BUILD_TESTS=ON` to the cmake args and run `colcon test --packages-select rko_slam`.
 
 ### Dependencies and quirks
