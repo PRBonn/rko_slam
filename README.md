@@ -1,15 +1,21 @@
-# rko_slam
+<h1 align="center">rko_slam</h1>
+
+<div align="center">
+
+[![GitHub License](https://img.shields.io/github/license/PRBonn/rko_slam)](/LICENSE) [![GitHub last commit](https://img.shields.io/github/last-commit/PRBonn/rko_slam)](/)
+
+</div>
 
 ROS2 LiDAR-inertial SLAM system built on [rko_lio](https://github.com/PRBonn/rko_lio): sub-map-based loop closing, pose-graph optimization and multi-session alignment.
 
-### SLAM - tl;dr
+## SLAM - tl;dr
 
 If you already run rko_lio, you have an odometry estimate and no way to deal with odometry drift when you come back to
 somewhere you have been before. Drive a long loop and the two ends of it will not meet. rko_slam sits next to
 the odometry, recognizes the revisit, and corrects the whole trajectory behind you. You keep the odometry you
 had, and you additionally get a `map -> odom` correction, a pose graph, and the sub-maps the system built.
 
-### Multi-Session Alignment - tl;dr
+## Multi-Session Alignment - tl;dr
 
 The same revisit machinery works across runs or sessions, not just within one. Give it the run directories of several
 sessions of the same place - different days, different directions, whatever - and it finds where they overlap
@@ -41,7 +47,6 @@ Please note: rko_slam is MIT, but the g2o Cholmod solver links SuiteSparse's CHO
 carries GPL-2+ modules.
 
 Once again, steps are planned to cleanup the dependency requirements and support pure rosdep installs. Stay tuned.
-
 
 ## Usage
 
@@ -171,30 +176,47 @@ where the graph now says you are is published as `map -> odom`.
 
 Everything below is a launch argument and a node parameter by the same name. `-s` prints this list too.
 
-**Sub-maps.** `splitting_distance` (100 m) is the one to change first - it decides how many sub-maps a run has,
-and a run with one sub-map can never close anything. Smaller means more keyposes, so more chances to catch a
-revisit, at the cost of a closure search per sub-map and a bigger graph to solve.
-`voxel_size` (0.5 m) and `max_points_per_voxel` (20) set the resolution the sub-map is kept at, and that
-resolution is what ICP and the overlap check see. `min_range` (1 m) and `max_range` (100 m) cut the scan before
-any of it.
+**Sub-maps**
 
-**Finding a revisit.** `density_map_resolution` (0.5 m) and `density_threshold` (0.05) shape the top-down image
-places are recognized in. `hamming_distance_threshold` (50) is how close two places have to look to be matched
-at all - lower is stricter. `inliers_threshold` (5) is how much of that match has to agree before the expensive
-check runs on it. `no_of_sub_maps_to_skip` (3) must be at least 1; adjacent sub-maps are not loop closures.
+- `splitting_distance` (100 m) is the one to change first: it decides how many sub-maps a run has, and a run
+  with one sub-map can never close anything. Smaller means more keyposes, so more chances to catch a revisit,
+  at the cost of a closure search per sub-map and a bigger graph to solve.
+- `voxel_size` (0.5 m) and `max_points_per_voxel` (20) set the resolution the sub-map is kept at, and that
+  resolution is what ICP and the overlap check see.
+- `min_range` (1 m) and `max_range` (100 m) cut the scan before any of it.
 
-**Accepting it.** `overlap_threshold` (0.4) is the one knob that decides what is a real closure. Raise it where
-many places look alike, lower it if you know revisits are being missed.
+**Finding a revisit**
 
-**The graph.** `rotation_info_scale` (100) is how much more the optimizer trusts rotation than translation.
-`closure_info_scale` (1.0) trades closures against odometry - above 1 believes closures more. `closure_kernel_delta` (1.0 m) is where the robust kernel starts
-discounting a closure instead of believing it. `max_iterations` (10) caps the optimization done at each split.
+- `density_map_resolution` (0.5 m) and `density_threshold` (0.05) shape the top-down image places are
+  recognized in.
+- `hamming_distance_threshold` (50) is how close two places have to look to be matched at all - lower is
+  stricter.
+- `inliers_threshold` (5) is how much of that match has to agree before the expensive check runs on it.
+- `no_of_sub_maps_to_skip` (3) must be at least 1; adjacent sub-maps are not loop closures.
 
-**Visualization.** Off by default. `publish_sub_maps:=true` publishes each closed sub-map on
-`rko_slam/sub_maps` along with a `sub_map_<i>` TF chain, `publish_keypose_graph:=true` publishes the keyposes
-and both kinds of edge as markers, and `publish_closure_maps:=true` publishes each accepted closure pair as a
-two-tone cloud so you can see what got matched to what. `rviz:=true` turns all three on and opens a view that
-already displays them.
+**Accepting a closure**
+
+- `overlap_threshold` (0.4) is the one knob that decides what is a real closure. Raise it where many places
+  look alike, lower it if you know revisits are being missed.
+
+**The graph**
+
+- `rotation_info_scale` (100) is how much more the optimizer trusts rotation than translation.
+- `closure_info_scale` (1.0) trades closures against odometry - above 1 believes closures more.
+- `closure_kernel_delta` (1.0 m) is where the robust kernel starts discounting a closure instead of believing
+  it.
+- `max_iterations` (10) caps the optimization done at each split.
+
+**Visualization**
+
+Off by default.
+
+- `publish_sub_maps:=true` publishes each closed sub-map on `rko_slam/sub_maps`, along with a `sub_map_<i>`
+  TF chain.
+- `publish_keypose_graph:=true` publishes the keyposes and both kinds of edge as markers.
+- `publish_closure_maps:=true` publishes each accepted closure pair as a two-tone cloud, so you can see what
+  got matched to what.
+- `rviz:=true` turns all three on and opens a view that already displays them.
 
 ## Acknowledgments and Citation
 
@@ -202,7 +224,7 @@ This work is essentially a reimplementation of [KISS-SLAM](https://github.com/PR
 And relies on my lidar inertial odometry package [rko_lio](https://github.com/PRBonn/rko_lio) for much of the
 internals. This was developed as part of my thesis work.
 
-If you find this package useful, consider leaving a star on KISS-SLAM and citing the original publication:
+If you find this package useful, consider leaving a star ⭐ on KISS-SLAM and citing the original publication:
 ```bib
 @INPROCEEDINGS{kiss2025iros,
   author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
@@ -214,7 +236,7 @@ If you find this package useful, consider leaving a star on KISS-SLAM and citing
 }
 ```
 
-If you found the default odometry, i.e., rko_lio useful, consider leaving a star there and citing the corresponding publication:
+If you found the default odometry, i.e., rko_lio useful, consider leaving a star ⭐ there and citing the corresponding publication:
 ```bib
 @article{malladi2026ral,
   author      = {M.V.R. Malladi and T. Guadagnino and L. Lobefaro and C. Stachniss},
