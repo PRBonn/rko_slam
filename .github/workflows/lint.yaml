@@ -1,12 +1,21 @@
 name: Lint
 on:
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   pre_commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
       - uses: pre-commit/action@v3.0.1
   clang_tidy:
     runs-on: ubuntu-latest
@@ -17,10 +26,10 @@ jobs:
       FMT_VERSION: "12.2.0"
       SPDLOG_VERSION: "v1.17.0"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: src/rko_slam
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: PRBonn/rko_lio
           ref: 48ca72a34acc38d31ae5eccb6ed70c748fccb0f0

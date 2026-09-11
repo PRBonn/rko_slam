@@ -1,0 +1,26 @@
+name: Lyrical
+on:
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'Makefile'
+      - '.pre-commit-config.yaml'
+      - '.clang-format'
+      - '.clang-tidy'
+      - '.cmake-format.py'
+      - 'ruff.toml'
+      - 'launch/**'
+      - 'config/**'
+  workflow_dispatch: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ros_build:
+    uses: ./.github/workflows/ros_build.yaml
+    with:
+      ros_distro: lyrical
+      container_image: osrf/ros:lyrical-desktop
