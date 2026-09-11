@@ -1,0 +1,45 @@
+name: ROS Build
+on:
+  workflow_dispatch: {}
+jobs:
+  ros_build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {ros_distro: jazzy, container_image: "osrf/ros:jazzy-desktop"}
+          - {ros_distro: kilted, container_image: "osrf/ros:kilted-desktop"}
+          - {ros_distro: lyrical, container_image: "osrf/ros:lyrical-desktop"}
+          - {ros_distro: rolling, container_image: "osrf/ros:rolling-desktop"}
+    container:
+      image: ${{ matrix.container_image }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src/rko_slam
+      - uses: actions/checkout@v6
+        with:
+          repository: PRBonn/rko_lio
+          ref: 48ca72a34acc38d31ae5eccb6ed70c748fccb0f0
+          path: src/rko_lio
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y build-essential cmake
+      - name: rosdep install
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+          rosdep init 2>/dev/null || true
+          rosdep update
+          rosdep install --from-paths src --ignore-src -r -y
+      - name: Build
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+          colcon build --packages-select rko_lio rko_slam --event-handlers console_direct+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release -DRKO_SLAM_BUILD_TESTS=ON
+      - name: Test
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+          colcon test --packages-select rko_slam --event-handlers console_direct+ --return-code-on-test-failure
+          colcon test-result --verbose

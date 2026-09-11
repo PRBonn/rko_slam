@@ -1,0 +1,90 @@
+name: Lint
+on:
+  workflow_dispatch: {}
+jobs:
+  pre_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+      - uses: pre-commit/action@v3.0.1
+  clang_tidy:
+    runs-on: ubuntu-latest
+    container:
+      image: ros:lyrical-ros-base
+    env:
+      LLVM_VERSION: "23"
+      FMT_VERSION: "12.2.0"
+      SPDLOG_VERSION: "v1.17.0"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: src/rko_slam
+      - uses: actions/checkout@v6
+        with:
+          repository: PRBonn/rko_lio
+          ref: 48ca72a34acc38d31ae5eccb6ed70c748fccb0f0
+          path: src/rko_lio
+      - name: Keep apt archives for the cache
+        run: |
+          rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+      - uses: actions/cache/restore@v4
+        id: apt_cache
+        with:
+          path: /var/cache/apt/archives
+          key: apt-llvm${{ env.LLVM_VERSION }}-${{ hashFiles('.github/workflows/lint.yaml') }}
+          restore-keys: apt-llvm${{ env.LLVM_VERSION }}-
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake ninja-build git \
+            wget gnupg lsb-release software-properties-common ca-certificates
+          wget -q https://apt.llvm.org/llvm.sh -O /tmp/llvm.sh
+          chmod +x /tmp/llvm.sh
+          /tmp/llvm.sh ${{ env.LLVM_VERSION }}
+          apt-get install -y clang-tidy-${{ env.LLVM_VERSION }}
+      # spdlog's imported target defines SPDLOG_FMT_EXTERNAL, so its headers reach for whichever fmt is on the include
+      # path, and clang-tidy rejects the consteval format strings in the one the distro ships.
+      - uses: actions/cache/save@v4
+        if: steps.apt_cache.outputs.cache-hit != 'true'
+        with:
+          path: /var/cache/apt/archives
+          key: apt-llvm${{ env.LLVM_VERSION }}-${{ hashFiles('.github/workflows/lint.yaml') }}
+      - name: Install fmt and spdlog
+        run: |
+          git clone --depth 1 --branch ${{ env.FMT_VERSION }} https://github.com/fmtlib/fmt.git /tmp/fmt
+          cmake -S /tmp/fmt -B /tmp/fmt/build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DFMT_TEST=OFF -DFMT_DOC=OFF
+          cmake --build /tmp/fmt/build -j"$(nproc)"
+          cmake --install /tmp/fmt/build
+          git clone --depth 1 --branch ${{ env.SPDLOG_VERSION }} https://github.com/gabime/spdlog.git /tmp/spdlog
+          cmake -S /tmp/spdlog -B /tmp/spdlog/build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DSPDLOG_BUILD_EXAMPLE=OFF \
+                -DSPDLOG_BUILD_TESTS=OFF -DSPDLOG_FMT_EXTERNAL=ON
+          cmake --build /tmp/spdlog/build -j"$(nproc)"
+          cmake --install /tmp/spdlog/build
+      - name: rosdep install
+        run: |
+          . /opt/ros/lyrical/setup.sh
+          rosdep init 2>/dev/null || true
+          rosdep update
+          rosdep install --from-paths src --ignore-src -r -y
+      - name: Build rko_lio
+        run: |
+          . /opt/ros/lyrical/setup.sh
+          colcon build --packages-select rko_lio --event-handlers console_direct+
+      - name: Configure
+        run: |
+          . /opt/ros/lyrical/setup.sh
+          . install/setup.sh
+          cmake -G Ninja -S src/rko_slam -B build/tidy \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
+            -DRKO_SLAM_BUILD_TESTS=ON
+      - name: Run clang-tidy
+        working-directory: src/rko_slam
+        run: |
+          run-clang-tidy-${{ env.LLVM_VERSION }} -p ../../build/tidy -j "$(nproc)" -quiet \
+            -warnings-as-errors='*' "$PWD/(rko_slam|tests)/.*\.cpp$"

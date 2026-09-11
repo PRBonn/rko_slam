@@ -1,0 +1,53 @@
+# PLEASE NOTE THIS FILE IS NOT USED AUTOMATICALLY BY THE LAUNCH FILE
+# it is here to show every parameter and the value it takes when you leave it alone.
+# to use it, pass it explicitly:
+#   ros2 launch rko_slam slam.launch.py config_file:=<path_to>/ros_default.yaml
+# #############################################################################
+# --- input ---
+# lidar_topic: <autodetected when exactly one PointCloud2 topic is published>
+# base_frame: <base_link, base_footprint or base if the TF tree has one, else the lidar's own frame>
+# odom_frame: odom
+# map_frame: map
+# deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
+# base_T_lidar_qxyzw_xyz: <[qx, qy, qz, qw, tx, ty, tz], else resolved from TF on the first scan>
+# tf_lookup_timeout_ms: 80
+# lidar_timestamps.multiplier_to_seconds: 0.0
+# lidar_timestamps.force_absolute: false
+# lidar_timestamps.force_relative: false
+# use_sim_time: false
+#
+# --- output ---
+# results_dir: results
+# run_name: <rko_slam online, the bag directory name offline>
+# dump_results: false
+# dump_sub_maps: true
+#
+# --- sub map ---
+# voxel_size: 0.5
+# splitting_distance: 100.0
+# max_points_per_voxel: 20
+# min_range: 1.0
+# max_range: 100.0
+#
+# --- closure detection ---
+# density_map_resolution: 0.5
+# density_threshold: 0.05
+# hamming_distance_threshold: 50
+# inliers_threshold: 5
+# overlap_threshold: 0.4
+# no_of_sub_maps_to_skip: 3
+#
+# --- pose graph ---
+# rotation_info_scale: 100.0
+# closure_info_scale: 1.0
+# closure_kernel_delta: 1.0
+# max_iterations: 10
+#
+# --- rviz ---
+# publish_sub_maps: false
+# publish_closure_maps: false
+# publish_keypose_graph: false
+#
+# --- offline only ---
+# bag_path: <rosbag2 directory to process>
+# odom_tum_path: <TUM trajectory; when set the bag's /tf is ignored>

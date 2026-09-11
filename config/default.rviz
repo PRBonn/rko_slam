@@ -1,0 +1,64 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: true
+      Marker Scale: 5
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: SubMaps
+      Topic:
+        Value: rko_slam/sub_maps
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+      Color Transformer: AxisColor
+      Axis: Z
+      Size (m): 0.1
+      Style: Flat Squares
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: KeyposeGraph
+      Topic:
+        Value: rko_slam/keypose_graph
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: ClosureMaps
+      Topic:
+        Value: rko_slam/closure_maps
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+      Color Transformer: Intensity
+      Size (m): 0.15
+      Style: Flat Squares
+  Global Options:
+    Background Color: 35; 35; 40
+    Fixed Frame: map
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 150
+      Name: Current View
+      Pitch: 1.2
+      Target Frame: <Fixed Frame>
+      Yaw: 0.78
+Window Geometry:
+  Height: 900
+  Width: 1400

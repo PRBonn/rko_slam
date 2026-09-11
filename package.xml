@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?><package format="3">
+  <name>rko_slam</name>
+  <version>0.0.1</version>
+  <description>LiDAR-inertial SLAM built on rko_lio: sub-map-based loop closing, pose-graph optimization and multi-session alignment</description>
+  <maintainer email="rm.meher97@gmail.com">Meher Malladi</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>eigen</depend>
+  <depend>sophus</depend>
+  <depend>spdlog</depend>
+  <depend>nanoflann</depend>
+  <depend>robin-map-dev</depend>
+  <depend>suitesparse</depend>
+  <depend>yaml-cpp</depend>
+  <depend>rko_lio</depend>
+
+  <test_depend>catch2</test_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>rosbag2_storage</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

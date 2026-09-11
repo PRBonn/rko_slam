@@ -1,0 +1,12 @@
+build/
+install/
+log/
+**/results/
+compile_commands.json
+.cache/
+.vscode/
+__pycache__/
+*.pyc
+
+/.claude/
+/.ruff_cache/

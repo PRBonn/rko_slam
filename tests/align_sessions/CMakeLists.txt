@@ -1,0 +1,5 @@
+add_executable(rko_slam_align_sessions_tests test_align_sessions.cpp)
+
+target_link_libraries(rko_slam_align_sessions_tests PRIVATE rko_slam::align_sessions Catch2::Catch2WithMain)
+
+catch_discover_tests(rko_slam_align_sessions_tests)
