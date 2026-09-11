@@ -51,7 +51,9 @@ ClosureCandidate from_upstream(const map_closures::ClosureCandidate& upstream,
   return {
       .source_id = local_to_global.at(static_cast<std::size_t>(upstream.source_id)),
       .target_id = local_to_global.at(static_cast<std::size_t>(upstream.target_id)),
-      .target_T_source = Sophus::SE3d(upstream.pose).cast<float>(),
+      .target_T_source = Sophus::SE3d(Eigen::Quaterniond(upstream.pose.block<3, 3>(0, 0)).normalized(),
+                                      upstream.pose.block<3, 1>(0, 3))
+                             .cast<float>(),
       .number_of_inliers = upstream.number_of_inliers,
   };
 }
