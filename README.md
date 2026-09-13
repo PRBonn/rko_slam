@@ -4,7 +4,8 @@
 <div align="center">
 
 [![Jazzy](https://github.com/PRBonn/rko_slam/actions/workflows/ros_jazzy.yaml/badge.svg)](https://github.com/PRBonn/rko_slam/actions/workflows/ros_jazzy.yaml) [![Kilted](https://github.com/PRBonn/rko_slam/actions/workflows/ros_kilted.yaml/badge.svg)](https://github.com/PRBonn/rko_slam/actions/workflows/ros_kilted.yaml) [![Lyrical](https://github.com/PRBonn/rko_slam/actions/workflows/ros_lyrical.yaml/badge.svg)](https://github.com/PRBonn/rko_slam/actions/workflows/ros_lyrical.yaml) [![Rolling](https://github.com/PRBonn/rko_slam/actions/workflows/ros_rolling.yaml/badge.svg)](https://github.com/PRBonn/rko_slam/actions/workflows/ros_rolling.yaml)
-[![GitHub License](https://img.shields.io/github/license/PRBonn/rko_slam)](/LICENSE) [![GitHub last commit](https://img.shields.io/github/last-commit/PRBonn/rko_slam)](/)
+
+[![Docs](https://img.shields.io/badge/docs-prbonn.github.io-blue)](https://prbonn.github.io/rko_slam/) [![GitHub License](https://img.shields.io/github/license/PRBonn/rko_slam)](/LICENSE) [![GitHub last commit](https://img.shields.io/github/last-commit/PRBonn/rko_slam)](/)
 
 </div>
 
