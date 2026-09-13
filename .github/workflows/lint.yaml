@@ -6,7 +6,6 @@ on:
       - '**/*.md'
       - 'LICENSE'
       - '.gitignore'
-  workflow_dispatch: {}
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

@@ -15,7 +15,6 @@ on:
       - 'ruff.toml'
       - 'launch/**'
       - 'config/**'
-  workflow_dispatch: {}
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

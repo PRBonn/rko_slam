@@ -13,7 +13,6 @@ source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 exclude_patterns = ["_build", "root"]
 
 html_title = "rko_slam: ROS2 LiDAR-inertial SLAM"
-html_short_title = "rko_slam"
 html_theme = "pydata_sphinx_theme"
 rosdoc2_settings = {"override_theme": False}
 html_static_path = ["_static"]
@@ -23,6 +22,7 @@ html_baseurl = "https://prbonn.github.io/rko_slam/master/"
 html_context = {"default_mode": "dark"}
 html_sidebars = {"**": []}
 html_theme_options = {
+    "logo": {"text": "rko_slam"},
     "github_url": "https://github.com/PRBonn/rko_slam",
     "announcement": 'These docs are still under construction. Anything you can improve, an issue or a PR on <a href="https://github.com/PRBonn/rko_slam">GitHub</a> is appreciated.',
     "navbar_start": ["navbar-logo"],
