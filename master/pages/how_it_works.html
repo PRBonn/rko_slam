@@ -1,0 +1,616 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How it works &#8212; rko_slam: ROS2 LiDAR-inertial SLAM</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=0a4a0d38" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../_static/documentation_options.js?v=30d551ce"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pages/how_it_works';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://prbonn.github.io/rko_slam/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            true;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://prbonn.github.io/rko_slam/master/pages/how_it_works.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="master" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">These docs are still under construction. Anything you can improve, an issue or a PR on <a href="https://github.com/PRBonn/rko_slam">GitHub</a> is appreciated.</div>
+</aside>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">rko_slam: ROS2 LiDAR-inertial SLAM</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="build_and_run.html">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="configuration.html">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="build_and_run.html">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="configuration.html">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">How it works</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="how-it-works">
+<h1>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h1>
+<p>rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything
+locally consistent publishing <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base</span></code>) and publishes a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">odom</span></code> correction. The pipeline is
+essentially a reimplementation of <a class="reference external" href="https://github.com/PRBonn/kiss-slam">KISS-SLAM</a>, uses
+<a class="reference external" href="https://github.com/PRBonn/MapClosures">MapClosures</a> for detecting revisits, and a g2o pose graph.</p>
+<section id="sub-maps">
+<h2>Sub-maps<a class="headerlink" href="#sub-maps" title="Link to this heading">#</a></h2>
+<p>The system does not maintain a single global map but splits the trajectory into local maps, or sub-maps. Each
+sub-map is anchored at a keypose, the pose estimate at which it is opened, and holds a voxel grid of the local
+map points expressed in the keypose frame. Each new deskewed scan is integrated into the open sub-map using its
+odometry pose, looked up on TF at the scan’s timestamp. Points closer than <code class="docutils literal notranslate"><span class="pre">min_range</span></code> or further than
+<code class="docutils literal notranslate"><span class="pre">max_range</span></code> never enter, <code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> sets the cell, and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code> caps how many points a cell
+keeps.</p>
+<p>Each sub-map is bounded by a splitting criterion: the displacement of the current pose from the sub-map’s
+keypose. Once that crosses <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code>, the current sub-map is closed and a new one opened, its keypose
+seeded from the composition of the old keypose and the odometry accumulated since, breaking the trajectory into
+locally consistent segments. This is straight-line displacement, not distance travelled - a 700 m loop that
+never gets more than 80 m from where it started is one sub-map, not seven.</p>
+</section>
+<section id="the-pose-graph">
+<h2>The pose graph<a class="headerlink" href="#the-pose-graph" title="Link to this heading">#</a></h2>
+<p>The sub-map keyposes form the nodes of the pose graph, connected by the relative odometry between consecutive
+keyposes as edge constraints, so that correcting the keyposes corrects the whole trajectory. That chain is the
+odometry, just sampled at keyposes instead of at scans.</p>
+<p>The odometry does not provide an uncertainty estimate for these poses. As in KISS-SLAM and other LiDAR SLAM
+systems, a fixed covariance is used for the odometry edges, since reliable covariance estimates for scan
+matching are hard to obtain in practice. Each edge is weighted by a block-diagonal information matrix with
+isotropic translation and rotation blocks, the rotation block set to a fixed multiple of the translation block.
+That multiple is <code class="docutils literal notranslate"><span class="pre">rotation_info_scale</span></code>, and it accounts for the scale difference between the metre-scale
+translation and radian-scale rotation residuals.</p>
+</section>
+<section id="finding-a-revisit">
+<h2>Finding a revisit<a class="headerlink" href="#finding-a-revisit" title="Link to this heading">#</a></h2>
+<p>Whenever a sub-map is completed, the system searches for loop closures between it and all previously built
+sub-maps. That search runs on its own thread, so the scan stream keeps moving while it works.</p>
+<p>MapClosures identifies the ground points in the local map, projects the map onto the ground plane into a bird’s
+eye view density image (<code class="docutils literal notranslate"><span class="pre">density_map_resolution</span></code> is its cell size, <code class="docutils literal notranslate"><span class="pre">density_threshold</span></code> decides when a cell
+counts as occupied), and computes binary ORB descriptors that are matched against the descriptors of all
+previous sub-maps. <code class="docutils literal notranslate"><span class="pre">hamming_distance_threshold</span></code> is how different two descriptors may be and still be called a
+match, and <code class="docutils literal notranslate"><span class="pre">no_of_sub_maps_to_skip</span></code> keeps the most recent sub-maps out of the search so a sub-map does not match
+its own neighbours.</p>
+<p>A matching candidate is geometrically validated with RANSAC to obtain an initial alignment, and
+<code class="docutils literal notranslate"><span class="pre">inliers_threshold</span></code> is how much agreement that alignment needs before it is worth checking properly. Checking it
+properly means refining the alignment with point-to-plane ICP between the two sub-maps’ voxel centroids, into a
+relative closure transform that maps the keypose frame of one sub-map into that of the other.</p>
+<p>The overlap between the two sub-maps is then measured with the overlap coefficient: the number of voxels the
+two share after aligning, divided by the size of the smaller sub-map. This ratio lies in 0 to 1, and
+is close to zero when the sub-maps barely overlap and one when the smaller sub-map lies entirely within the
+other. That is what <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> gates.</p>
+</section>
+<section id="closing-the-loop">
+<h2>Closing the loop<a class="headerlink" href="#closing-the-loop" title="Link to this heading">#</a></h2>
+<p>An accepted closure is inserted as a new edge, with a Cauchy robust kernel on it to down-weight inconsistent or
+outlier closures, and the graph is re-solved (Dogleg, Cholmod) immediately. The keyposes move, the trajectory is
+rebuilt from them, and the difference between where the odometry thinks you are and where the graph now says you
+are is published as <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">odom</span></code>.</p>
+</section>
+<section id="across-sessions">
+<h2>Across sessions<a class="headerlink" href="#across-sessions" title="Link to this heading">#</a></h2>
+<div class="pair">
+  <figure><figcaption>as recorded</figcaption><img class="only-dark" src="../_static/img/multi_session_recorded_dark.png" alt="three sessions, each in its own frame"><img class="only-light" src="../_static/img/multi_session_recorded_light.png" alt="three sessions, each in its own frame"></figure>
+  <figure><figcaption>aligned</figcaption><img class="only-dark" src="../_static/img/multi_session_aligned_dark.png" alt="the same three sessions in one frame"><img class="only-light" src="../_static/img/multi_session_aligned_light.png" alt="the same three sessions in one frame"></figure>
+</div>
+<p class="pair-caption">Three sessions of the same place, recorded on different days, each starting in its own frame, and after alignment.</p>
+<p>Every run ends in its own frame, wherever the odometry happened to start. A robot often operates in the same
+place several times on different days, or a single mission is interrupted and resumed later. Multi-session
+alignment treats each continuous operation as one session and merges several of them into one common frame,
+reusing the single-session components and detecting inter-session closures through the same place recognition.</p>
+<p>It runs offline on the artifacts each completed session produces, the sub-maps with their keyposes and the
+per-session pose graph, without reprocessing the raw sensor data. The closure detector is rebuilt from the
+stored sub-maps and searched for closures between sessions, since the closures within each session are already
+part of its own pose graph. The inter-session closures are validated with the same overlap criterion as before.</p>
+<p>Each session is internally consistent in its own frame, and a single inter-session closure fixes that session’s
+frame relative to a neighbour’s. The sessions and their accepted inter-session closures form a graph, over which
+a spanning tree is computed, rooted at the session that reaches the most others. Composing the closure
+transforms along each tree path places every session in the common frame, giving an initial guess for its
+keyposes. Any session with no closure path to the root is left out, with a warning, since without such a link
+its trajectory cannot be brought into the common frame.</p>
+<p>A single pose graph is then built over the keyposes of all sessions, adding each session’s own odometry and
+closures together with every accepted inter-session closure as edges. The first keypose of the root session is
+fixed, removing the gauge freedom. Optimizing this joint graph yields the merged set of trajectories in the
+common frame, which is what the run directory holds. Beyond placing the sessions in one frame, the joint
+optimization can also improve the trajectory consistency within each session.</p>
+<p>The closure parameters are the same as for a single run, except <code class="docutils literal notranslate"><span class="pre">no_of_sub_maps_to_skip</span></code>, which is 0 here since
+neighbouring sub-maps from different sessions are real candidates. <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> is the one that matters:
+where the physical overlap between two recordings is small, lower it accordingly. How to run it is on the
+<a class="reference internal" href="build_and_run.html"><span class="doc">Build and run</span></a> page.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="configuration.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Configuration</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sub-maps">Sub-maps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-pose-graph">The pose graph</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#finding-a-revisit">Finding a revisit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#closing-the-loop">Closing the loop</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#across-sessions">Across sessions</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026 Meher V.R. Malladi.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__center">
+      
+        <div class="footer-item"><p class="credits">Pages in <a href="https://myst-parser.readthedocs.io/">MyST</a>. vibe coded&trade;</p></div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

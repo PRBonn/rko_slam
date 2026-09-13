@@ -1,0 +1,769 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Configuration &#8212; rko_slam: ROS2 LiDAR-inertial SLAM</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=0a4a0d38" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../_static/documentation_options.js?v=30d551ce"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pages/configuration';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://prbonn.github.io/rko_slam/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            true;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://prbonn.github.io/rko_slam/master/pages/configuration.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How it works" href="how_it_works.html" />
+    <link rel="prev" title="Build and run" href="build_and_run.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="master" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">These docs are still under construction. Anything you can improve, an issue or a PR on <a href="https://github.com/PRBonn/rko_slam">GitHub</a> is appreciated.</div>
+</aside>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">rko_slam: ROS2 LiDAR-inertial SLAM</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="build_and_run.html">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="how_it_works.html">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="build_and_run.html">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="how_it_works.html">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Configuration</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h1>
+<p>Every parameter is a launch argument and a node parameter by the same name. Set it on the command line as
+<code class="docutils literal notranslate"><span class="pre">name:=value</span></code>, or put any number of them in a YAML file and pass that with <code class="docutils literal notranslate"><span class="pre">config_file:=</span></code>. Command line values
+override the file, and anything you leave unset keeps the default listed here.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>-s<span class="w">   </span><span class="c1"># the same list, with defaults, from the launch file itself</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml"><code class="docutils literal notranslate"><span class="pre">config/ros_default.yaml</span></code></a> has every
+parameter with its default, commented out, as a file to start from.</p>
+<p>Two of them are required and have no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, and both are
+<a class="reference internal" href="build_and_run.html#what-gets-autodetected"><span class="std std-ref">autodetected</span></a> when you leave them unset. Everything else has a default
+that works as is, and the ones worth changing first are <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code> and <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code>.</p>
+<section id="mode">
+<h2>Mode<a class="headerlink" href="#mode" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>mode</strong> (default <code class="docutils literal notranslate"><span class="pre">online</span></code>)</p>
+<p><code class="docutils literal notranslate"><span class="pre">online</span></code> subscribes to live topics. <code class="docutils literal notranslate"><span class="pre">offline</span></code> drains a rosbag at full speed and also needs <code class="docutils literal notranslate"><span class="pre">bag_path</span></code>.</p>
+</li>
+<li><p><strong>bag_path</strong> (offline only, required)</p>
+<p>The rosbag2 directory to process.</p>
+</li>
+<li><p><strong>odom_tum_path</strong> (offline only)</p>
+<p>A TUM trajectory file to take the odometry from. When set, the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code> is ignored and the file’s poses are
+used as <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> instead. The bag’s <code class="docutils literal notranslate"><span class="pre">/tf_static</span></code> is still read, for the scan-to-<code class="docutils literal notranslate"><span class="pre">base_frame</span></code>
+extrinsic. If the file holds the LiDAR’s own poses, set <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the scan’s frame.</p>
+</li>
+<li><p><strong>use_sim_time</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">/clock</span></code> topic, for bag replay with <code class="docutils literal notranslate"><span class="pre">--clock</span></code>.</p>
+</li>
+</ul>
+</section>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>lidar_topic</strong> (required, autodetected)</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans. Deskewed scans unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> the launch
+file fills in <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.</p>
+</li>
+<li><p><strong>base_frame</strong> (required, autodetected)</p>
+<p>The body frame the odometry estimates and the scans are registered in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>.</p>
+</li>
+<li><p><strong>odom_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">odom</span></code>), <strong>map_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">map</span></code>)</p>
+<p>The frame the odometry publishes, as TF parent of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, and the frame rko_slam publishes:
+rko_slam broadcasts <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">-&gt;</span> <span class="pre">odom_frame</span></code>.</p>
+</li>
+<li><p><strong>autodetect</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>), <strong>autodetect_timeout</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">10.0</span></code>)</p>
+<p>Fill in <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> when you did not give them, from the running graph or from the bag. The
+rules are under <a class="reference internal" href="build_and_run.html#what-gets-autodetected"><span class="std std-ref">What gets autodetected</span></a>. The timeout is how long to
+wait for the topics and TF tree this needs, online only.</p>
+</li>
+<li><p><strong>deskew</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry
+already publishes a deskewed cloud and you consume that, which is the case with <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.</p>
+</li>
+<li><p><strong>base_T_lidar_qxyzw_xyz</strong> (<code class="docutils literal notranslate"><span class="pre">[qx,</span> <span class="pre">qy,</span> <span class="pre">qz,</span> <span class="pre">qw,</span> <span class="pre">tx,</span> <span class="pre">ty,</span> <span class="pre">tz]</span></code>, optional)</p>
+<p>The LiDAR extrinsic. Left empty, it is resolved from TF on the first scan.</p>
+</li>
+<li><p><strong>tf_lookup_timeout_ms</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, online only, default <code class="docutils literal notranslate"><span class="pre">80</span></code>)</p>
+<p>How long an <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> TF lookup blocks before the scan is dropped.</p>
+</li>
+<li><p><strong>lidar_timestamps.multiplier_to_seconds</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.0</span></code>), <strong>lidar_timestamps.force_absolute</strong>
+(<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>lidar_timestamps.force_relative</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Only relevant with <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code>. The multiplier scales per-point timestamps to seconds, <code class="docutils literal notranslate"><span class="pre">0.0</span></code> auto-detects
+seconds versus nanoseconds. The two flags force the timestamps to be read as absolute times, or as relative
+to the message stamp, when the auto-detection gets it wrong.</p>
+</li>
+</ul>
+</section>
+<section id="sub-maps">
+<h2>Sub-maps<a class="headerlink" href="#sub-maps" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>splitting_distance</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
+<p>Metres from the sub-map’s keypose at which the sub-map is closed and the next one starts. Straight-line
+displacement, not distance travelled. This decides how many sub-maps, and so how many keyposes, a run has: a
+run with one sub-map can never close a loop. Smaller means more chances to catch a revisit, at the cost of a
+closure search per sub-map and a bigger graph. Across the environments I evaluated on: 100 m on long car
+sequences, 50 m on compact campus-scale ones, 30 m on short forest plots.</p>
+</li>
+<li><p><strong>voxel_size</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>), <strong>max_points_per_voxel</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">20</span></code>)</p>
+<p>The resolution a sub-map is kept at: voxel size in metres, and how many points a voxel keeps. Closure
+refinement and the overlap check see the sub-map at this resolution.</p>
+</li>
+<li><p><strong>min_range</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>), <strong>max_range</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
+<p>Points closer or further than this many metres never enter a sub-map.</p>
+</li>
+</ul>
+</section>
+<section id="finding-a-revisit">
+<h2>Finding a revisit<a class="headerlink" href="#finding-a-revisit" title="Link to this heading">#</a></h2>
+<p>These shape how a candidate revisit is found. They can be left at their defaults; the knob that decides what is
+accepted is <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> below.</p>
+<ul>
+<li><p><strong>density_map_resolution</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>), <strong>density_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.05</span></code>)</p>
+<p>Each sub-map is turned into a top-down density image, and places are recognized in that image. The cell size
+and how occupied a cell must be to count. Not the first knobs to reach for.</p>
+</li>
+<li><p><strong>hamming_distance_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">50</span></code>)</p>
+<p>How different two places may look and still be called a match. Lower is stricter. Not the first knob to reach
+for either.</p>
+</li>
+<li><p><strong>inliers_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">5</span></code>)</p>
+<p>How many matched points must agree before a candidate closure is checked properly, with the refinement below.</p>
+</li>
+<li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">3</span></code>)</p>
+<p>How many of the most recent sub-maps to leave out of the search, so a sub-map does not match its own
+neighbours. Keep it at least 1 within a run. Multi-session alignment sets it to 0, see below.</p>
+</li>
+</ul>
+</section>
+<section id="accepting-a-closure">
+<h2>Accepting a closure<a class="headerlink" href="#accepting-a-closure" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>overlap_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.4</span></code>)</p>
+<p>After refinement, how much of the two sub-maps must overlap for the closure to be accepted. The overlap
+coefficient is the voxels they share once aligned, over the voxel count of the smaller one, so 0 to 1. This is the one knob that decides what
+counts as a real closure. Raise it where many places look alike, lower it if you know revisits are being
+missed. I used 0.4 on car and forest data, 0.5 on the Oxford Spires campus sequences, where the detector produced
+false closures at 0.4, and 0.3 when merging sessions that barely overlap.</p>
+</li>
+</ul>
+</section>
+<section id="pose-graph">
+<h2>Pose graph<a class="headerlink" href="#pose-graph" title="Link to this heading">#</a></h2>
+<p>These can be left at their defaults.</p>
+<ul>
+<li><p><strong>rotation_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
+<p>Each pose-graph edge is weighted by a block-diagonal information matrix with isotropic translation and
+rotation blocks. This is the fixed multiple the rotation block is set to, accounting for the scale
+difference between the metre-scale translation and radian-scale rotation residuals.</p>
+</li>
+<li><p><strong>closure_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<p>How much the optimizer trusts closures against odometry. Above 1 trusts closures more.</p>
+</li>
+<li><p><strong>closure_kernel_delta</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<p>Closures that disagree with the rest of the graph by more than this many metres are given less weight rather
+than believed.</p>
+</li>
+<li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">10</span></code>)</p>
+<p>Most optimizer iterations at each split.</p>
+</li>
+</ul>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>dump_results</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Write the run directory: trajectory, pose graph, config, profile, and the sub-maps. See
+<a class="reference internal" href="build_and_run.html"><span class="doc">Build and run, Outputs</span></a> for what the files are.</p>
+</li>
+<li><p><strong>dump_sub_maps</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>)</p>
+<p>Also write each sub-map under <code class="docutils literal notranslate"><span class="pre">&lt;run&gt;/sub_maps/</span></code>, which multi-session alignment needs. Ignored when
+<code class="docutils literal notranslate"><span class="pre">dump_results</span></code> is off. On a long run this adds up, at a rate the sub-map parameters set.</p>
+</li>
+<li><p><strong>results_dir</strong> (default <code class="docutils literal notranslate"><span class="pre">results</span></code>), <strong>run_name</strong> (default <code class="docutils literal notranslate"><span class="pre">rko_slam</span></code> online, the bag’s name offline)</p>
+<p>Where the run directory goes, and its name. A number is appended so nothing is overwritten.</p>
+</li>
+</ul>
+</section>
+<section id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>publish_sub_maps</strong>, <strong>publish_closure_maps</strong>, <strong>publish_keypose_graph</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Publish each closed sub-map on <code class="docutils literal notranslate"><span class="pre">rko_slam/sub_maps</span></code> with a <code class="docutils literal notranslate"><span class="pre">sub_map_&lt;i&gt;</span></code> TF chain, each accepted closure pair as a
+two-tone cloud on <code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, and the keyposes with their odometry and closure edges as markers
+on <code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code>. For what that looks like, see
+<a class="reference internal" href="build_and_run.html#visualization"><span class="std std-ref">Visualization</span></a>.</p>
+</li>
+<li><p><strong>rviz</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>rviz_config_file</strong> (default <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>)</p>
+<p>Launch RViz alongside. With the default config, the launch file patches in your frames, adds the odometry
+layers when <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code>, and turns the three publishers above on. Any other config is passed to RViz
+unchanged and you can configure the behaviour as desired.</p>
+</li>
+</ul>
+</section>
+<section id="spawning-rko-lio">
+<h2>Spawning rko_lio<a class="headerlink" href="#spawning-rko-lio" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>odometry</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Also start an rko_lio online node as the odometry. Its <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan</span></code> and <code class="docutils literal notranslate"><span class="pre">publish_local_map</span></code> are
+forced on and <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is pinned to its deskewed scan topic. Give <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> as well, see
+<a class="reference internal" href="build_and_run.html#what-gets-autodetected"><span class="std std-ref">What gets autodetected</span></a>.</p>
+</li>
+<li><p><strong>rko_lio_config_file</strong>, <strong>rko_lio_lidar_topic</strong>, <strong>rko_lio_imu_topic</strong></p>
+<p>The YAML config, the raw LiDAR topic and the IMU topic for that rko_lio node. rko_lio autodetects its topics and
+frames as well when you leave them unset, see its
+<a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection">ROS docs</a>; what goes in the
+file is in its <a class="reference external" href="https://prbonn.github.io/rko_lio/pages/config.html">configuration</a>.</p>
+</li>
+</ul>
+</section>
+<section id="other">
+<h2>Other<a class="headerlink" href="#other" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><strong>config_file</strong></p>
+<p>A YAML file with any of the parameters on this page. Command line values override it.</p>
+</li>
+<li><p><strong>log_level</strong> (default <code class="docutils literal notranslate"><span class="pre">info</span></code>)</p>
+<p>ROS log level: <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">WARN</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> or <code class="docutils literal notranslate"><span class="pre">FATAL</span></code>.</p>
+</li>
+</ul>
+</section>
+<section id="multi-session-alignment">
+<h2>Multi-session alignment<a class="headerlink" href="#multi-session-alignment" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> reads the run directories and nothing live, so none of the input, mode, output or
+visualization parameters above apply and there is nothing to autodetect. The sub-map parameters come from each
+run’s dumped config, and all runs must agree on <code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code>. What it takes is the
+<a class="reference internal" href="#finding-a-revisit">Finding a revisit</a>, <a class="reference internal" href="#accepting-a-closure">Accepting a closure</a> and
+<a class="reference internal" href="#pose-graph">Pose graph</a> parameters with the same defaults, <code class="docutils literal notranslate"><span class="pre">config_file</span></code> and
+<code class="docutils literal notranslate"><span class="pre">log_level</span></code>, and:</p>
+<ul>
+<li><p><strong>run_dirs</strong> (required)</p>
+<p>The run directories to merge, at least two, as a list: <code class="docutils literal notranslate"><span class="pre">run_dirs:=&quot;[results/run_1,</span> <span class="pre">results/run_2]&quot;</span></code>.</p>
+</li>
+<li><p><strong>results_dir</strong> (default <code class="docutils literal notranslate"><span class="pre">results</span></code>), <strong>run_name</strong> (default <code class="docutils literal notranslate"><span class="pre">aligned</span></code>)</p>
+<p>Where the merged run goes, and its name. A number is appended so nothing is overwritten.</p>
+</li>
+<li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">0</span></code>)</p>
+<p>Zero here, since neighbouring sub-maps from different sessions are real candidates. Settable, like every
+parameter on this page.</p>
+</li>
+<li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
+<p>Most optimizer iterations over the merged graph.</p>
+</li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="build_and_run.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Build and run</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="how_it_works.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">How it works</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mode">Mode</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input">Input</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sub-maps">Sub-maps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#finding-a-revisit">Finding a revisit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accepting-a-closure">Accepting a closure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pose-graph">Pose graph</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization">Visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spawning-rko-lio">Spawning rko_lio</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other">Other</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-session-alignment">Multi-session alignment</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026 Meher V.R. Malladi.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__center">
+      
+        <div class="footer-item"><p class="credits">Pages in <a href="https://myst-parser.readthedocs.io/">MyST</a>. vibe coded&trade;</p></div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

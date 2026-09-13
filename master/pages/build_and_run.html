@@ -1,0 +1,780 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="dark">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Build and run &#8212; rko_slam: ROS2 LiDAR-inertial SLAM</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=0a4a0d38" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../_static/documentation_options.js?v=30d551ce"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pages/build_and_run';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://prbonn.github.io/rko_slam/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            true;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="canonical" href="https://prbonn.github.io/rko_slam/master/pages/build_and_run.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="rko_slam" href="../index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="master" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="dark">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content">These docs are still under construction. Anything you can improve, an issue or a PR on <a href="https://github.com/PRBonn/rko_slam">GitHub</a> is appreciated.</div>
+</aside>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">rko_slam: ROS2 LiDAR-inertial SLAM</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="configuration.html">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="how_it_works.html">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Build and run
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="configuration.html">
+    Configuration
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="how_it_works.html">
+    How it works
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PRBonn/rko_slam" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Build and run</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="build-and-run">
+<h1>Build and run<a class="headerlink" href="#build-and-run" title="Link to this heading">#</a></h1>
+<p>Supported distros: Jazzy, Kilted, Lyrical, Rolling.</p>
+<section id="build">
+<h2>Build<a class="headerlink" href="#build" title="Link to this heading">#</a></h2>
+<p>rko_slam depends on <a class="reference external" href="https://github.com/PRBonn/rko_lio">rko_lio</a> at build time, and for now both have to be
+built in the same workspace.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;ws&gt;/src
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PRBonn/rko_lio
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PRBonn/rko_slam
+<span class="nb">cd</span><span class="w"> </span>&lt;ws&gt;<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>rosdep<span class="w"> </span>install<span class="w"> </span>--from-paths<span class="w"> </span>src<span class="w"> </span>--ignore-src<span class="w"> </span>-y
+colcon<span class="w"> </span>build<span class="w"> </span>--packages-select<span class="w"> </span>rko_lio<span class="w"> </span>rko_slam
+</pre></div>
+</div>
+<p>Please note, as of right now using <code class="docutils literal notranslate"><span class="pre">rko_lio</span></code> via <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">ros-&lt;distro&gt;-rko-lio</span></code> is not supported. Please
+clone master into your workspace as shown above. <code class="docutils literal notranslate"><span class="pre">apt</span></code> installs of both will be supported, same as with rko_lio
+today.</p>
+<p>Tests are off by default; add <code class="docutils literal notranslate"><span class="pre">-DRKO_SLAM_BUILD_TESTS=ON</span></code> to the cmake args and run
+<code class="docutils literal notranslate"><span class="pre">colcon</span> <span class="pre">test</span> <span class="pre">--packages-select</span> <span class="pre">rko_slam</span></code>.</p>
+<section id="dependencies-and-quirks">
+<h3>Dependencies and quirks<a class="headerlink" href="#dependencies-and-quirks" title="Link to this heading">#</a></h3>
+<p>Three dependencies - g2o, MapClosures and the UTL profiler - are fetched and pinned by CMake, always; nanoflann
+and Catch2 are fetched too under <code class="docutils literal notranslate"><span class="pre">-DRKO_SLAM_FETCH_CONTENT_DEPS=ON</span></code> and found on the system otherwise. Sourcing
+Eigen, Sophus, spdlog and tsl-robin-map relies on rko_lio, however you configure that (check rko_lio’s
+<a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html">ROS docs</a>). Everything else resolves via rosdep.</p>
+<p>Please note: rko_slam is MIT, but the g2o Cholmod solver links SuiteSparse’s CHOLMOD, whose Ubuntu/Debian build
+carries GPL-2+ modules.</p>
+<p>Steps are planned to clean up the dependency requirements and support pure rosdep installs.</p>
+</section>
+</section>
+<section id="run">
+<h2>Run<a class="headerlink" href="#run" title="Link to this heading">#</a></h2>
+<p>Two entrypoints: <code class="docutils literal notranslate"><span class="pre">slam.launch.py</span></code> (<code class="docutils literal notranslate"><span class="pre">mode:=online|offline</span></code>) and <code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code>. <code class="docutils literal notranslate"><span class="pre">-s</span></code> lists every parameter
+with its documentation, and anything you leave unset keeps the node’s own default. What each parameter does is
+on the <a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a> page.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>-s
+</pre></div>
+</div>
+<section id="online">
+<h3>Online<a class="headerlink" href="#online" title="Link to this heading">#</a></h3>
+<p>Next to a running rko_lio, give it rko_lio’s deskewed scan. The base frame is found for you (see
+<a class="reference internal" href="#what-gets-autodetected">below</a>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan
+</pre></div>
+</div>
+<p>Add <code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> to open RViz with the default view: sub-maps, keypose graph and closures.</p>
+<p>The same launch file can spawn the rko_lio front-end for you. rko_lio’s <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan</span></code> is forced on and
+rko_slam consumes that topic. Give <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> here, since rko_lio is not running yet when it would be detected:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>odometry:<span class="o">=</span><span class="nb">true</span><span class="w"> </span>base_frame:<span class="o">=</span>base_link<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>rko_lio_config_file:<span class="o">=</span>my_rko_lio.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>rko_lio_lidar_topic:<span class="o">=</span>/os_cloud_node/points<span class="w"> </span>rko_lio_imu_topic:<span class="o">=</span>/os_cloud_node/imu
+</pre></div>
+</div>
+</section>
+<section id="the-odometry">
+<h3>The odometry<a class="headerlink" href="#the-odometry" title="Link to this heading">#</a></h3>
+<p>rko_lio is the default, not a requirement. rko_slam asks two things of the odometry: that it publishes
+<code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> on TF, and that it is locally consistent, meaning the motion between two nearby scans is
+right even if the whole trajectory drifts. The loop closing corrects the drift; it does not repair a jump. Any
+LiDAR odometry qualifies. In my thesis the same back-end ran unchanged on top of
+<a class="reference external" href="https://github.com/PRBonn/kinematic-icp">Kinematic-ICP</a>, which fuses a LiDAR with wheel odometry on a wheeled
+robot.</p>
+<p>With another odometry the scans are usually raw, so set <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code> and rko_slam deskews them itself with
+the same TF:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>deskew:<span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+<p>If the odometry publishes under other names, give <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>, <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> and <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> explicitly.</p>
+</section>
+<section id="offline">
+<h3>Offline<a class="headerlink" href="#offline" title="Link to this heading">#</a></h3>
+<p>Offline, the node self-drains a bag (every scan is processed faster than frame-rate if possible). The odometry
+comes from the bag’s own <code class="docutils literal notranslate"><span class="pre">/tf</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag
+</pre></div>
+</div>
+<p>If the odometry you want is not in the bag, <code class="docutils literal notranslate"><span class="pre">odom_tum_path</span></code> takes it from a TUM trajectory file instead, read
+as <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code>, and the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code> is then ignored:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span>odom_tum_path:<span class="o">=</span>/data/odometry_tum.txt
+</pre></div>
+</div>
+<p>Nothing is written unless you ask for it, see <a class="reference internal" href="#outputs">Outputs</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>dump_results:<span class="o">=</span><span class="nb">true</span><span class="w"> </span>results_dir:<span class="o">=</span>results<span class="w"> </span>run_name:<span class="o">=</span>my_run
+</pre></div>
+</div>
+</section>
+<section id="multi-session-alignment">
+<h3>Multi-session alignment<a class="headerlink" href="#multi-session-alignment" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> is an offline step: it merges the run directories of several runs of the same place into one
+frame. Every run directory must carry its sub-maps, i.e. have been run with <code class="docutils literal notranslate"><span class="pre">dump_results:=true</span></code> (sub-maps are
+dumped by default):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>align.launch.py<span class="w"> </span>run_dirs:<span class="o">=</span><span class="s2">"[results/run_1, results/run_2]"</span>
+</pre></div>
+</div>
+</section>
+<section id="what-gets-autodetected">
+<h3>What gets autodetected<a class="headerlink" href="#what-gets-autodetected" title="Link to this heading">#</a></h3>
+<p>Two parameters are required and have no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>. With <code class="docutils literal notranslate"><span class="pre">autodetect:=true</span></code>, the
+default, the launch file fills in whichever of the two you left unset:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is the one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code> topic there is. If several exist, the launch stops and lists
+them so you can pick. Next to a running rko_lio there are at least two, the raw scan and the deskewed one, so
+give <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> in that case.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is the first of <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, <code class="docutils literal notranslate"><span class="pre">base_footprint</span></code>, <code class="docutils literal notranslate"><span class="pre">base</span></code> found in the TF tree, otherwise the scan’s
+own <code class="docutils literal notranslate"><span class="pre">frame_id</span></code>. Either way the TF tree must connect it to the scan’s frame, or the launch stops and says so.</p></li>
+</ul>
+<p>Online this means waiting for the topics and TF to show up, <code class="docutils literal notranslate"><span class="pre">autodetect_timeout</span></code> (10 s) long. Offline it is read
+from the bag. Anything you did give is used as is, and with both given nothing is detected at all;
+<code class="docutils literal notranslate"><span class="pre">autodetect:=false</span></code> turns it off. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code>, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is set to rko_lio’s deskewed scan topic
+and not searched for, but the base frame detection needs a message on that topic and rko_lio only starts
+afterwards, so give <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> too.</p>
+</section>
+</section>
+<section id="topics-and-frames">
+<h2>Topics and frames<a class="headerlink" href="#topics-and-frames" title="Link to this heading">#</a></h2>
+<p>Subscribed:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Topic / frame</p></th>
+<th class="head"><p>What</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code>)</p></td>
+<td><p>the scans, deskewed unless <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> on TF</p></td>
+<td><p>the odometry, looked up at each scan’s timestamp</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Published:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Topic / frame</p></th>
+<th class="head"><p>What</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">-&gt;</span> <span class="pre">odom_frame</span></code> on TF</p></td>
+<td><p>the correction; <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">base</span></code> is then the SLAM estimate</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rko_slam/sub_maps</span></code> (<code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>)</p></td>
+<td><p>each closed sub-map, with a <code class="docutils literal notranslate"><span class="pre">sub_map_&lt;i&gt;</span></code> TF chain (<code class="docutils literal notranslate"><span class="pre">publish_sub_maps:=true</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code> (<code class="docutils literal notranslate"><span class="pre">MarkerArray</span></code>)</p></td>
+<td><p>the keyposes with their odometry and closure edges (<code class="docutils literal notranslate"><span class="pre">publish_keypose_graph:=true</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code> (<code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>)</p></td>
+<td><p>each accepted closure pair as a two-tone cloud (<code class="docutils literal notranslate"><span class="pre">publish_closure_maps:=true</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rko_slam/bag_progress</span></code> (<code class="docutils literal notranslate"><span class="pre">Float32MultiArray</span></code>)</p></td>
+<td><p>offline only, how far into the bag the node is</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading">#</a></h2>
+<p>Nothing is published for display unless you ask for it. Three publishers, each off by default:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">publish_sub_maps:=true</span></code>, each closed sub-map as a point cloud on <code class="docutils literal notranslate"><span class="pre">rko_slam/sub_maps</span></code>, with a <code class="docutils literal notranslate"><span class="pre">sub_map_&lt;i&gt;</span></code> TF
+chain so RViz places them.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">publish_keypose_graph:=true</span></code>, the keyposes as spheres with the odometry edges between consecutive keyposes and
+the closure edges, as markers on <code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">publish_closure_maps:=true</span></code>, each accepted closure as the two sub-maps it matched, one colour each, on
+<code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, so you can see what got matched to what.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns all three on and opens RViz with the default view, <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>, patched with your
+frames. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> it also shows rko_lio’s local map and deskewed scan. Pass your own config with
+<code class="docutils literal notranslate"><span class="pre">rviz_config_file:=</span></code> and it is used unchanged, with nothing forced on.</p>
+<figure>
+  <img src="../_static/img/rviz_default_view.png" alt="RViz with the default view on an Oxford Spires sequence: sub-maps, the keypose graph with odometry and closure edges, and a two-tone closure map">
+  <figcaption class="pair-caption">The default view at the end of an Oxford Spires sequence: sub-maps, the keypose graph with its odometry and closure edges, and one closure map in two tones.</figcaption>
+</figure>
+</section>
+<section id="outputs">
+<h2>Outputs<a class="headerlink" href="#outputs" title="Link to this heading">#</a></h2>
+<p>Nothing is written unless you ask for it. With <code class="docutils literal notranslate"><span class="pre">dump_results:=true</span></code>, a SLAM run (<code class="docutils literal notranslate"><span class="pre">slam.launch.py</span></code>) writes
+<code class="docutils literal notranslate"><span class="pre">&lt;results_dir&gt;/&lt;run_name&gt;_&lt;n&gt;/</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>What</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_tum.txt</span></code></p></td>
+<td><p>the trajectory</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*_keypose_graph.g2o</span></code></p></td>
+<td><p>the keypose pose graph</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_config.yaml</span></code></p></td>
+<td><p>the config dumped for reproducibility</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*_profile.txt</span></code></p></td>
+<td><p>profiling logs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_trajectory.png</span></code></p></td>
+<td><p>the trajectory as an image, loop closures in red</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sub_maps/sub_map_*.ply</span></code></p></td>
+<td><p>the sub-maps, one file each, in the frame of their keypose. Usable as a map for a localization system, and the input to <code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> (<code class="docutils literal notranslate"><span class="pre">dump_sub_maps</span></code>, on by default)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> always writes <code class="docutils literal notranslate"><span class="pre">&lt;results_dir&gt;/&lt;run_name&gt;_&lt;n&gt;/</span></code>, and needs the runs it merges to have been
+written with <code class="docutils literal notranslate"><span class="pre">dump_results:=true</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>What</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_joint_keypose_graph.g2o</span></code></p></td>
+<td><p>the joint pose graph over all sessions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*_session_&lt;i&gt;_tum.txt</span></code></p></td>
+<td><p>each session’s trajectory in the joint frame, <code class="docutils literal notranslate"><span class="pre">&lt;i&gt;</span></code> in <code class="docutils literal notranslate"><span class="pre">run_dirs</span></code> order</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_config.yaml</span></code></p></td>
+<td><p>the config dumped for reproducibility, with the run directories</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">rko_slam</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="configuration.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Configuration</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build">Build</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependencies-and-quirks">Dependencies and quirks</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run">Run</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#online">Online</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-odometry">The odometry</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#offline">Offline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-session-alignment">Multi-session alignment</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-autodetected">What gets autodetected</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#topics-and-frames">Topics and frames</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization">Visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs">Outputs</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026 Meher V.R. Malladi.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__center">
+      
+        <div class="footer-item"><p class="credits">Pages in <a href="https://myst-parser.readthedocs.io/">MyST</a>. vibe coded&trade;</p></div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
