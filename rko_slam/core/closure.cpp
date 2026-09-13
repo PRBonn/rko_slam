@@ -147,7 +147,7 @@ ClosureRefinement refine_closure(const float voxel_size,
   const Sophus::SE3f refined = icp_point_to_plane(source.centroids, target.centroids, target.normals,
                                                   max_correspondence_distance, target_T_source_init);
 
-  const double overlap = voxel_set_iou(target.centroids, source.centroids, refined, voxel_size);
+  const double overlap = voxel_overlap_coefficient(target.centroids, source.centroids, refined, voxel_size);
 
   return ClosureRefinement{.refined_target_T_source = refined, .overlap = overlap};
 }
@@ -214,12 +214,12 @@ Sophus::SE3f icp_point_to_plane(const std::vector<Eigen::Vector3f>& source,
   return pose_estimate;
 }
 
-double voxel_set_iou(const std::vector<Eigen::Vector3f>& first_pts,
-                     const std::vector<Eigen::Vector3f>& second_pts,
-                     const Sophus::SE3f& first_T_second,
-                     const float voxel_size) {
+double voxel_overlap_coefficient(const std::vector<Eigen::Vector3f>& first_pts,
+                                 const std::vector<Eigen::Vector3f>& second_pts,
+                                 const Sophus::SE3f& first_T_second,
+                                 const float voxel_size) {
   if (first_pts.empty() || second_pts.empty() || voxel_size <= 0.0F) {
-    throw std::invalid_argument("voxel_set_iou: needs two non-empty clouds and a positive voxel size");
+    throw std::invalid_argument("voxel_overlap_coefficient: needs two non-empty clouds and a positive voxel size");
   }
   const float inv_voxel_size = 1.0F / voxel_size;
 

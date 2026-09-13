@@ -85,10 +85,10 @@ Sophus::SE3f icp_point_to_plane(const std::vector<Eigen::Vector3f>& source,
                                 const float max_correspondence_distance,
                                 const Sophus::SE3f& initial_guess);
 
-// Voxel-set IoU of both clouds voxelised in the same frame: intersection / min(|first|, |second|).
-double voxel_set_iou(const std::vector<Eigen::Vector3f>& first_pts,
-                     const std::vector<Eigen::Vector3f>& second_pts,
-                     const Sophus::SE3f& first_T_second,
-                     const float voxel_size);
+// Overlap coefficient of both clouds voxelised in the same frame: intersection / min(|first|, |second|).
+double voxel_overlap_coefficient(const std::vector<Eigen::Vector3f>& first_pts,
+                                 const std::vector<Eigen::Vector3f>& second_pts,
+                                 const Sophus::SE3f& first_T_second,
+                                 const float voxel_size);
 
 } // namespace rko_slam::core

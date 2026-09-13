@@ -1,0 +1,38 @@
+name: Docs
+# Every version gets its own directory: master/ and one per tag. Each deploy replaces only its own
+# directory. The root holds the redirect into master/ and the switcher.json the version dropdown reads.
+# A manual run on a branch builds but does not publish.
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - run: python3 -m pip install sphinx pydata-sphinx-theme myst-parser
+      - env:
+          DOCS_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'master' }}
+        run: sphinx-build -W --keep-going -b html docs docs/_build
+      - if: github.ref == 'refs/heads/master' || github.ref_type == 'tag'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build
+          destination_dir: ${{ github.ref_type == 'tag' && github.ref_name || 'master' }}
+      - if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/root
+          keep_files: true
