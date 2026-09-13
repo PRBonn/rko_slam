@@ -1,0 +1,9 @@
+type: 'rosdoc2 config'
+version: 1
+---
+settings:
+  generate_package_index: true
+  always_run_doxygen: false
+  always_run_sphinx_apidoc: false
+builders:
+  - sphinx: {name: 'rko_slam', output_dir: '', sphinx_sourcedir: "docs"}

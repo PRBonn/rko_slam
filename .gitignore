@@ -10,3 +10,6 @@ __pycache__/
 
 /.claude/
 /.ruff_cache/
+docs/_build/
+docs_build/
+docs_output/

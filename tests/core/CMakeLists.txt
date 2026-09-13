@@ -8,7 +8,7 @@ add_executable(
   test_sub_map.cpp
   test_tum_writer.cpp
   test_voxel_hash_map.cpp
-  test_voxel_iou.cpp)
+  test_voxel_overlap_coefficient.cpp)
 
 target_link_libraries(rko_slam_core_tests PRIVATE rko_slam::core Catch2::Catch2WithMain)
 

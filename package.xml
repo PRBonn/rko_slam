@@ -2,9 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?><package format="3">
   <name>rko_slam</name>
   <version>0.0.1</version>
-  <description>LiDAR-inertial SLAM built on rko_lio: sub-map-based loop closing, pose-graph optimization and multi-session alignment</description>
+  <description>ROS2 SLAM on top of a LiDAR-inertial odometry: drift correction and multi-session alignment</description>
   <maintainer email="rm.meher97@gmail.com">Meher Malladi</maintainer>
   <license>MIT</license>
+  <url type="website">https://prbonn.github.io/rko_slam/</url>
+  <url type="repository">https://github.com/PRBonn/rko_slam</url>
+  <url type="bugtracker">https://github.com/PRBonn/rko_slam/issues</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -32,5 +35,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <rosdoc2>rosdoc2.yaml</rosdoc2>
   </export>
 </package>
