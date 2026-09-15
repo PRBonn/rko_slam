@@ -20,7 +20,7 @@ public:
   struct Config {
     VoxelHashMap::Config voxel_map = {};
     // Translation in the keypose-relative frame at which the live map closes (m).
-    float splitting_distance = 100.0F;
+    float splitting_distance = 50.0F;
     // Per-scan range filter (m), applied in the base frame before insertion.
     float min_range = 1.0F;
     float max_range = 100.0F;

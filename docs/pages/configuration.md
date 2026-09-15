@@ -79,7 +79,7 @@ that works as is, and the ones worth changing first are `splitting_distance` and
 
 ## Sub-maps
 
-- **splitting_distance** (`float`, default `100.0`)
+- **splitting_distance** (`float`, default `50.0`)
 
   Metres from the sub-map's keypose at which the sub-map is closed and the next one starts. Straight-line
   displacement, not distance travelled. This decides how many sub-maps, and so how many keyposes, a run has: a

@@ -131,7 +131,7 @@ configurable_parameters = [
     },
     {
         "name": "splitting_distance",
-        "default": "100.0",
+        "default": "50.0",
         "type": "float",
         "description": "Distance (m) travelled before the current sub-map is closed and a new one started",
     },
