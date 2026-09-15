@@ -93,7 +93,7 @@ This work is essentially a reimplementation of [KISS-SLAM](https://github.com/PR
 And relies on my lidar inertial odometry package [rko_lio](https://github.com/PRBonn/rko_lio) for much of the
 internals. This was developed as part of my thesis work.
 
-If you find this package useful, consider leaving a star ⭐ on KISS-SLAM and citing the original publication:
+If you find this package useful, consider leaving a star ⭐ here and on KISS-SLAM, and citing the original publication:
 ```bib
 @INPROCEEDINGS{kiss2025iros,
   author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
