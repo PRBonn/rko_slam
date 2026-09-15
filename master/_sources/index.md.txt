@@ -55,7 +55,8 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 ## Citation
 
 rko_slam is essentially a reimplementation of [KISS-SLAM](https://github.com/PRBonn/kiss-slam) for ROS2. If you
-find it useful, consider leaving a star on KISS-SLAM and citing the original publication:
+find it useful, consider leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and citing
+the original publication:
 
 ```bibtex
 @INPROCEEDINGS{kiss2025iros,
