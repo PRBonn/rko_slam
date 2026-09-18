@@ -46,16 +46,6 @@ void transform_points(const Sophus::SE3f& pose, std::vector<Eigen::Vector3f>& po
   }
 }
 
-std::string format_extrinsic(const OptionalPose& ext) {
-  if (!ext) {
-    return "<not set; resolved via TF>";
-  }
-  const Eigen::Quaternionf& quaternion = ext->unit_quaternion();
-  const Eigen::Vector3f& translation = ext->translation();
-  return std::format("[{},{},{},{},{},{},{}]", quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w(),
-                     translation.x(), translation.y(), translation.z());
-}
-
 geometry_msgs::msg::Point pose_to_point(const Sophus::SE3f& pose) {
   geometry_msgs::msg::Point point;
   rko_lio::ros::utils::eigen_vector_to_ros_xyz(pose.translation(), point);
@@ -163,15 +153,6 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
   sub_map_config.max_range = static_cast<float>(node->declare_parameter<double>("max_range", sub_map_config.max_range));
   sub_map_builder = std::make_unique<core::SubMapBuilder>(sub_map_config);
 
-  const std::vector<double> extrinsic_param =
-      node->declare_parameter<std::vector<double>>("base_T_lidar_qxyzw_xyz", std::vector<double>{});
-  if (!extrinsic_param.empty()) {
-    base_T_lidar = rko_lio::ros::utils::to_se3(extrinsic_param);
-    RCLCPP_INFO_STREAM(node->get_logger(), "Parsed base_T_lidar_qxyzw_xyz as: " << base_T_lidar->log().transpose());
-  }
-
-  tf_lookup_timeout = std::chrono::milliseconds(
-      node->declare_parameter<std::int64_t>("tf_lookup_timeout_ms", tf_lookup_timeout.count()));
   tf_buffer = std::make_shared<tf2_ros::Buffer>(node->get_clock(), tf2::durationFromSec(50.0));
   tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*node);
 
@@ -217,24 +198,39 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
   slam = std::make_unique<core::SLAM>(slam_config, sub_map_builder->config.voxel_map);
 }
 
+OptionalPose BaseNode::resolve_base_T_lidar(const std_msgs::msg::Header& scan_header) {
+  if (base_T_lidar) {
+    return base_T_lidar;
+  }
+  if (base_frame.empty()) {
+    base_frame = scan_header.frame_id;
+  }
+  if (base_frame == scan_header.frame_id) {
+    base_T_lidar = Sophus::SE3f{};
+    return base_T_lidar;
+  }
+  base_T_lidar = rko_lio::ros::utils::get_transform(tf_buffer, scan_header.frame_id, base_frame,
+                                                    to_ns(scan_header.stamp), tf_lookup_timeout);
+  if (base_T_lidar) {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resolved " << base_frame << " <- " << scan_header.frame_id);
+  } else {
+    RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
+                                "Waiting for extrinsic " << base_frame << " <- " << scan_header.frame_id);
+  }
+  return base_T_lidar;
+}
+
 void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) {
   UTL_PROFILER_SCOPE("BaseNode::lidar_callback");
   using rko_lio::ros::utils::get_transform;
-  if (!base_T_lidar) {
-    if (msg->header.frame_id.empty()) {
-      RCLCPP_WARN_STREAM(node->get_logger(), "dropping scan: header.frame_id is empty, cannot resolve the extrinsic");
-      ++scans_dropped;
-      return;
-    }
-    const OptionalPose extrinsic =
-        get_transform(tf_buffer, msg->header.frame_id, base_frame, to_ns(msg->header.stamp), tf_lookup_timeout);
-    if (!extrinsic) {
-      RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
-                                  "Waiting for extrinsic " << base_frame << " <- " << msg->header.frame_id);
-      return;
-    }
-    base_T_lidar = *extrinsic;
-    RCLCPP_INFO_STREAM(node->get_logger(), "Resolved " << base_frame << " <- " << msg->header.frame_id);
+  if (msg->header.frame_id.empty()) {
+    RCLCPP_WARN_STREAM(node->get_logger(), "dropping scan: header.frame_id is empty, cannot look up its odometry");
+    ++scans_dropped;
+    return;
+  }
+  if (!resolve_base_T_lidar(msg->header)) {
+    ++scans_dropped;
+    return;
   }
 
   Scan scan;
@@ -391,19 +387,25 @@ void BaseNode::write_run_config(const std::string_view extra) const {
     RCLCPP_WARN_STREAM(node->get_logger(), "cannot open " << path.string() << "; run config not written");
     return;
   }
+  std::string resolved_extrinsic = "none";
+  if (base_T_lidar) {
+    const Eigen::Quaternionf& quaternion = base_T_lidar->unit_quaternion();
+    const Eigen::Vector3f& translation = base_T_lidar->translation();
+    resolved_extrinsic = std::format("[{}, {}, {}, {}, {}, {}, {}]", quaternion.x(), quaternion.y(), quaternion.z(),
+                                     quaternion.w(), translation.x(), translation.y(), translation.z());
+  }
   out << std::boolalpha;
   out << "lidar_topic: " << lidar_topic << '\n'
-      << "base_frame: " << base_frame << '\n'
+      << "base_frame: " << (base_frame.empty() ? "\"\"" : base_frame) << '\n'
+      << "# resolved base_frame <- scan extrinsic: " << resolved_extrinsic << '\n'
       << "odom_frame: " << odom_frame << '\n'
       << "map_frame: " << map_frame << '\n'
       << "dump_results: " << true << '\n'
       << "dump_sub_maps: " << run_output->dump_sub_maps << '\n'
       << "deskew: " << deskew << '\n'
-      << "tf_lookup_timeout_ms: " << tf_lookup_timeout.count() << '\n'
       << std::format("lidar_timestamps.multiplier_to_seconds: {}\n", timestamps_config.multiplier_to_seconds)
       << "lidar_timestamps.force_absolute: " << timestamps_config.force_absolute << '\n'
       << "lidar_timestamps.force_relative: " << timestamps_config.force_relative << '\n'
-      << "base_T_lidar_qxyzw_xyz: " << format_extrinsic(base_T_lidar) << '\n'
       << sub_map_builder->config.to_yaml() << slam->config.closure_detector.to_yaml()
       << std::format("overlap_threshold: {}\n", slam->config.closure_overlap_threshold)
       << slam->config.pose_graph.to_yaml() << "publish_sub_maps: " << publish_sub_maps << '\n'

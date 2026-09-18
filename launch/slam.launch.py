@@ -50,8 +50,7 @@ configurable_parameters = [
     {
         "name": "base_frame",
         "default": "",
-        "description": "Robot body frame the scans are deskewed and registered in (required, unless it can be autodetected from the TF tree)",
-        "required": True,
+        "description": "Frame rko_slam works in, e.g. base_link; unset, the scan's frame (autodetected from the TF tree)",
         "autodetectable": True,
     },
     {

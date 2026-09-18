@@ -117,6 +117,15 @@ public:
         ++scans_skipped_out_of_trajectory;
         return;
       }
+      if (cloud_msg->header.frame_id.empty()) {
+        RCLCPP_WARN_STREAM(node->get_logger(), "dropping scan: header.frame_id is empty, cannot look up its odometry");
+        ++scans_dropped;
+        return;
+      }
+      if (!resolve_base_T_lidar(cloud_msg->header)) {
+        ++scans_dropped;
+        return;
+      }
       inject_trajectory_up_to(scan_stamp + trajectory_inject_lookahead);
     }
 

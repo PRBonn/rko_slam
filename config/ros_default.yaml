@@ -9,7 +9,6 @@
 # odom_frame: odom
 # map_frame: map
 # deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
-# base_T_lidar_qxyzw_xyz: <[qx, qy, qz, qw, tx, ty, tz], else resolved from TF on the first scan>
 # tf_lookup_timeout_ms: 80
 # lidar_timestamps.multiplier_to_seconds: 0.0
 # lidar_timestamps.force_absolute: false

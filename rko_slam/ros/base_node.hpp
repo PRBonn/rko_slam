@@ -18,6 +18,7 @@
 #include <rclcpp/publisher.hpp>
 #include <rko_lio/core/process_timestamps.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -82,6 +83,8 @@ public:
   BaseNode(BaseNode&&) = delete;
   BaseNode& operator=(const BaseNode&) = delete;
   BaseNode& operator=(BaseNode&&) = delete;
+
+  std::optional<Sophus::SE3f> resolve_base_T_lidar(const std_msgs::msg::Header& scan_header);
 
   // sub-map integration; a sealed sub-map is handed to `closure_task`.
   void lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg);

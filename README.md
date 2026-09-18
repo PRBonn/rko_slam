@@ -54,7 +54,7 @@ cd <ws>/src
 git clone https://github.com/PRBonn/rko_lio
 git clone https://github.com/PRBonn/rko_slam
 cd <ws> && rosdep install --from-paths src --ignore-src -y
-colcon build --packages-select rko_lio rko_slam --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --packages-select rko_lio rko_slam
 ```
 
 `apt` installs will be supported, same as with rko_lio. Dependencies and build options are covered in the [docs](https://prbonn.github.io/rko_slam/master/pages/build_and_run.html).

@@ -66,8 +66,8 @@ ros2 launch rko_slam slam.launch.py odometry:=true base_frame:=base_link \
 
 ### The odometry
 
-rko_lio is the default, not a requirement. rko_slam asks two things of the odometry: that it publishes
-`odom -> base_frame` on TF, and that it is locally consistent, meaning the motion between two nearby scans is
+rko_lio is the default, not a requirement. rko_slam asks two things of the odometry: that its pose is on TF, as
+described under [Frames](#frames), and that it is locally consistent, meaning the motion between two nearby scans is
 right even if the whole trajectory drifts. The loop closing corrects the drift; it does not repair a jump. Any
 LiDAR odometry qualifies. In my thesis the same back-end ran unchanged on top of
 [Kinematic-ICP](https://github.com/PRBonn/kinematic-icp), which fuses a LiDAR with wheel odometry on a wheeled
@@ -91,8 +91,8 @@ comes from the bag's own `/tf`:
 ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag
 ```
 
-If the odometry you want is not in the bag, `odom_tum_path` takes it from a TUM trajectory file instead, read
-as `odom -> base_frame`, and the bag's `/tf` is then ignored:
+If the odometry you want is not in the bag, `odom_tum_path` takes it from a TUM trajectory file instead, see
+[Frames](#frames):
 
 ```bash
 ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag odom_tum_path:=/data/odometry_tum.txt
@@ -131,6 +131,20 @@ from the bag. Anything you did give is used as is, and with both given nothing i
 `autodetect:=false` turns it off. With `odometry:=true`, `lidar_topic` is set to rko_lio's deskewed scan topic
 and not searched for, but the base frame detection needs a message on that topic and rko_lio only starts
 afterwards, so give `base_frame` too.
+
+## Frames
+
+rko_slam works in one frame, `base_frame`: the sub-maps, keyposes and trajectory are expressed in it. Left unset,
+it is the scan's frame, the `frame_id` of the `PointCloud2`.
+
+The odometry is the pose of `base_frame` in `odom_frame`, read from TF at each scan's timestamp. A static transform
+on TF connects `base_frame` to the scan's frame, and rko_slam reads it once, on the first scan, to transform every
+scan into `base_frame` before adding it to the sub-maps.
+
+Offline, `odom_tum_path` takes the odometry from a TUM file instead of the bag's `/tf`. The file holds the pose of
+`base_frame` in `odom_frame`.
+
+rko_slam publishes `map_frame <- odom_frame`, which makes `map_frame <- base_frame` the SLAM estimate.
 
 ## Topics and frames
 

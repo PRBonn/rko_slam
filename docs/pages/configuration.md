@@ -28,9 +28,8 @@ Everything else has a default that works as is, and the ones worth changing firs
 
 - **odom_tum_path** (offline only)
 
-  A TUM trajectory file to take the odometry from. When set, the bag's `/tf` is ignored and the file's poses are
-  used as `odom -> base_frame` instead. The bag's `/tf_static` is still read, for the scan-to-`base_frame`
-  extrinsic. If the file holds the LiDAR's own poses, set `base_frame` to the scan's frame.
+  A TUM trajectory file to take the odometry from instead of the bag's `/tf`, see
+  [Frames](build_and_run.md#frames).
 
 - **use_sim_time** (`bool`, default `false`)
 
@@ -43,14 +42,13 @@ Everything else has a default that works as is, and the ones worth changing firs
   The `PointCloud2` topic with the scans. Deskewed scans unless you set `deskew`. With `odometry:=true` the launch
   file fills in `/rko_lio/deskewed_scan`.
 
-- **base_frame** (required, autodetected)
+- **base_frame** (autodetected)
 
-  The body frame the odometry estimates and the scans are registered in, usually `base_link`.
+  The frame rko_slam works in, usually `base_link`, see [Frames](build_and_run.md#frames).
 
 - **odom_frame** (default `odom`), **map_frame** (default `map`)
 
-  The frame the odometry publishes, as TF parent of `base_frame`, and the frame rko_slam publishes:
-  rko_slam broadcasts `map_frame -> odom_frame`.
+  The odometry's frame and the frame rko_slam publishes, see [Frames](build_and_run.md#frames).
 
 - **autodetect** (`bool`, default `true`), **autodetect_timeout** (`float`, default `10.0`)
 
@@ -62,10 +60,6 @@ Everything else has a default that works as is, and the ones worth changing firs
 
   Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry
   already publishes a deskewed cloud and you consume that, which is the case with `/rko_lio/deskewed_scan`.
-
-- **base_T_lidar_qxyzw_xyz** (`[qx, qy, qz, qw, tx, ty, tz]`, optional)
-
-  The LiDAR extrinsic. Left empty, it is resolved from TF on the first scan.
 
 - **tf_lookup_timeout_ms** (`int`, online only, default `80`)
 
