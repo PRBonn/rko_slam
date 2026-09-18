@@ -118,8 +118,9 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 ### Starting rko_lio
 
 `odometry:=true` starts an rko_lio online node next to rko_slam. With `rko_lio_config_file`, rko_lio runs on that
-file as it is; rko_slam reads rko_lio's deskewed scan, so the file has to set `publish_deskewed_scan: true` and the
-launch stops if it does not. Without the file, rko_lio configures itself with its own
+file as it is. rko_slam reads rko_lio's deskewed scan unless you give it a `lidar_topic` of your own, so the file
+has to set `publish_deskewed_scan: true` and the launch stops if it does not. Without the file, rko_lio
+configures itself with its own
 [autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection), waiting for the
 topics and TF to show up, and publishes its deskewed scan. For anything else, run rko_lio with its own launch
 file.
@@ -137,13 +138,16 @@ rko_lio's own `lidar_topic`, the raw scans it subscribes to, is not in that tabl
 rko_lio takes it from `rko_lio_config_file` or finds it itself, as it does its IMU topic.
 
 `lidar_topic` always resolves: from `rko_lio_config_file` if it defines `deskewed_scan_topic`, otherwise from
-rko_lio's default `rko_lio/deskewed_scan`. The rest are taken only if rko_lio has a value for them, which means
-what `rko_lio_config_file` defines, or what rko_lio's autodetection found when there is no config file. A parameter
-that neither you nor rko_lio defines keeps rko_slam's own default: `odom_frame` is `odom`, `invert_map_tf` is
-`false`, and `base_frame` unset means the scan's frame.
+rko_lio's default `rko_lio/deskewed_scan`. Taking it also turns `deskew` off, since that cloud is already
+deskewed. The rest are taken only if rko_lio has a value for them, which means what `rko_lio_config_file`
+defines, or what rko_lio's autodetection found when there is no config file. A parameter that neither you nor
+rko_lio defines keeps rko_slam's own default: `odom_frame` is `odom`, `invert_map_tf` is `false`, and
+`base_frame` unset means the scan's frame.
 
-`base_frame` also goes the other way: set it on rko_slam and rko_lio estimates in that frame instead of looking
-for one.
+The two frames also go the other way: set `base_frame` or `odom_frame` on rko_slam and rko_lio is started with
+them, so both nodes work in the same body and publish the odometry in the same frame. They override
+`rko_lio_config_file` if it defines them too, the same way `use_sim_time` does, since what you set on rko_slam is
+for this run and rko_lio's file is not.
 
 ## Frames
 

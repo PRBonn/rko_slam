@@ -44,14 +44,14 @@ works as is, and the ones worth changing first are `splitting_distance` and `ove
 - **base_frame** (optional)
 
   The frame rko_slam works in, usually `base_link`, see [Frames](build_and_run.md#frames). With
-  `odometry:=true` it defaults to rko_lio's `base_frame`; left unset with no rko_lio to take it from, it is the
-  scan's own frame.
+  `odometry:=true` it is shared with rko_lio: set it and rko_lio is started with it, leave it and rko_lio's is
+  used. Unset with no rko_lio to take it from, it is the scan's own frame.
 
 - **odom_frame** (default `odom`), **map_frame** (default `map`)
 
   The odometry's frame and the frame rko_slam publishes, see [Frames](build_and_run.md#frames):
   rko_slam broadcasts `map_frame <- odom_frame`, inverted with `invert_map_tf`. With `odometry:=true`,
-  `odom_frame` defaults to rko_lio's.
+  `odom_frame` is shared with rko_lio the same way `base_frame` is.
 
 - **invert_map_tf** (`bool`, default `false`)
 
@@ -62,7 +62,9 @@ works as is, and the ones worth changing first are `splitting_distance` and `ove
 - **deskew** (`bool`, default `false`)
 
   Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry
-  already publishes a deskewed cloud and you consume that, which is the case with `/rko_lio/deskewed_scan`.
+  already publishes a deskewed cloud and you consume that, which is the case with `/rko_lio/deskewed_scan`. When
+  the launch file picks that topic for you, under `odometry:=true` with no `lidar_topic` of your own, it turns
+  this off with it.
 
 - **tf_lookup_timeout_ms** (`int`, online only, default `80`)
 
@@ -193,9 +195,11 @@ These can be left at their defaults.
 - **rko_lio_config_file**
 
   The YAML config the rko_lio node runs on, as it is; what goes in it is in rko_lio's
-  [configuration](https://prbonn.github.io/rko_lio/pages/config.html). It has to define
-  `publish_deskewed_scan: true`, since that is the topic rko_slam subscribes to, and the launch stops if it does
-  not. Without the file, rko_lio configures itself with its
+  [configuration](https://prbonn.github.io/rko_lio/pages/config.html), except that `base_frame`, `odom_frame`
+  and `use_sim_time` set on rko_slam override what it defines. If you let `lidar_topic` default to
+  rko_lio's deskewed scan, the file has to define `publish_deskewed_scan: true` and the launch stops if it does
+  not; give rko_slam a `lidar_topic` of your own and it does not matter. Without the file, rko_lio configures
+  itself with its
   [autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection).
 
 ## Other

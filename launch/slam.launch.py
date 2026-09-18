@@ -274,17 +274,21 @@ def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str 
 
 
 def rko_lio_value(odom_params: dict, name: str):
-    return odom_params.get(name, common.default_for(rko_lio_odometry.configurable_parameters, name))
+    table = rko_lio_odometry.configurable_parameters
+    if name in odom_params:
+        return odom_params[name]
+    # rko_lio declares its defaults as launch argument strings, so "false" needs casting before it is read
+    return common.cast(next(param for param in table if param["name"] == name), common.default_for(table, name))
 
 
-def autodetected_odometry_parameters(base_frame: str) -> dict:
+def autodetected_odometry_parameters(given: dict) -> dict:
     """rko_lio's own launch file resolves its arguments from argv, which would take this launch file's values for the
     dozen names the two packages share.
     """
     autodetect = load_module(rko_lio_launch / "autodetect.py")
     timeout = common.default_for(rko_lio_odometry.configurable_parameters, "autodetect_timeout")
     try:
-        return autodetect.autodetect({"base_frame": base_frame}, mode="online", bag_path=None, timeout=float(timeout))
+        return autodetect.autodetect(given, mode="online", bag_path=None, timeout=float(timeout))
     except autodetect.AutodetectError as error:
         common.fail(
             "[ERROR] rko_lio autodetect failed:",
@@ -314,21 +318,28 @@ def launch_setup(context, *args, **kwargs):
             # rko_lio configs use the flat launch-file format, not the ros__parameters wrapper.
             with open(config_file) as f:
                 odom_params = yaml.safe_load(f) or {}
-            if not rko_lio_value(odom_params, "publish_deskewed_scan"):
-                common.fail(
-                    "[ERROR] rko_lio_config_file must set publish_deskewed_scan: true,",
-                    "it is the topic rko_slam subscribes to.",
-                )
         else:
             odom_params = {
                 "publish_deskewed_scan": True,
                 "publish_local_map": using_default_rviz,
-                **autodetected_odometry_parameters(merged.get("base_frame", "")),
+                **autodetected_odometry_parameters(
+                    {name: merged[name] for name in ("base_frame", "odom_frame") if merged.get(name)}
+                ),
             }
         if "use_sim_time" in merged:
             odom_params["use_sim_time"] = merged["use_sim_time"]
+        for name in ("base_frame", "odom_frame"):
+            if merged.get(name):
+                odom_params[name] = merged[name]
         if not merged.get("lidar_topic"):
+            if not rko_lio_value(odom_params, "publish_deskewed_scan"):
+                common.fail(
+                    "[ERROR] rko_lio is not configured to publish a deskewed scan, so there is nothing for",
+                    "rko_slam to subscribe to. Set publish_deskewed_scan: true in rko_lio_config_file, or give",
+                    "rko_slam a lidar_topic of your own.",
+                )
             merged["lidar_topic"] = rko_lio_value(odom_params, "deskewed_scan_topic")
+            merged["deskew"] = False
         for name in ("base_frame", "odom_frame"):
             if not merged.get(name) and name in odom_params:
                 merged[name] = odom_params[name]
