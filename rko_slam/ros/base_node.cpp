@@ -62,7 +62,7 @@ geometry_msgs::msg::Point pose_to_point(const Sophus::SE3f& pose) {
   return point;
 }
 
-// The `map -> sub_map_0 -> sub_map_1 -> ...` TF chain; every link after the first is a relative pose.
+// The `map <- sub_map_0 <- sub_map_1 <- ...` TF chain; every link after the first is a relative pose.
 std::vector<geometry_msgs::msg::TransformStamped>
 build_sub_map_chain(const rko_slam::core::Keyposes& keyposes, const std::string& map_frame, const rclcpp::Time& stamp) {
   std::vector<geometry_msgs::msg::TransformStamped> chain;
@@ -140,7 +140,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
 #endif
 
   lidar_topic = node->declare_parameter<std::string>("lidar_topic"); // required
-  base_frame = node->declare_parameter<std::string>("base_frame");   // required
+  base_frame = node->declare_parameter<std::string>("base_frame", base_frame);
   odom_frame = node->declare_parameter<std::string>("odom_frame", odom_frame);
   map_frame = node->declare_parameter<std::string>("map_frame", map_frame);
 

@@ -5,7 +5,7 @@
 # #############################################################################
 # --- input ---
 # lidar_topic: <autodetected when exactly one PointCloud2 topic is published>
-# base_frame: <base_link, base_footprint or base if the TF tree has one, else the lidar's own frame>
+# base_frame: <base_link, base_footprint or base if the TF tree has one, else the scan's frame>
 # odom_frame: odom
 # map_frame: map
 # deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
@@ -50,4 +50,4 @@
 #
 # --- offline only ---
 # bag_path: <rosbag2 directory to process>
-# odom_tum_path: <TUM trajectory; when set the bag's /tf is ignored>
+# odom_tum_path: <TUM trajectory of base_frame in odom_frame, used in place of the bag's /tf>

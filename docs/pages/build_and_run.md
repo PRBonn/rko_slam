@@ -117,7 +117,7 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 
 ### What gets autodetected
 
-Two parameters are required and have no default, `lidar_topic` and `base_frame`. With `autodetect:=true`, the
+`lidar_topic` is required and has no default, and `base_frame` is optional. With `autodetect:=true`, the
 default, the launch file fills in whichever of the two you left unset:
 
 - `lidar_topic` is the one `sensor_msgs/PointCloud2` topic there is. If several exist, the launch stops and lists
@@ -139,13 +139,13 @@ Subscribed:
 | Topic / frame | What |
 |---|---|
 | `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, deskewed unless `deskew:=true` |
-| `odom_frame -> base_frame` on TF | the odometry, looked up at each scan's timestamp |
+| `odom_frame <- base_frame` on TF | the odometry, see [Frames](#frames) |
 
 Published:
 
 | Topic / frame | What |
 |---|---|
-| `map_frame -> odom_frame` on TF | the correction; `map -> base` is then the SLAM estimate |
+| `map_frame <- odom_frame` on TF | the correction; `map_frame <- base_frame` is then the SLAM estimate |
 | `rko_slam/sub_maps` (`PointCloud2`) | each closed sub-map, with a `sub_map_<i>` TF chain (`publish_sub_maps:=true`) |
 | `rko_slam/keypose_graph` (`MarkerArray`) | the keyposes with their odometry and closure edges (`publish_keypose_graph:=true`) |
 | `rko_slam/closure_maps` (`PointCloud2`) | each accepted closure pair as a two-tone cloud (`publish_closure_maps:=true`) |

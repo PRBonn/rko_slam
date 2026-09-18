@@ -21,11 +21,11 @@
 rko_slam is a ROS2 LiDAR-inertial SLAM system. It runs on top of a LiDAR-inertial odometry. An odometry tells you how you
 moved, and over a long enough run its estimate drifts: come back to a place you have been before and the two
 visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR, recognizes the revisit, and corrects the
-whole trajectory behind you. You keep the odometry as it is, and you additionally get a `map -> odom` correction
+whole trajectory behind you. You keep the odometry as it is, and you additionally get a `map <- odom` correction
 on TF, a pose graph, and the sub-maps the system built along the way.
 
 The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry
-package, which is also a build dependency. At run time any odometry that publishes `odom -> base` on TF and is
+package, which is also a build dependency. At run time any odometry that publishes `odom <- base` on TF and is
 locally consistent will do, wheel odometry included.
 
 The same detector works across runs, not just within one, as an offline step. Give it the run directories of several

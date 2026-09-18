@@ -11,9 +11,10 @@ ros2 launch rko_slam slam.launch.py -s   # the same list, with defaults, from th
 [`config/ros_default.yaml`](https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml) has every
 parameter with its default, commented out, as a file to start from.
 
-Two of them are required and have no default, `lidar_topic` and `base_frame`, and both are
-[autodetected](build_and_run.md#what-gets-autodetected) when you leave them unset. Everything else has a default
-that works as is, and the ones worth changing first are `splitting_distance` and `overlap_threshold`.
+One of them is required and has no default, `lidar_topic`. It is
+[autodetected](build_and_run.md#what-gets-autodetected) when you leave it unset, and so is `base_frame`.
+Everything else has a default that works as is, and the ones worth changing first are `splitting_distance` and
+`overlap_threshold`.
 
 ## Mode
 
@@ -68,7 +69,7 @@ that works as is, and the ones worth changing first are `splitting_distance` and
 
 - **tf_lookup_timeout_ms** (`int`, online only, default `80`)
 
-  How long an `odom -> base_frame` TF lookup blocks before the scan is dropped.
+  How long an `odom_frame <- base_frame` TF lookup blocks before the scan is dropped.
 
 - **lidar_timestamps.multiplier_to_seconds** (`float`, default `0.0`), **lidar_timestamps.force_absolute**
   (`bool`, default `false`), **lidar_timestamps.force_relative** (`bool`, default `false`)

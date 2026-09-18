@@ -19,11 +19,11 @@ myst:
 An odometry tells you how you moved. Over a long enough run its estimate drifts, and when you come back to a
 place you have been before, the two visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR,
 recognizes the revisit, and corrects the whole trajectory behind you. You keep the odometry as it is, and you
-additionally get a `map -> odom` correction on TF, a pose graph, and the sub-maps the system built along the way.
+additionally get a `map <- odom` correction on TF, a pose graph, and the sub-maps the system built along the way.
 
 The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry
 package. rko_lio is also a build dependency, rko_slam uses its voxel map and deskewing internally. At run time
-though, any odometry that publishes `odom -> base` on TF and is locally consistent will do, wheel odometry included.
+though, any odometry that publishes `odom <- base` on TF and is locally consistent will do, wheel odometry included.
 
 ```bash
 ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=true

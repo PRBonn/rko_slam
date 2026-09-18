@@ -97,8 +97,8 @@ public:
 
   ~OfflineNode() {
     try {
-      write_run_config(std::format("bag_path: {}\nodom_tum_path: {}\n", bag_path,
-                                   odom_tum_path ? odom_tum_path->string() : "<not set; odometry from the bag's tf>"));
+      write_run_config(
+          std::format("bag_path: {}\nodom_tum_path: {}\n", bag_path, odom_tum_path ? odom_tum_path->string() : "\"\""));
       dump_results_to_disk();
     } catch (const std::exception& error) {
       RCLCPP_ERROR_STREAM(node->get_logger(), "run dump failed: " << error.what());
