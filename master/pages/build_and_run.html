@@ -539,12 +539,12 @@ scan into <code class="docutils literal notranslate"><span class="pre">base_fram
 <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> in <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>.</p>
 <p>rko_slam publishes <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">odom_frame</span></code>, which makes <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> the SLAM estimate.</p>
 </section>
-<section id="topics">
-<h2>Topics<a class="headerlink" href="#topics" title="Link to this heading">#</a></h2>
+<section id="topics-and-transforms">
+<h2>Topics and transforms<a class="headerlink" href="#topics-and-transforms" title="Link to this heading">#</a></h2>
 <p>Subscribed:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Topic / frame</p></th>
+<tr class="row-odd"><th class="head"><p>Topic / transform</p></th>
 <th class="head"><p>What</p></th>
 </tr>
 </thead>
@@ -553,7 +553,10 @@ scan into <code class="docutils literal notranslate"><span class="pre">base_fram
 <td><p>the scans, deskewed unless <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> on TF</p></td>
-<td><p>the odometry, see <a class="reference internal" href="#frames">Frames</a></p></td>
+<td><p>the odometry, looked up at each scan’s timestamp</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">scan's</span> <span class="pre">frame</span></code> on TF</p></td>
+<td><p>static, read once on the first scan to bring every scan into <code class="docutils literal notranslate"><span class="pre">base_frame</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -561,7 +564,7 @@ scan into <code class="docutils literal notranslate"><span class="pre">base_fram
 <p>Published:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Topic / frame</p></th>
+<tr class="row-odd"><th class="head"><p>Topic / transform</p></th>
 <th class="head"><p>What</p></th>
 </tr>
 </thead>
@@ -720,7 +723,7 @@ written with <code class="docutils literal notranslate"><span class="pre">dump_r
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frames">Frames</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#topics">Topics</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#topics-and-transforms">Topics and transforms</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization">Visualization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs">Outputs</a></li>
 </ul>
