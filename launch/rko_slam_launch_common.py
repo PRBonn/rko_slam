@@ -1,4 +1,5 @@
 import sys
+from typing import NoReturn
 
 import yaml
 from launch.actions import DeclareLaunchArgument
@@ -76,7 +77,7 @@ POSE_GRAPH_PARAMETERS = [
 ]
 
 
-def fail(*lines):
+def fail(*lines) -> NoReturn:
     print("\n\n" + "=" * 40)
     for line in lines:
         print(line)

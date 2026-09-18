@@ -39,6 +39,7 @@ public:
 
   std::string odom_frame{"odom"};
   std::string map_frame{"map"};
+  bool invert_map_tf = false;
 
   std::chrono::milliseconds tf_lookup_timeout{0};
 
@@ -96,7 +97,7 @@ public:
   write_sub_map(const core::KeyposeId keypose_id, const core::Nsec keypose_time, std::vector<Eigen::Vector3f> points);
 
   // A closure's correction reaches tf on the scan after it.
-  void broadcast_map_T_odom(const builtin_interfaces::msg::Time& stamp) const;
+  void broadcast_map_tf(const builtin_interfaces::msg::Time& stamp) const;
   std::optional<RunOutput> declare_run_output(const std::string& default_run_name);
   // `extra` is appended: the keys the calling node owns and this class does not.
   void write_run_config(const std::string_view extra = {}) const;

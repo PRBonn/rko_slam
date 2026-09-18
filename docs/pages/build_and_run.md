@@ -46,8 +46,7 @@ ros2 launch rko_slam slam.launch.py -s
 
 ### Online
 
-Next to a running rko_lio, give it rko_lio's deskewed scan. The base frame is found for you (see
-[below](#what-gets-autodetected)):
+Next to a running rko_lio, give rko_slam rko_lio's deskewed scan:
 
 ```bash
 ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan
@@ -55,13 +54,10 @@ ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan
 
 Add `rviz:=true` to open RViz with the default view: sub-maps, keypose graph and closures.
 
-The same launch file can spawn the rko_lio front-end for you. rko_lio's `publish_deskewed_scan` is forced on and
-rko_slam consumes that topic. Give `base_frame` here, since rko_lio is not running yet when it would be detected:
+The same launch file can start rko_lio for you, see [Starting rko_lio](#starting-rko_lio):
 
 ```bash
-ros2 launch rko_slam slam.launch.py odometry:=true base_frame:=base_link \
-  rko_lio_config_file:=my_rko_lio.yaml \
-  rko_lio_lidar_topic:=/os_cloud_node/points rko_lio_imu_topic:=/os_cloud_node/imu
+ros2 launch rko_slam slam.launch.py odometry:=true
 ```
 
 ### The odometry
@@ -77,10 +73,11 @@ With another odometry the scans are usually raw, so set `deskew:=true` and rko_s
 the same TF:
 
 ```bash
-ros2 launch rko_slam slam.launch.py deskew:=true
+ros2 launch rko_slam slam.launch.py lidar_topic:=/points base_frame:=base_link deskew:=true
 ```
 
-If the odometry publishes under other names, give `lidar_topic`, `base_frame` and `odom_frame` explicitly.
+If its odometry frame is not `odom`, give `odom_frame` as well. If it publishes `odom_frame` as the TF child of
+`base_frame`, set `invert_map_tf:=true`, and rko_slam publishes `map_frame` as the child of `odom_frame`.
 
 ### Offline
 
@@ -88,20 +85,23 @@ Offline, the node self-drains a bag (every scan is processed faster than frame-r
 comes from the bag's own `/tf`:
 
 ```bash
-ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag
+ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
+  lidar_topic:=/rko_lio/deskewed_scan
 ```
 
 If the odometry you want is not in the bag, `odom_tum_path` takes it from a TUM trajectory file instead, see
 [Frames](#frames):
 
 ```bash
-ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag odom_tum_path:=/data/odometry_tum.txt
+ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
+  lidar_topic:=/points base_frame:=base_link deskew:=true odom_tum_path:=/data/odometry_tum.txt
 ```
 
 Nothing is written unless you ask for it, see [Outputs](#outputs):
 
 ```bash
 ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
+  lidar_topic:=/rko_lio/deskewed_scan \
   dump_results:=true results_dir:=results run_name:=my_run
 ```
 
@@ -115,22 +115,35 @@ dumped by default):
 ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 ```
 
-### What gets autodetected
+### Starting rko_lio
 
-`lidar_topic` is required and has no default, and `base_frame` is optional. With `autodetect:=true`, the
-default, the launch file fills in whichever of the two you left unset:
+`odometry:=true` starts an rko_lio online node next to rko_slam. With `rko_lio_config_file`, rko_lio runs on that
+file as it is; rko_slam reads rko_lio's deskewed scan, so the file has to set `publish_deskewed_scan: true` and the
+launch stops if it does not. Without the file, rko_lio configures itself with its own
+[autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection), waiting for the
+topics and TF to show up, and publishes its deskewed scan. For anything else, run rko_lio with its own launch
+file.
 
-- `lidar_topic` is the one `sensor_msgs/PointCloud2` topic there is. If several exist, the launch stops and lists
-  them so you can pick. Next to a running rko_lio there are at least two, the raw scan and the deskewed one, so
-  give `lidar_topic` in that case.
-- `base_frame` is the first of `base_link`, `base_footprint`, `base` found in the TF tree, otherwise the scan's
-  own `frame_id`. Either way the TF tree must connect it to the scan's frame, or the launch stops and says so.
+Whatever you leave unset on rko_slam is taken from how rko_lio is configured:
 
-Online this means waiting for the topics and TF to show up, `autodetect_timeout` (10 s) long. Offline it is read
-from the bag. Anything you did give is used as is, and with both given nothing is detected at all;
-`autodetect:=false` turns it off. With `odometry:=true`, `lidar_topic` is set to rko_lio's deskewed scan topic
-and not searched for, but the base frame detection needs a message on that topic and rko_lio only starts
-afterwards, so give `base_frame` too.
+| rko_slam | rko_lio |
+|---|---|
+| `lidar_topic`, the scans rko_slam subscribes to | `deskewed_scan_topic`, the scans rko_lio publishes |
+| `base_frame` | `base_frame` |
+| `odom_frame` | `odom_frame` |
+| `invert_map_tf` | `invert_odom_tf` |
+
+rko_lio's own `lidar_topic`, the raw scans it subscribes to, is not in that table and rko_slam never sets it:
+rko_lio takes it from `rko_lio_config_file` or finds it itself, as it does its IMU topic.
+
+`lidar_topic` always resolves: from `rko_lio_config_file` if it defines `deskewed_scan_topic`, otherwise from
+rko_lio's default `rko_lio/deskewed_scan`. The rest are taken only if rko_lio has a value for them, which means
+what `rko_lio_config_file` defines, or what rko_lio's autodetection found when there is no config file. A parameter
+that neither you nor rko_lio defines keeps rko_slam's own default: `odom_frame` is `odom`, `invert_map_tf` is
+`false`, and `base_frame` unset means the scan's frame.
+
+`base_frame` also goes the other way: set it on rko_slam and rko_lio estimates in that frame instead of looking
+for one.
 
 ## Frames
 
@@ -152,7 +165,7 @@ Subscribed:
 
 | Topic / transform | What |
 |---|---|
-| `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, deskewed unless `deskew:=true` |
+| `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, taken as already deskewed unless you set `deskew:=true` |
 | `odom_frame <- base_frame` on TF | the odometry, looked up at each scan's timestamp |
 | `base_frame <- the scan's frame` on TF | static, read once on the first scan to bring every scan into `base_frame` |
 
@@ -160,7 +173,7 @@ Published:
 
 | Topic / transform | What |
 |---|---|
-| `map_frame <- odom_frame` on TF | the correction; `map_frame <- base_frame` is then the SLAM estimate |
+| `map_frame <- odom_frame` on TF | the correction, flipped by `invert_map_tf`; `map_frame <- base_frame` is then the SLAM estimate |
 | `rko_slam/sub_maps` (`PointCloud2`) | each closed sub-map, with a `sub_map_<i>` TF chain (`publish_sub_maps:=true`) |
 | `rko_slam/keypose_graph` (`MarkerArray`) | the keyposes with their odometry and closure edges (`publish_keypose_graph:=true`) |
 | `rko_slam/closure_maps` (`PointCloud2`) | each accepted closure pair as a two-tone cloud (`publish_closure_maps:=true`) |
@@ -177,7 +190,7 @@ Nothing is published for display unless you ask for it. Three publishers, each o
 - `publish_closure_maps:=true`, each accepted closure as the two sub-maps it matched, one colour each, on
   `rko_slam/closure_maps`, so you can see what got matched to what.
 
-`rviz:=true` turns all three on and opens RViz with the default view, `config/default.rviz`, patched with your
+`rviz:=true` turns all three on and opens RViz with the default view, `config/default.rviz`, customised with your
 frames. With `odometry:=true` it also shows rko_lio's local map and deskewed scan. Pass your own config with
 `rviz_config_file:=` and it is used unchanged, with nothing forced on.
 

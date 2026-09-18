@@ -133,6 +133,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
   base_frame = node->declare_parameter<std::string>("base_frame", base_frame);
   odom_frame = node->declare_parameter<std::string>("odom_frame", odom_frame);
   map_frame = node->declare_parameter<std::string>("map_frame", map_frame);
+  invert_map_tf = node->declare_parameter<bool>("invert_map_tf", invert_map_tf);
 
   deskew = node->declare_parameter<bool>("deskew", deskew);
   timestamps_config.multiplier_to_seconds = node->declare_parameter<double>("lidar_timestamps.multiplier_to_seconds",
@@ -292,7 +293,7 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
   }
 
   latest_scan_time.store(scan.end_time, std::memory_order_relaxed);
-  broadcast_map_T_odom(rko_lio::ros::utils::to_ros_time(scan.end_time));
+  broadcast_map_tf(rko_lio::ros::utils::to_ros_time(scan.end_time));
   auto finished = sub_map_builder->add_to_live_map(scan.points, scan.end_time, scan.odom_T_base);
   ++scans_processed;
   if (finished) {
@@ -352,7 +353,7 @@ void BaseNode::write_sub_map(const core::KeyposeId keypose_id,
        points = std::move(points)] { return core::write_ply_xyz(path, points); }));
 }
 
-void BaseNode::broadcast_map_T_odom(const builtin_interfaces::msg::Time& stamp) const {
+void BaseNode::broadcast_map_tf(const builtin_interfaces::msg::Time& stamp) const {
   const auto keyposes = slam->latest_keyposes();
   Sophus::SE3f map_T_odom;
   if (keyposes && !keyposes->map_T_keypose.empty()) {
@@ -360,9 +361,15 @@ void BaseNode::broadcast_map_T_odom(const builtin_interfaces::msg::Time& stamp) 
   }
   geometry_msgs::msg::TransformStamped out;
   out.header.stamp = stamp;
-  out.header.frame_id = map_frame;
-  out.child_frame_id = odom_frame;
-  out.transform = rko_lio::ros::utils::sophus_to_transform(map_T_odom);
+  if (invert_map_tf) {
+    out.header.frame_id = odom_frame;
+    out.child_frame_id = map_frame;
+    out.transform = rko_lio::ros::utils::sophus_to_transform(map_T_odom.inverse());
+  } else {
+    out.header.frame_id = map_frame;
+    out.child_frame_id = odom_frame;
+    out.transform = rko_lio::ros::utils::sophus_to_transform(map_T_odom);
+  }
   tf_broadcaster->sendTransform(out);
 }
 
@@ -401,6 +408,7 @@ void BaseNode::write_run_config(const std::string_view extra) const {
       << "# resolved base_frame <- scan extrinsic: " << resolved_extrinsic << '\n'
       << "odom_frame: " << odom_frame << '\n'
       << "map_frame: " << map_frame << '\n'
+      << "invert_map_tf: " << invert_map_tf << '\n'
       << "dump_results: " << true << '\n'
       << "dump_sub_maps: " << run_output->dump_sub_maps << '\n'
       << "deskew: " << deskew << '\n'

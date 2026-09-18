@@ -1,8 +1,8 @@
 # Configuration
 
-Every parameter is a launch argument and a node parameter by the same name. Set it on the command line as
-`name:=value`, or put any number of them in a YAML file and pass that with `config_file:=`. Command line values
-override the file, and anything you leave unset keeps the default listed here.
+Every parameter is a launch argument. Set it on the command line as `name:=value`, or put any number of them in
+a YAML file and pass that with `config_file:=`. Command line values override the file, and anything you leave
+unset keeps the default listed here.
 
 ```bash
 ros2 launch rko_slam slam.launch.py -s   # the same list, with defaults, from the launch file itself
@@ -11,10 +11,9 @@ ros2 launch rko_slam slam.launch.py -s   # the same list, with defaults, from th
 [`config/ros_default.yaml`](https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml) has every
 parameter with its default, commented out, as a file to start from.
 
-One of them is required and has no default, `lidar_topic`. It is
-[autodetected](build_and_run.md#what-gets-autodetected) when you leave it unset, and so is `base_frame`.
-Everything else has a default that works as is, and the ones worth changing first are `splitting_distance` and
-`overlap_threshold`.
+One of them is required and has no default, `lidar_topic`; with `odometry:=true` it and `base_frame` default
+to rko_lio's, see [Starting rko_lio](build_and_run.md#starting-rko_lio). Everything else has a default that
+works as is, and the ones worth changing first are `splitting_distance` and `overlap_threshold`.
 
 ## Mode
 
@@ -37,24 +36,28 @@ Everything else has a default that works as is, and the ones worth changing firs
 
 ## Input
 
-- **lidar_topic** (required, autodetected)
+- **lidar_topic** (required)
 
-  The `PointCloud2` topic with the scans. Deskewed scans unless you set `deskew`. With `odometry:=true` the launch
-  file fills in `/rko_lio/deskewed_scan`.
+  The `PointCloud2` topic with the scans, taken as already deskewed unless you set `deskew`. With
+  `odometry:=true` it defaults to rko_lio's deskewed scan.
 
-- **base_frame** (autodetected)
+- **base_frame** (optional)
 
-  The frame rko_slam works in, usually `base_link`, see [Frames](build_and_run.md#frames).
+  The frame rko_slam works in, usually `base_link`, see [Frames](build_and_run.md#frames). With
+  `odometry:=true` it defaults to rko_lio's `base_frame`; left unset with no rko_lio to take it from, it is the
+  scan's own frame.
 
 - **odom_frame** (default `odom`), **map_frame** (default `map`)
 
-  The odometry's frame and the frame rko_slam publishes, see [Frames](build_and_run.md#frames).
+  The odometry's frame and the frame rko_slam publishes, see [Frames](build_and_run.md#frames):
+  rko_slam broadcasts `map_frame <- odom_frame`, inverted with `invert_map_tf`. With `odometry:=true`,
+  `odom_frame` defaults to rko_lio's.
 
-- **autodetect** (`bool`, default `true`), **autodetect_timeout** (`float`, default `10.0`)
+- **invert_map_tf** (`bool`, default `false`)
 
-  Fill in `lidar_topic` and `base_frame` when you did not give them, from the running graph or from the bag. The
-  rules are under [What gets autodetected](build_and_run.md#what-gets-autodetected). The timeout is how long to
-  wait for the topics and TF tree this needs, online only.
+  Publish `map_frame` as the TF child of `odom_frame`, with the inverted transform. Set it when the odometry
+  publishes `odom_frame` as the child of `base_frame`, as rko_lio does with `invert_odom_tf`. With `odometry:=true`
+  it defaults to rko_lio's `invert_odom_tf`.
 
 - **deskew** (`bool`, default `false`)
 
@@ -63,7 +66,8 @@ Everything else has a default that works as is, and the ones worth changing firs
 
 - **tf_lookup_timeout_ms** (`int`, online only, default `80`)
 
-  How long an `odom_frame <- base_frame` TF lookup blocks before the scan is dropped.
+  How long a TF lookup blocks before the scan is dropped, both the odometry and the static
+  `base_frame <- the scan's frame`.
 
 - **lidar_timestamps.multiplier_to_seconds** (`float`, default `0.0`), **lidar_timestamps.force_absolute**
   (`bool`, default `false`), **lidar_timestamps.force_relative** (`bool`, default `false`)
@@ -175,24 +179,24 @@ These can be left at their defaults.
 
 - **rviz** (`bool`, default `false`), **rviz_config_file** (default `config/default.rviz`)
 
-  Launch RViz alongside. With the default config, the launch file patches in your frames, adds the odometry
-  layers when `odometry:=true`, and turns the three publishers above on. Any other config is passed to RViz
-  unchanged and you can configure the behaviour as desired.
+  Launch RViz alongside. With the default config, the launch file customises it for this run: your frames, plus
+  rko_lio's deskewed scan when `odometry:=true` and its local map when rko_lio publishes one, and it turns the
+  three publishers above on. Any other config is passed to RViz unchanged and you can configure the behaviour as
+  desired.
 
 ## Spawning rko_lio
 
 - **odometry** (`bool`, default `false`)
 
-  Also start an rko_lio online node as the odometry. Its `publish_deskewed_scan` and `publish_local_map` are
-  forced on and `lidar_topic` is pinned to its deskewed scan topic. Give `base_frame` as well, see
-  [What gets autodetected](build_and_run.md#what-gets-autodetected).
+  Also start an rko_lio online node as the odometry, see [Starting rko_lio](build_and_run.md#starting-rko_lio).
 
-- **rko_lio_config_file**, **rko_lio_lidar_topic**, **rko_lio_imu_topic**
+- **rko_lio_config_file**
 
-  The YAML config, the raw LiDAR topic and the IMU topic for that rko_lio node. rko_lio autodetects its topics and
-  frames as well when you leave them unset, see its
-  [ROS docs](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection); what goes in the
-  file is in its [configuration](https://prbonn.github.io/rko_lio/pages/config.html).
+  The YAML config the rko_lio node runs on, as it is; what goes in it is in rko_lio's
+  [configuration](https://prbonn.github.io/rko_lio/pages/config.html). It has to define
+  `publish_deskewed_scan: true`, since that is the topic rko_slam subscribes to, and the launch stops if it does
+  not. Without the file, rko_lio configures itself with its
+  [autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection).
 
 ## Other
 
@@ -207,7 +211,7 @@ These can be left at their defaults.
 ## Multi-session alignment
 
 `align.launch.py` reads the run directories and nothing live, so none of the input, mode, output or
-visualization parameters above apply and there is nothing to autodetect. The sub-map parameters come from each
+visualization parameters above apply. The sub-map parameters come from each
 run's dumped config, and all runs must agree on `voxel_size` and `max_points_per_voxel`. What it takes is the
 [Finding a revisit](#finding-a-revisit), [Accepting a closure](#accepting-a-closure) and
 [Pose graph](#pose-graph) parameters with the same defaults, `config_file` and
