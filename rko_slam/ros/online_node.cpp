@@ -30,8 +30,7 @@ public:
 
   explicit OnlineNode(const rclcpp::NodeOptions& options) : BaseNode("rko_slam_online", options) {
     run_output = declare_run_output("rko_slam");
-    tf_lookup_timeout = std::chrono::milliseconds(
-        node->declare_parameter<std::int64_t>("tf_lookup_timeout_ms", tf_lookup_timeout.count()));
+    tf_lookup_timeout = std::chrono::milliseconds(node->declare_parameter<std::int64_t>("tf_lookup_timeout_ms", 80));
 
 #if RCLCPP_VERSION_MAJOR >= 30
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer, *node);

@@ -202,9 +202,6 @@ OptionalPose BaseNode::resolve_base_T_lidar(const std_msgs::msg::Header& scan_he
   if (base_T_lidar) {
     return base_T_lidar;
   }
-  if (base_frame.empty()) {
-    base_frame = scan_header.frame_id;
-  }
   if (base_frame == scan_header.frame_id) {
     base_T_lidar = Sophus::SE3f{};
     return base_T_lidar;
@@ -228,7 +225,11 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
     ++scans_dropped;
     return;
   }
-  if (!resolve_base_T_lidar(msg->header)) {
+  if (base_frame.empty()) {
+    base_frame = msg->header.frame_id;
+  }
+  const OptionalPose extrinsic = resolve_base_T_lidar(msg->header);
+  if (!extrinsic) {
     ++scans_dropped;
     return;
   }
@@ -244,7 +245,7 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
       return;
     }
     scan.points = rko_lio::ros::utils::point_cloud2_to_eigen(msg);
-    transform_points(*base_T_lidar, scan.points);
+    transform_points(*extrinsic, scan.points);
     scan.odom_T_base = *odom_T_base;
     scan.end_time = to_ns(msg->header.stamp);
   } else {
@@ -271,7 +272,7 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
       return;
     }
 
-    transform_points(*base_T_lidar, points_lidar);
+    transform_points(*extrinsic, points_lidar);
 
     if (timestamps.max > timestamps.min) {
       // Constant-velocity deskewing to scan-end.

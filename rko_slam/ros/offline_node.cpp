@@ -66,8 +66,6 @@ public:
     run_output = declare_run_output(
         std::filesystem::path(bag_path.substr(0, bag_path.find_last_not_of('/') + 1)).filename().string());
 
-    tf_lookup_timeout = std::chrono::milliseconds{0};
-
     if (odom_tum_path) {
       RCLCPP_INFO_STREAM(node->get_logger(), "odometry from " << *odom_tum_path << "; the bag's /tf is ignored");
       odom_trajectory = core::read_tum(*odom_tum_path);
@@ -117,16 +115,12 @@ public:
         ++scans_skipped_out_of_trajectory;
         return;
       }
-      if (cloud_msg->header.frame_id.empty()) {
-        RCLCPP_WARN_STREAM(node->get_logger(), "dropping scan: header.frame_id is empty, cannot look up its odometry");
-        ++scans_dropped;
-        return;
+      if (base_frame.empty()) {
+        base_frame = cloud_msg->header.frame_id;
       }
-      if (!resolve_base_T_lidar(cloud_msg->header)) {
-        ++scans_dropped;
-        return;
+      if (!base_frame.empty()) {
+        inject_trajectory_up_to(scan_stamp + trajectory_inject_lookahead);
       }
-      inject_trajectory_up_to(scan_stamp + trajectory_inject_lookahead);
     }
 
     lidar_callback(cloud_msg);

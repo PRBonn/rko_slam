@@ -40,7 +40,7 @@ public:
   std::string odom_frame{"odom"};
   std::string map_frame{"map"};
 
-  std::chrono::milliseconds tf_lookup_timeout{80};
+  std::chrono::milliseconds tf_lookup_timeout{0};
 
   rko_lio::core::TimestampProcessingConfig timestamps_config;
 

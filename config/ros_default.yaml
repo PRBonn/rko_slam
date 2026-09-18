@@ -9,7 +9,6 @@
 # odom_frame: odom
 # map_frame: map
 # deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
-# tf_lookup_timeout_ms: 80
 # lidar_timestamps.multiplier_to_seconds: 0.0
 # lidar_timestamps.force_absolute: false
 # lidar_timestamps.force_relative: false
@@ -46,6 +45,9 @@
 # publish_sub_maps: false
 # publish_closure_maps: false
 # publish_keypose_graph: false
+#
+# --- online only ---
+# tf_lookup_timeout_ms: 80
 #
 # --- offline only ---
 # bag_path: <rosbag2 directory to process>
