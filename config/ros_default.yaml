@@ -4,12 +4,13 @@
 #   ros2 launch rko_slam slam.launch.py config_file:=<path_to>/ros_default.yaml
 # #############################################################################
 # --- input ---
-# lidar_topic: <required; with odometry:=true, rko_lio's deskewed scan>
-# base_frame: <the scan's frame; with odometry:=true, rko_lio's base_frame>
-# odom_frame: odom  # with odometry:=true, rko_lio's odom_frame
+# lidar_topic: <required>  # odometry_and_slam.launch.py sets it to rko_lio's deskewed scan and refuses it
+# base_frame: <the scan's frame>  # shared with rko_lio under odometry_and_slam.launch.py
+# odom_frame: odom  # shared with rko_lio under odometry_and_slam.launch.py
 # map_frame: map
-# invert_map_tf: false  # with odometry:=true, rko_lio's invert_odom_tf
-# deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
+# invert_map_tf: false  # odometry_and_slam.launch.py sets it to rko_lio's invert_odom_tf and refuses it
+# deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that.
+#                 odometry_and_slam.launch.py sets it false and refuses it as an argument
 # lidar_timestamps.multiplier_to_seconds: 0.0
 # lidar_timestamps.force_absolute: false
 # lidar_timestamps.force_relative: false

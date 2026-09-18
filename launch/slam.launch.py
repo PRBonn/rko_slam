@@ -18,7 +18,7 @@ def load_module(path: Path):
     return module
 
 
-common = load_module(Path(__file__).parent / "rko_slam_launch_common.py")
+common = load_module(Path(__file__).parent / "common.py")
 
 MODES = ("online", "offline")
 
@@ -43,18 +43,18 @@ configurable_parameters = [
     {
         "name": "lidar_topic",
         "default": "",
-        "description": "PointCloud2 input topic (required), taken as already deskewed unless you set deskew. With odometry:=true, defaults to rko_lio's deskewed scan",
+        "description": "PointCloud2 input topic (required), taken as already deskewed unless you set deskew",
         "required": True,
     },
     {
         "name": "base_frame",
         "default": "",
-        "description": "Frame rko_slam works in, e.g. base_link; unset, the scan's frame. With odometry:=true, rko_lio's base_frame",
+        "description": "Frame rko_slam works in, e.g. base_link; unset, the scan's frame",
     },
     {
         "name": "odom_frame",
         "default": "odom",
-        "description": "Odometry frame published by the upstream odometry. With odometry:=true, defaults to rko_lio's odom_frame",
+        "description": "Odometry frame published by the upstream odometry",
     },
     {
         "name": "map_frame",
@@ -65,7 +65,7 @@ configurable_parameters = [
         "name": "invert_map_tf",
         "default": "false",
         "type": "bool",
-        "description": "Invert the map transform so that the odom frame is the parent and the map frame is the child in the TF tree, for an odometry that publishes the odom frame as the child of the base frame. With odometry:=true, defaults to rko_lio's invert_odom_tf",
+        "description": "Invert the map transform so that the odom frame is the parent and the map frame is the child in the TF tree, for an odometry that publishes the odom frame as the child of the base frame",
     },
     {
         "name": "results_dir",
@@ -206,20 +206,7 @@ configurable_parameters = [
         "launch_only": True,
         "name": "rviz_config_file",
         "default": "config/default.rviz",
-        "description": "Path to the RViz config. The default one is customised for this run - frames, plus the odometry layers with odometry:=true - and forces the SLAM publish flags on. Any other path is passed to rviz unchanged",
-    },
-    {
-        "launch_only": True,
-        "name": "odometry",
-        "default": "false",
-        "type": "bool",
-        "description": "Also spawn an rko_lio online node as the odometry front-end, configured by rko_lio_config_file, or else by rko_lio's autodetection",
-    },
-    {
-        "launch_only": True,
-        "name": "rko_lio_config_file",
-        "default": "",
-        "description": "[odometry] YAML config the rko_lio node runs on, as it is",
+        "description": "Path to the RViz config. The default one is customised with this run's frames and forces the SLAM publish flags on. Any other path is passed to rviz unchanged",
     },
     *offline_only_parameters,
 ]
@@ -227,45 +214,29 @@ configurable_parameters = [
 executable_for_mode = {"online": "online_node", "offline": "offline_node"}
 
 
-def validate_mode(mode: str, odometry: bool) -> None:
+def validate_mode(mode: str) -> None:
     if mode not in MODES:
         common.fail(f"[ERROR] unknown mode '{mode}'. Valid: {' | '.join(MODES)}.")
-    if odometry and mode != "online":
-        common.fail("[ERROR] odometry:=true only makes sense with mode:=online")
 
 
-def applicable_parameters(mode: str) -> list:
-    return [param for param in configurable_parameters if mode in param.get("modes", MODES) or param.get("launch_only")]
+def applicable_parameters(table: list, mode: str) -> list:
+    return [param for param in table if mode in param.get("modes", MODES) or param.get("launch_only")]
 
 
-rko_lio_launch = Path(get_package_share_directory("rko_lio")) / "launch"
-rko_lio_odometry = load_module(rko_lio_launch / "odometry.launch.py")
+def using_default_rviz(context, table) -> bool:
+    return common.flag(context, "rviz") and LaunchConfiguration("rviz_config_file").perform(
+        context
+    ) == common.default_for(table, "rviz_config_file")
 
 
-def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str | None, odometry_layers: list) -> Path:
+def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str | None, extra_displays: list) -> Path:
     """The shipped view is generic; whatever depends on this run's frames or options is set here."""
     with open(Path(get_package_share_directory("rko_slam")) / rviz_config_file) as f:
         rviz_cfg = yaml.safe_load(f)
     rviz_cfg["Visualization Manager"]["Global Options"]["Fixed Frame"] = map_frame
     if base_frame:
         rviz_cfg["Visualization Manager"]["Views"]["Current"]["Target Frame"] = base_frame
-    if odometry_layers:
-        # Achromatic on purpose
-        rviz_cfg["Visualization Manager"]["Displays"].extend(
-            {
-                "Class": "rviz_default_plugins/PointCloud2",
-                "Enabled": True,
-                "Name": name,
-                # rko_lio publishes both at SystemDefaults/keep_last(1)/volatile.
-                "Topic": {"Value": topic, "Durability Policy": "Volatile", "Reliability Policy": "Reliable"},
-                "Color Transformer": "FlatColor",
-                "Color": color,
-                # Flat Squares as the shipped displays use: the Points style sizes in pixels.
-                "Size (m)": size_m,
-                "Style": "Flat Squares",
-            }
-            for name, topic, color, size_m in odometry_layers
-        )
+    rviz_cfg["Visualization Manager"]["Displays"].extend(extra_displays)
 
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".rviz", delete=False)  # noqa: SIM115
     yaml.safe_dump(rviz_cfg, tmp)
@@ -273,98 +244,24 @@ def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str 
     return Path(tmp.name)
 
 
-def rko_lio_value(odom_params: dict, name: str):
-    table = rko_lio_odometry.configurable_parameters
-    if name in odom_params:
-        return odom_params[name]
-    # rko_lio declares its defaults as launch argument strings, so "false" needs casting before it is read
-    return common.cast(next(param for param in table if param["name"] == name), common.default_for(table, name))
-
-
-def autodetected_odometry_parameters(given: dict) -> dict:
-    """rko_lio's own launch file resolves its arguments from argv, which would take this launch file's values for the
-    dozen names the two packages share.
-    """
-    autodetect = load_module(rko_lio_launch / "autodetect.py")
-    timeout = common.default_for(rko_lio_odometry.configurable_parameters, "autodetect_timeout")
-    try:
-        return autodetect.autodetect(given, mode="online", bag_path=None, timeout=float(timeout))
-    except autodetect.AutodetectError as error:
-        common.fail(
-            "[ERROR] rko_lio autodetect failed:",
-            str(error),
-            "Pass rko_lio_config_file, or run rko_lio with its own launch file.",
-        )
-
-
-def launch_setup(context, *args, **kwargs):
-    mode = LaunchConfiguration("mode").perform(context).lower()
-    odometry = common.flag(context, "odometry")
-    validate_mode(mode, odometry)
-
-    merged = common.merge(
-        common.config_file_parameters(context), common.cli_parameters(context, configurable_parameters)
-    )
-
+def slam_nodes(context, table: list, mode: str, slam_params: dict, extra_displays: list) -> list:
     rviz_enabled = common.flag(context, "rviz")
     rviz_config_file = Path(LaunchConfiguration("rviz_config_file").perform(context))
-    using_default_rviz = rviz_enabled and str(rviz_config_file) == common.default_for(
-        configurable_parameters, "rviz_config_file"
-    )
+    default_rviz = using_default_rviz(context, table)
 
-    odom_params = {}
-    if odometry:
-        if config_file := LaunchConfiguration("rko_lio_config_file").perform(context):
-            # rko_lio configs use the flat launch-file format, not the ros__parameters wrapper.
-            with open(config_file) as f:
-                odom_params = yaml.safe_load(f) or {}
-        else:
-            odom_params = {
-                "publish_deskewed_scan": True,
-                "publish_local_map": using_default_rviz,
-                **autodetected_odometry_parameters(
-                    {name: merged[name] for name in ("base_frame", "odom_frame") if merged.get(name)}
-                ),
-            }
-        if "use_sim_time" in merged:
-            odom_params["use_sim_time"] = merged["use_sim_time"]
-        for name in ("base_frame", "odom_frame"):
-            if merged.get(name):
-                odom_params[name] = merged[name]
-        if not merged.get("lidar_topic"):
-            if not rko_lio_value(odom_params, "publish_deskewed_scan"):
-                common.fail(
-                    "[ERROR] rko_lio is not configured to publish a deskewed scan, so there is nothing for",
-                    "rko_slam to subscribe to. Set publish_deskewed_scan: true in rko_lio_config_file, or give",
-                    "rko_slam a lidar_topic of your own.",
-                )
-            merged["lidar_topic"] = rko_lio_value(odom_params, "deskewed_scan_topic")
-            merged["deskew"] = False
-        for name in ("base_frame", "odom_frame"):
-            if not merged.get(name) and name in odom_params:
-                merged[name] = odom_params[name]
-        if "invert_map_tf" not in merged and "invert_odom_tf" in odom_params:
-            merged["invert_map_tf"] = odom_params["invert_odom_tf"]
+    applicable = applicable_parameters(table, mode)
+    common.check_required(applicable, slam_params)
+    final_params = common.node_parameters(applicable, slam_params)
 
-    applicable = applicable_parameters(mode)
-    common.check_required(applicable, merged)
-    final_params = common.node_parameters(applicable, merged)
-
-    if using_default_rviz:
+    if default_rviz:
         final_params["publish_sub_maps"] = True
         final_params["publish_keypose_graph"] = True
         final_params["publish_closure_maps"] = True
-        odometry_layers = []
-        if odometry:
-            odometry_layers = [("DeskewedScan", final_params["lidar_topic"], "255; 255; 255", 0.05)]
-            if rko_lio_value(odom_params, "publish_local_map"):
-                map_topic = rko_lio_value(odom_params, "map_topic")
-                odometry_layers.insert(0, ("OdomLocalMap", map_topic, "142; 149; 163", 0.07))
         rviz_config_file = prepare_rviz_config(
             rviz_config_file,
-            final_params.get("map_frame", common.default_for(configurable_parameters, "map_frame")),
+            final_params.get("map_frame", common.default_for(table, "map_frame")),
             final_params.get("base_frame"),
-            odometry_layers,
+            extra_displays,
         )
 
     print("\n" + "=" * 40 + "\n")
@@ -387,11 +284,6 @@ def launch_setup(context, *args, **kwargs):
         )
     ]
 
-    if odometry:
-        print("rko_lio launch configuration:\n")
-        print(yaml.dump(odom_params, sort_keys=False, default_flow_style=False, indent=4))
-        nodes.append(rko_lio_odometry.rko_lio_node(odom_params, "online_node", log_level))
-
     print("=" * 40 + "\n")
 
     if rviz_enabled:
@@ -406,6 +298,15 @@ def launch_setup(context, *args, **kwargs):
         )
 
     return nodes
+
+
+def launch_setup(context, *args, **kwargs):
+    mode = LaunchConfiguration("mode").perform(context).lower()
+    validate_mode(mode)
+    merged = common.merge(
+        common.config_file_parameters(context), common.cli_parameters(context, configurable_parameters)
+    )
+    return slam_nodes(context, configurable_parameters, mode, merged, extra_displays=[])
 
 
 def generate_launch_description():

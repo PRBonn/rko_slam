@@ -16,7 +16,7 @@ def load_module(path: Path):
     return module
 
 
-common = load_module(Path(__file__).parent / "rko_slam_launch_common.py")
+common = load_module(Path(__file__).parent / "common.py")
 
 # Everything align_sessions declares.
 configurable_parameters = [

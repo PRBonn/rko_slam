@@ -5,8 +5,7 @@ import yaml
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
-# A parameter whose default differs between the two entrypoints stays in their own tables.
-# The launch-level knobs both entrypoints take.
+# A parameter whose default differs between entrypoints stays in that entrypoint's own table.
 LAUNCH_PARAMETERS = [
     {
         "launch_only": True,
