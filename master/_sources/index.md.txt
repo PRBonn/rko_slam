@@ -16,14 +16,14 @@ myst:
 </div>
 <p class="pair-caption">A 3 km drive that ends where it started, with rko_lio, and with rko_slam running on top of it.</p>
 
-An odometry tells you how you moved. Over a long enough run its estimate drifts, and when you come back to a
-place you have been before, the two visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR,
+An odometry tells you how you moved. Over a long enough run its estimate drifts, and when you come back to a place you
+have been before, the two visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR,
 recognizes the revisit, and corrects the whole trajectory behind you. You keep the odometry as it is, and you
 additionally get a `map <- odom` correction on TF, a pose graph, and the sub-maps the system built along the way.
 
-The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry
-package. rko_lio is also a build dependency, rko_slam uses its voxel map and deskewing internally. At run time
-though, any odometry that publishes `odom <- base` on TF and is locally consistent will do, wheel odometry included.
+The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry package.
+rko_lio is also a build dependency, rko_slam uses its voxel map and deskewing internally. At run time though, any
+odometry that publishes `odom <- base` on TF and is locally consistent will do, wheel odometry included.
 
 ```bash
 ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=true
@@ -32,9 +32,9 @@ ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=tr
 ## Multi-session alignment
 
 The same detector works across runs, not just within one, as an offline step. Give it the run directories of several
-sessions of the same place - different days, different directions, whatever - and it finds where they overlap
-and solves all of them into one frame. No bags and no live topics, it only reads what the runs already dumped.
-Merging can also tighten each session's own trajectory, not only place them in one frame.
+sessions of the same place - different days, different directions, whatever - and it finds where they overlap and solves
+all of them into one frame. No bags and no live topics, it only reads what the runs already dumped. Merging can also
+tighten each session's own trajectory, not only place them in one frame.
 
 <div class="pair">
   <figure><figcaption>as recorded</figcaption><img class="only-dark" src="_static/img/multi_session_recorded_dark.png" alt="three sessions, each in its own frame"><img class="only-light" src="_static/img/multi_session_recorded_light.png" alt="three sessions, each in its own frame"></figure>
@@ -48,15 +48,16 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 
 ## Where to go
 
-- {doc}`Build and run <pages/build_and_run>`: build it, run it online or on a bag, read what it publishes, use what it writes.
+- {doc}`Build and run <pages/build_and_run>`: build it, run it online or on a bag, read what it publishes, use what it
+  writes.
 - {doc}`Configuration <pages/configuration>`: every parameter and what it does.
 - {doc}`How it works <pages/how_it_works>`: sub-maps, closure detection, the pose graph, and how sessions are aligned.
 
 ## Citation
 
-rko_slam is essentially a reimplementation of [KISS-SLAM](https://github.com/PRBonn/kiss-slam) for ROS2. If you
-find it useful, consider leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and citing
-the original publication:
+rko_slam is essentially a reimplementation of [KISS-SLAM](https://github.com/PRBonn/kiss-slam) for ROS2. If you find it
+useful, consider leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and citing the
+original publication:
 
 ```bibtex
 @INPROCEEDINGS{kiss2025iros,
@@ -69,7 +70,8 @@ the original publication:
 }
 ```
 
-If the default odometry, [rko_lio](https://github.com/PRBonn/rko_lio), was useful to you, consider a star there and citing its paper:
+If the default odometry, [rko_lio](https://github.com/PRBonn/rko_lio), was useful to you, consider a star there and
+citing its paper:
 
 ```bibtex
 @article{malladi2026ral,
@@ -85,8 +87,9 @@ If the default odometry, [rko_lio](https://github.com/PRBonn/rko_lio), was usefu
 ```
 
 ```{toctree}
-:hidden:
-
+---
+hidden:
+---
 Build and run <pages/build_and_run>
 Configuration <pages/configuration>
 How it works <pages/how_it_works>

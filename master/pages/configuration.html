@@ -416,17 +416,17 @@
                   
   <section id="configuration">
 <h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h1>
-<p>Every parameter is a launch argument. Set it on the command line as <code class="docutils literal notranslate"><span class="pre">name:=value</span></code>, or put any number of them in
-a YAML file and pass that with <code class="docutils literal notranslate"><span class="pre">config_file:=</span></code>. Command line values override the file, and anything you leave
-unset keeps the default listed here.</p>
+<p>Every parameter is a launch argument. Set it on the command line as <code class="docutils literal notranslate"><span class="pre">name:=value</span></code>, or put any number of them in a YAML
+file and pass that with <code class="docutils literal notranslate"><span class="pre">config_file:=</span></code>. Command line values override the file, and anything you leave unset keeps the
+default listed here.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>-s<span class="w">   </span><span class="c1"># the same list, with defaults, from the launch file itself</span>
 </pre></div>
 </div>
-<p><a class="reference external" href="https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml"><code class="docutils literal notranslate"><span class="pre">config/ros_default.yaml</span></code></a> has every
-parameter with its default, commented out, as a file to start from.</p>
-<p>One of them is required and has no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>; with <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> it and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> default
-to rko_lio’s, see <a class="reference internal" href="build_and_run.html#starting-rko-lio"><span class="std std-ref">Starting rko_lio</span></a>. Everything else has a default that
-works as is, and the ones worth changing first are <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code> and <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code>.</p>
+<p><a class="reference external" href="https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml"><code class="docutils literal notranslate"><span class="pre">config/ros_default.yaml</span></code></a> has every parameter
+with its default, commented out, as a file to start from.</p>
+<p>One of them is required and has no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>; <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it itself, see
+<a class="reference internal" href="build_and_run.html#running-rko-lio-with-it"><span class="std std-ref">Running rko_lio with it</span></a>. Everything else has a default that works as is, and
+the ones worth changing first are <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code> and <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code>.</p>
 <section id="mode">
 <h2>Mode<a class="headerlink" href="#mode" title="Link to this heading">#</a></h2>
 <ul>
@@ -437,8 +437,7 @@ works as is, and the ones worth changing first are <code class="docutils literal
 <p>The rosbag2 directory to process.</p>
 </li>
 <li><p><strong>odom_tum_path</strong> (offline only)</p>
-<p>A TUM trajectory file to take the odometry from instead of the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code>, see
-<a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>.</p>
+<p>A TUM trajectory file to take the odometry from instead of the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code>, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>.</p>
 </li>
 <li><p><strong>use_sim_time</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
 <p>Use the <code class="docutils literal notranslate"><span class="pre">/clock</span></code> topic, for bag replay with <code class="docutils literal notranslate"><span class="pre">--clock</span></code>.</p>
@@ -449,39 +448,38 @@ works as is, and the ones worth changing first are <code class="docutils literal
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><strong>lidar_topic</strong> (required)</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>. With
-<code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> it defaults to rko_lio’s deskewed scan.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>.
+<code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it to rko_lio’s deskewed scan and refuses it as an argument.</p>
 </li>
 <li><p><strong>base_frame</strong> (optional)</p>
-<p>The frame rko_slam works in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>. With
-<code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> it is shared with rko_lio: set it and rko_lio is started with it, leave it and rko_lio’s is
-used. Unset with no rko_lio to take it from, it is the scan’s own frame.</p>
+<p>The frame rko_slam works in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>. Under
+<code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> it is shared with rko_lio: set it and rko_lio is started with it, leave it and rko_lio’s
+is used. Unset with no rko_lio to take it from, it is the scan’s own frame.</p>
 </li>
 <li><p><strong>odom_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">odom</span></code>), <strong>map_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">map</span></code>)</p>
-<p>The odometry’s frame and the frame rko_slam publishes, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>:
-rko_slam broadcasts <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">odom_frame</span></code>, inverted with <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code>. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code>,
-<code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> is shared with rko_lio the same way <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is.</p>
+<p>The odometry’s frame and the frame rko_slam publishes, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>: rko_slam broadcasts
+<code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">odom_frame</span></code>, inverted with <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code>. Under <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code>, <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> is shared
+with rko_lio the same way <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is.</p>
 </li>
 <li><p><strong>invert_map_tf</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
-<p>Publish <code class="docutils literal notranslate"><span class="pre">map_frame</span></code> as the TF child of <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>, with the inverted transform. Set it when the odometry
-publishes <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> as the child of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, as rko_lio does with <code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code>. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code>
-it defaults to rko_lio’s <code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code>.</p>
+<p>Publish <code class="docutils literal notranslate"><span class="pre">map_frame</span></code> as the TF child of <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>, with the inverted transform. Set it when the odometry publishes
+<code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> as the child of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, as rko_lio does with <code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code>. <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets
+it to rko_lio’s <code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code> and refuses it as an argument.</p>
 </li>
 <li><p><strong>deskew</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
-<p>Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry
-already publishes a deskewed cloud and you consume that, which is the case with <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>. When
-the launch file picks that topic for you, under <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> with no <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> of your own, it turns
-this off with it.</p>
+<p>Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry already
+publishes a deskewed cloud and you consume that, which is the case with <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.
+<code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it false and refuses it as an argument.</p>
 </li>
 <li><p><strong>tf_lookup_timeout_ms</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, online only, default <code class="docutils literal notranslate"><span class="pre">80</span></code>)</p>
 <p>How long a TF lookup blocks before the scan is dropped, both the odometry and the static
 <code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">scan's</span> <span class="pre">frame</span></code>.</p>
 </li>
-<li><p><strong>lidar_timestamps.multiplier_to_seconds</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.0</span></code>), <strong>lidar_timestamps.force_absolute</strong>
-(<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>lidar_timestamps.force_relative</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
-<p>Only relevant with <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code>. The multiplier scales per-point timestamps to seconds, <code class="docutils literal notranslate"><span class="pre">0.0</span></code> auto-detects
-seconds versus nanoseconds. The two flags force the timestamps to be read as absolute times, or as relative
-to the message stamp, when the auto-detection gets it wrong.</p>
+<li><p><strong>lidar_timestamps.multiplier_to_seconds</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.0</span></code>), <strong>lidar_timestamps.force_absolute</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>,
+default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>lidar_timestamps.force_relative</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<p>Only relevant with <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code>. The multiplier scales per-point timestamps to seconds, <code class="docutils literal notranslate"><span class="pre">0.0</span></code> auto-detects seconds
+versus nanoseconds. The two flags force the timestamps to be read as absolute times, or as relative to the message
+stamp, when the auto-detection gets it wrong.</p>
 </li>
 </ul>
 </section>
@@ -489,15 +487,15 @@ to the message stamp, when the auto-detection gets it wrong.</p>
 <h2>Sub-maps<a class="headerlink" href="#sub-maps" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><strong>splitting_distance</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">50.0</span></code>)</p>
-<p>Metres from the sub-map’s keypose at which the sub-map is closed and the next one starts. Straight-line
-displacement, not distance travelled. This decides how many sub-maps, and so how many keyposes, a run has: a
-run with one sub-map can never close a loop. Smaller means more chances to catch a revisit, at the cost of a
-closure search per sub-map and a bigger graph. Across the environments I evaluated on: 100 m on long car
-sequences, 50 m on compact campus-scale ones, 30 m on short forest plots.</p>
+<p>Metres from the sub-map’s keypose at which the sub-map is closed and the next one starts. Straight-line displacement,
+not distance travelled. This decides how many sub-maps, and so how many keyposes, a run has: a run with one sub-map
+can never close a loop. Smaller means more chances to catch a revisit, at the cost of a closure search per sub-map and
+a bigger graph. Across the environments I evaluated on: 100 m on long car sequences, 50 m on compact campus-scale
+ones, 30 m on short forest plots.</p>
 </li>
 <li><p><strong>voxel_size</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>), <strong>max_points_per_voxel</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">20</span></code>)</p>
-<p>The resolution a sub-map is kept at: voxel size in metres, and how many points a voxel keeps. Closure
-refinement and the overlap check see the sub-map at this resolution.</p>
+<p>The resolution a sub-map is kept at: voxel size in metres, and how many points a voxel keeps. Closure refinement and
+the overlap check see the sub-map at this resolution.</p>
 </li>
 <li><p><strong>min_range</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>), <strong>max_range</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
 <p>Points closer or further than this many metres never enter a sub-map.</p>
@@ -506,23 +504,23 @@ refinement and the overlap check see the sub-map at this resolution.</p>
 </section>
 <section id="finding-a-revisit">
 <h2>Finding a revisit<a class="headerlink" href="#finding-a-revisit" title="Link to this heading">#</a></h2>
-<p>These shape how a candidate revisit is found. They can be left at their defaults; the knob that decides what is
-accepted is <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> below.</p>
+<p>These shape how a candidate revisit is found. They can be left at their defaults; the knob that decides what is accepted
+is <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> below.</p>
 <ul>
 <li><p><strong>density_map_resolution</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>), <strong>density_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.05</span></code>)</p>
-<p>Each sub-map is turned into a top-down density image, and places are recognized in that image. The cell size
-and how occupied a cell must be to count. Not the first knobs to reach for.</p>
+<p>Each sub-map is turned into a top-down density image, and places are recognized in that image. The cell size and how
+occupied a cell must be to count. Not the first knobs to reach for.</p>
 </li>
 <li><p><strong>hamming_distance_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">50</span></code>)</p>
-<p>How different two places may look and still be called a match. Lower is stricter. Not the first knob to reach
-for either.</p>
+<p>How different two places may look and still be called a match. Lower is stricter. Not the first knob to reach for
+either.</p>
 </li>
 <li><p><strong>inliers_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">5</span></code>)</p>
 <p>How many matched points must agree before a candidate closure is checked properly, with the refinement below.</p>
 </li>
 <li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">3</span></code>)</p>
-<p>How many of the most recent sub-maps to leave out of the search, so a sub-map does not match its own
-neighbours. Keep it at least 1 within a run. Multi-session alignment sets it to 0, see below.</p>
+<p>How many of the most recent sub-maps to leave out of the search, so a sub-map does not match its own neighbours. Keep
+it at least 1 within a run. Multi-session alignment sets it to 0, see below.</p>
 </li>
 </ul>
 </section>
@@ -530,9 +528,9 @@ neighbours. Keep it at least 1 within a run. Multi-session alignment sets it to 
 <h2>Accepting a closure<a class="headerlink" href="#accepting-a-closure" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><strong>overlap_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.4</span></code>)</p>
-<p>After refinement, how much of the two sub-maps must overlap for the closure to be accepted. The overlap
-coefficient is the voxels they share once aligned, over the voxel count of the smaller one, so 0 to 1. This is the one knob that decides what
-counts as a real closure. Raise it where many places look alike, lower it if you know revisits are being
+<p>After refinement, how much of the two sub-maps must overlap for the closure to be accepted. The overlap coefficient is
+the voxels they share once aligned, over the voxel count of the smaller one, so 0 to 1. This is the one knob that
+decides what counts as a real closure. Raise it where many places look alike, lower it if you know revisits are being
 missed. I used 0.4 on car and forest data, 0.5 on the Oxford Spires campus sequences, where the detector produced
 false closures at 0.4, and 0.3 when merging sessions that barely overlap.</p>
 </li>
@@ -543,16 +541,16 @@ false closures at 0.4, and 0.3 when merging sessions that barely overlap.</p>
 <p>These can be left at their defaults.</p>
 <ul>
 <li><p><strong>rotation_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
-<p>Each pose-graph edge is weighted by a block-diagonal information matrix with isotropic translation and
-rotation blocks. This is the fixed multiple the rotation block is set to, accounting for the scale
-difference between the metre-scale translation and radian-scale rotation residuals.</p>
+<p>Each pose-graph edge is weighted by a block-diagonal information matrix with isotropic translation and rotation
+blocks. This is the fixed multiple the rotation block is set to, accounting for the scale difference between the
+metre-scale translation and radian-scale rotation residuals.</p>
 </li>
 <li><p><strong>closure_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
 <p>How much the optimizer trusts closures against odometry. Above 1 trusts closures more.</p>
 </li>
 <li><p><strong>closure_kernel_delta</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
-<p>Closures that disagree with the rest of the graph by more than this many metres are given less weight rather
-than believed.</p>
+<p>Closures that disagree with the rest of the graph by more than this many metres are given less weight rather than
+believed.</p>
 </li>
 <li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">10</span></code>)</p>
 <p>Most optimizer iterations at each split.</p>
@@ -567,8 +565,8 @@ than believed.</p>
 <a class="reference internal" href="build_and_run.html"><span class="doc">Build and run, Outputs</span></a> for what the files are.</p>
 </li>
 <li><p><strong>dump_sub_maps</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>)</p>
-<p>Also write each sub-map under <code class="docutils literal notranslate"><span class="pre">&lt;run&gt;/sub_maps/</span></code>, which multi-session alignment needs. Ignored when
-<code class="docutils literal notranslate"><span class="pre">dump_results</span></code> is off. On a long run this adds up, at a rate the sub-map parameters set.</p>
+<p>Also write each sub-map under <code class="docutils literal notranslate"><span class="pre">&lt;run&gt;/sub_maps/</span></code>, which multi-session alignment needs. Ignored when <code class="docutils literal notranslate"><span class="pre">dump_results</span></code> is
+off. On a long run this adds up, at a rate the sub-map parameters set.</p>
 </li>
 <li><p><strong>results_dir</strong> (default <code class="docutils literal notranslate"><span class="pre">results</span></code>), <strong>run_name</strong> (default <code class="docutils literal notranslate"><span class="pre">rko_slam</span></code> online, the bag’s name offline)</p>
 <p>Where the run directory goes, and its name. A number is appended so nothing is overwritten.</p>
@@ -580,31 +578,25 @@ than believed.</p>
 <ul>
 <li><p><strong>publish_sub_maps</strong>, <strong>publish_closure_maps</strong>, <strong>publish_keypose_graph</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
 <p>Publish each closed sub-map on <code class="docutils literal notranslate"><span class="pre">rko_slam/sub_maps</span></code> with a <code class="docutils literal notranslate"><span class="pre">sub_map_&lt;i&gt;</span></code> TF chain, each accepted closure pair as a
-two-tone cloud on <code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, and the keyposes with their odometry and closure edges as markers
-on <code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code>. For what that looks like, see
-<a class="reference internal" href="build_and_run.html#visualization"><span class="std std-ref">Visualization</span></a>.</p>
+two-tone cloud on <code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, and the keyposes with their odometry and closure edges as markers on
+<code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code>. For what that looks like, see <a class="reference internal" href="build_and_run.html#visualization"><span class="std std-ref">Visualization</span></a>.</p>
 </li>
 <li><p><strong>rviz</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>rviz_config_file</strong> (default <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>)</p>
 <p>Launch RViz alongside. With the default config, the launch file customises it for this run: your frames, plus
-rko_lio’s deskewed scan when <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> and its local map when rko_lio publishes one, and it turns the
-three publishers above on. Any other config is passed to RViz unchanged and you can configure the behaviour as
+rko_lio’s deskewed scan under <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> and its local map when rko_lio publishes one, and it turns
+the three publishers above on. Any other config is passed to RViz unchanged and you can configure the behaviour as
 desired.</p>
 </li>
 </ul>
 </section>
-<section id="spawning-rko-lio">
-<h2>Spawning rko_lio<a class="headerlink" href="#spawning-rko-lio" title="Link to this heading">#</a></h2>
+<section id="odometry-and-slam-launch-py-only">
+<h2>odometry_and_slam.launch.py only<a class="headerlink" href="#odometry-and-slam-launch-py-only" title="Link to this heading">#</a></h2>
 <ul>
-<li><p><strong>odometry</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
-<p>Also start an rko_lio online node as the odometry, see <a class="reference internal" href="build_and_run.html#starting-rko-lio"><span class="std std-ref">Starting rko_lio</span></a>.</p>
-</li>
 <li><p><strong>rko_lio_config_file</strong></p>
 <p>The YAML config the rko_lio node runs on, as it is; what goes in it is in rko_lio’s
-<a class="reference external" href="https://prbonn.github.io/rko_lio/pages/config.html">configuration</a>, except that <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>
-and <code class="docutils literal notranslate"><span class="pre">use_sim_time</span></code> set on rko_slam override what it defines. If you let <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> default to
-rko_lio’s deskewed scan, the file has to define <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan:</span> <span class="pre">true</span></code> and the launch stops if it does
-not; give rko_slam a <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> of your own and it does not matter. Without the file, rko_lio configures
-itself with its
+<a class="reference external" href="https://prbonn.github.io/rko_lio/pages/config.html">configuration</a>. <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> and <code class="docutils literal notranslate"><span class="pre">use_sim_time</span></code> set
+on the launch file override what it defines, <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan:</span> <span class="pre">true</span></code> is forced, and a file setting it false is
+refused. Without the file, rko_lio configures itself with its
 <a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection">autodetection</a>.</p>
 </li>
 </ul>
@@ -622,12 +614,11 @@ itself with its
 </section>
 <section id="multi-session-alignment">
 <h2>Multi-session alignment<a class="headerlink" href="#multi-session-alignment" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> reads the run directories and nothing live, so none of the input, mode, output or
-visualization parameters above apply. The sub-map parameters come from each
-run’s dumped config, and all runs must agree on <code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code>. What it takes is the
-<a class="reference internal" href="#finding-a-revisit">Finding a revisit</a>, <a class="reference internal" href="#accepting-a-closure">Accepting a closure</a> and
-<a class="reference internal" href="#pose-graph">Pose graph</a> parameters with the same defaults, <code class="docutils literal notranslate"><span class="pre">config_file</span></code> and
-<code class="docutils literal notranslate"><span class="pre">log_level</span></code>, and:</p>
+<p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> reads the run directories and nothing live, so none of the input, mode, output or visualization
+parameters above apply. The sub-map parameters come from each run’s dumped config, and all runs must agree on
+<code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code>. What it takes is the <a class="reference internal" href="#finding-a-revisit">Finding a revisit</a>,
+<a class="reference internal" href="#accepting-a-closure">Accepting a closure</a> and <a class="reference internal" href="#pose-graph">Pose graph</a> parameters with the same defaults,
+<code class="docutils literal notranslate"><span class="pre">config_file</span></code> and <code class="docutils literal notranslate"><span class="pre">log_level</span></code>, and:</p>
 <ul>
 <li><p><strong>run_dirs</strong> (required)</p>
 <p>The run directories to merge, at least two, as a list: <code class="docutils literal notranslate"><span class="pre">run_dirs:=&quot;[results/run_1,</span> <span class="pre">results/run_2]&quot;</span></code>.</p>
@@ -636,8 +627,8 @@ run’s dumped config, and all runs must agree on <code class="docutils literal 
 <p>Where the merged run goes, and its name. A number is appended so nothing is overwritten.</p>
 </li>
 <li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">0</span></code>)</p>
-<p>Zero here, since neighbouring sub-maps from different sessions are real candidates. Settable, like every
-parameter on this page.</p>
+<p>Zero here, since neighbouring sub-maps from different sessions are real candidates. Settable, like every parameter on
+this page.</p>
 </li>
 <li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
 <p>Most optimizer iterations over the merged graph.</p>
@@ -701,7 +692,7 @@ parameter on this page.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pose-graph">Pose graph</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output">Output</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization">Visualization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spawning-rko-lio">Spawning rko_lio</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#odometry-and-slam-launch-py-only">odometry_and_slam.launch.py only</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other">Other</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-session-alignment">Multi-session alignment</a></li>
 </ul>
