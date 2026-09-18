@@ -104,9 +104,6 @@ def cast(param, value):
         return int(value)
     if kind == "float":
         return float(value)
-    if kind == "float_array":
-        # yaml gives ints for "[0, 0, 1]"; the node declares double_array
-        return [float(x) for x in yaml.safe_load(str(value))]
     return value
 
 

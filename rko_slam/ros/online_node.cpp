@@ -1,4 +1,7 @@
+#include <chrono>
+#include <cstdint>
 #include <exception>
+#include <format>
 #include <memory>
 #include <string>
 
@@ -27,6 +30,7 @@ public:
 
   explicit OnlineNode(const rclcpp::NodeOptions& options) : BaseNode("rko_slam_online", options) {
     run_output = declare_run_output("rko_slam");
+    tf_lookup_timeout = std::chrono::milliseconds(node->declare_parameter<std::int64_t>("tf_lookup_timeout_ms", 80));
 
 #if RCLCPP_VERSION_MAJOR >= 30
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer, *node);
@@ -47,7 +51,7 @@ public:
 
   ~OnlineNode() {
     try {
-      write_run_config();
+      write_run_config(std::format("tf_lookup_timeout_ms: {}\n", tf_lookup_timeout.count()));
       dump_results_to_disk();
     } catch (const std::exception& error) {
       RCLCPP_ERROR_STREAM(node->get_logger(), "run dump failed: " << error.what());

@@ -5,12 +5,10 @@
 # #############################################################################
 # --- input ---
 # lidar_topic: <autodetected when exactly one PointCloud2 topic is published>
-# base_frame: <base_link, base_footprint or base if the TF tree has one, else the lidar's own frame>
+# base_frame: <base_link, base_footprint or base if the TF tree has one, else the scan's frame>
 # odom_frame: odom
 # map_frame: map
 # deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that
-# base_T_lidar_qxyzw_xyz: <[qx, qy, qz, qw, tx, ty, tz], else resolved from TF on the first scan>
-# tf_lookup_timeout_ms: 80
 # lidar_timestamps.multiplier_to_seconds: 0.0
 # lidar_timestamps.force_absolute: false
 # lidar_timestamps.force_relative: false
@@ -48,6 +46,9 @@
 # publish_closure_maps: false
 # publish_keypose_graph: false
 #
+# --- online only ---
+# tf_lookup_timeout_ms: 80
+#
 # --- offline only ---
 # bag_path: <rosbag2 directory to process>
-# odom_tum_path: <TUM trajectory; when set the bag's /tf is ignored>
+# odom_tum_path: <TUM trajectory of base_frame in odom_frame, used in place of the bag's /tf>

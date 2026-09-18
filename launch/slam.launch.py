@@ -34,7 +34,7 @@ offline_only_parameters = [
         "name": "odom_tum_path",
         "default": "",
         "modes": ("offline",),
-        "description": "[offline] TUM trajectory used as the odometry source; when set the bag's /tf is ignored and odom->base is synthesized from the file",
+        "description": "[offline] TUM trajectory of base_frame in odom_frame, used as the odometry in place of the bag's /tf",
     },
 ]
 
@@ -50,8 +50,7 @@ configurable_parameters = [
     {
         "name": "base_frame",
         "default": "",
-        "description": "Robot body frame the scans are deskewed and registered in (required, unless it can be autodetected from the TF tree)",
-        "required": True,
+        "description": "Frame rko_slam works in, e.g. base_link; unset, the scan's frame (autodetected from the TF tree)",
         "autodetectable": True,
     },
     {
@@ -62,7 +61,7 @@ configurable_parameters = [
     {
         "name": "map_frame",
         "default": "map",
-        "description": "Map frame; rko_slam broadcasts map->odom",
+        "description": "Map frame; rko_slam broadcasts map<-odom",
     },
     {
         "name": "results_dir",
@@ -93,17 +92,11 @@ configurable_parameters = [
         "description": "Deskew the input scan here, from its per-point timestamps and the odom TF. Leave false for /rko_lio/deskewed_scan, which is already deskewed to scan-end time",
     },
     {
-        "name": "base_T_lidar_qxyzw_xyz",
-        "default": "",
-        "type": "float_array",
-        "description": "Optional lidar extrinsic override [qx,qy,qz,qw,tx,ty,tz]; empty = resolve via TF on first scan",
-    },
-    {
         "modes": ("online",),
         "name": "tf_lookup_timeout_ms",
         "default": "80",
         "type": "int",
-        "description": "Blocking timeout for odom->base TF lookups",
+        "description": "Blocking timeout for odom_frame <- base_frame TF lookups",
     },
     {
         "name": "lidar_timestamps.multiplier_to_seconds",
@@ -133,7 +126,7 @@ configurable_parameters = [
         "name": "splitting_distance",
         "default": "50.0",
         "type": "float",
-        "description": "Distance (m) travelled before the current sub-map is closed and a new one started",
+        "description": "Straight-line distance (m) from the sub-map's keypose at which it is closed and the next one started",
     },
     {
         "name": "max_points_per_voxel",
@@ -270,6 +263,8 @@ def validate_parameters(merged: dict, mode: str, odometry: bool) -> None:
     common.check_required(applicable_parameters(mode), merged)
     if odometry and mode != "online":
         common.fail("[ERROR] odometry:=true only makes sense with mode:=online")
+    if odometry and not merged.get("base_frame"):
+        common.fail("[ERROR] odometry:=true needs base_frame: it is the body rko_lio estimates")
 
 
 # rko_lio's own defaults, for when its config does not name them.
@@ -286,12 +281,13 @@ def rko_lio_config(context) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str, odometry_layers: list) -> Path:
+def prepare_rviz_config(rviz_config_file: Path, map_frame: str, base_frame: str | None, odometry_layers: list) -> Path:
     """The shipped view is generic; whatever depends on this run's frames or options is set here."""
     with open(Path(get_package_share_directory("rko_slam")) / rviz_config_file) as f:
         rviz_cfg = yaml.safe_load(f)
     rviz_cfg["Visualization Manager"]["Global Options"]["Fixed Frame"] = map_frame
-    rviz_cfg["Visualization Manager"]["Views"]["Current"]["Target Frame"] = base_frame
+    if base_frame:
+        rviz_cfg["Visualization Manager"]["Views"]["Current"]["Target Frame"] = base_frame
     if odometry_layers:
         # Achromatic on purpose
         rviz_cfg["Visualization Manager"]["Displays"].extend(
@@ -395,7 +391,7 @@ def launch_setup(context, *args, **kwargs):
             rviz_config_file = prepare_rviz_config(
                 rviz_config_file,
                 final_params.get("map_frame", common.default_for(configurable_parameters, "map_frame")),
-                final_params["base_frame"],
+                final_params.get("base_frame"),
                 odometry_layers,
             )
 
