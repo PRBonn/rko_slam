@@ -403,10 +403,10 @@
 <p>An odometry tells you how you moved. Over a long enough run its estimate drifts, and when you come back to a
 place you have been before, the two visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR,
 recognizes the revisit, and corrects the whole trajectory behind you. You keep the odometry as it is, and you
-additionally get a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">odom</span></code> correction on TF, a pose graph, and the sub-maps the system built along the way.</p>
+additionally get a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code> correction on TF, a pose graph, and the sub-maps the system built along the way.</p>
 <p>The odometry it assumes by default is <a class="reference external" href="https://github.com/PRBonn/rko_lio">rko_lio</a>, my LiDAR-inertial odometry
 package. rko_lio is also a build dependency, rko_slam uses its voxel map and deskewing internally. At run time
-though, any odometry that publishes <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base</span></code> on TF and is locally consistent will do, wheel odometry included.</p>
+though, any odometry that publishes <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">&lt;-</span> <span class="pre">base</span></code> on TF and is locally consistent will do, wheel odometry included.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan<span class="w"> </span>rviz:<span class="o">=</span><span class="nb">true</span>
 </pre></div>
 </div>

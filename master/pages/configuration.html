@@ -424,9 +424,10 @@ override the file, and anything you leave unset keeps the default listed here.</
 </div>
 <p><a class="reference external" href="https://github.com/PRBonn/rko_slam/blob/master/config/ros_default.yaml"><code class="docutils literal notranslate"><span class="pre">config/ros_default.yaml</span></code></a> has every
 parameter with its default, commented out, as a file to start from.</p>
-<p>Two of them are required and have no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, and both are
-<a class="reference internal" href="build_and_run.html#what-gets-autodetected"><span class="std std-ref">autodetected</span></a> when you leave them unset. Everything else has a default
-that works as is, and the ones worth changing first are <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code> and <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code>.</p>
+<p>One of them is required and has no default, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>. It is
+<a class="reference internal" href="build_and_run.html#what-gets-autodetected"><span class="std std-ref">autodetected</span></a> when you leave it unset, and so is <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>.
+Everything else has a default that works as is, and the ones worth changing first are <code class="docutils literal notranslate"><span class="pre">splitting_distance</span></code> and
+<code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code>.</p>
 <section id="mode">
 <h2>Mode<a class="headerlink" href="#mode" title="Link to this heading">#</a></h2>
 <ul>
@@ -437,9 +438,8 @@ that works as is, and the ones worth changing first are <code class="docutils li
 <p>The rosbag2 directory to process.</p>
 </li>
 <li><p><strong>odom_tum_path</strong> (offline only)</p>
-<p>A TUM trajectory file to take the odometry from. When set, the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code> is ignored and the file’s poses are
-used as <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> instead. The bag’s <code class="docutils literal notranslate"><span class="pre">/tf_static</span></code> is still read, for the scan-to-<code class="docutils literal notranslate"><span class="pre">base_frame</span></code>
-extrinsic. If the file holds the LiDAR’s own poses, set <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the scan’s frame.</p>
+<p>A TUM trajectory file to take the odometry from instead of the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code>, see
+<a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>.</p>
 </li>
 <li><p><strong>use_sim_time</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
 <p>Use the <code class="docutils literal notranslate"><span class="pre">/clock</span></code> topic, for bag replay with <code class="docutils literal notranslate"><span class="pre">--clock</span></code>.</p>
@@ -453,12 +453,11 @@ extrinsic. If the file holds the LiDAR’s own poses, set <code class="docutils 
 <p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans. Deskewed scans unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> the launch
 file fills in <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.</p>
 </li>
-<li><p><strong>base_frame</strong> (required, autodetected)</p>
-<p>The body frame the odometry estimates and the scans are registered in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>.</p>
+<li><p><strong>base_frame</strong> (autodetected)</p>
+<p>The frame rko_slam works in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>.</p>
 </li>
 <li><p><strong>odom_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">odom</span></code>), <strong>map_frame</strong> (default <code class="docutils literal notranslate"><span class="pre">map</span></code>)</p>
-<p>The frame the odometry publishes, as TF parent of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, and the frame rko_slam publishes:
-rko_slam broadcasts <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">-&gt;</span> <span class="pre">odom_frame</span></code>.</p>
+<p>The odometry’s frame and the frame rko_slam publishes, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>.</p>
 </li>
 <li><p><strong>autodetect</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>), <strong>autodetect_timeout</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">10.0</span></code>)</p>
 <p>Fill in <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> when you did not give them, from the running graph or from the bag. The
@@ -469,11 +468,8 @@ wait for the topics and TF tree this needs, online only.</p>
 <p>Deskew the scan in rko_slam, from its per-point timestamps and the odometry TF. Leave it off when the odometry
 already publishes a deskewed cloud and you consume that, which is the case with <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.</p>
 </li>
-<li><p><strong>base_T_lidar_qxyzw_xyz</strong> (<code class="docutils literal notranslate"><span class="pre">[qx,</span> <span class="pre">qy,</span> <span class="pre">qz,</span> <span class="pre">qw,</span> <span class="pre">tx,</span> <span class="pre">ty,</span> <span class="pre">tz]</span></code>, optional)</p>
-<p>The LiDAR extrinsic. Left empty, it is resolved from TF on the first scan.</p>
-</li>
 <li><p><strong>tf_lookup_timeout_ms</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, online only, default <code class="docutils literal notranslate"><span class="pre">80</span></code>)</p>
-<p>How long an <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base_frame</span></code> TF lookup blocks before the scan is dropped.</p>
+<p>How long an <code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> TF lookup blocks before the scan is dropped.</p>
 </li>
 <li><p><strong>lidar_timestamps.multiplier_to_seconds</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.0</span></code>), <strong>lidar_timestamps.force_absolute</strong>
 (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>lidar_timestamps.force_relative</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>

@@ -416,7 +416,7 @@
   <section id="how-it-works">
 <h1>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h1>
 <p>rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything
-locally consistent publishing <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">-&gt;</span> <span class="pre">base</span></code>) and publishes a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">odom</span></code> correction. The pipeline is
+locally consistent publishing <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">&lt;-</span> <span class="pre">base</span></code>) and publishes a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code> correction. The pipeline is
 essentially a reimplementation of <a class="reference external" href="https://github.com/PRBonn/kiss-slam">KISS-SLAM</a>, uses
 <a class="reference external" href="https://github.com/PRBonn/MapClosures">MapClosures</a> for detecting revisits, and a g2o pose graph.</p>
 <section id="sub-maps">
@@ -469,7 +469,7 @@ other. That is what <code class="docutils literal notranslate"><span class="pre"
 <p>An accepted closure is inserted as a new edge, with a Cauchy robust kernel on it to down-weight inconsistent or
 outlier closures, and the graph is re-solved (Dogleg, Cholmod) immediately. The keyposes move, the trajectory is
 rebuilt from them, and the difference between where the odometry thinks you are and where the graph now says you
-are is published as <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">-&gt;</span> <span class="pre">odom</span></code>.</p>
+are is published as <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code>.</p>
 </section>
 <section id="across-sessions">
 <h2>Across sessions<a class="headerlink" href="#across-sessions" title="Link to this heading">#</a></h2>
