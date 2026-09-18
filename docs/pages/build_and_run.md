@@ -146,18 +146,19 @@ Offline, `odom_tum_path` takes the odometry from a TUM file instead of the bag's
 
 rko_slam publishes `map_frame <- odom_frame`, which makes `map_frame <- base_frame` the SLAM estimate.
 
-## Topics
+## Topics and transforms
 
 Subscribed:
 
-| Topic / frame | What |
+| Topic / transform | What |
 |---|---|
 | `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, deskewed unless `deskew:=true` |
-| `odom_frame <- base_frame` on TF | the odometry, see [Frames](#frames) |
+| `odom_frame <- base_frame` on TF | the odometry, looked up at each scan's timestamp |
+| `base_frame <- the scan's frame` on TF | static, read once on the first scan to bring every scan into `base_frame` |
 
 Published:
 
-| Topic / frame | What |
+| Topic / transform | What |
 |---|---|
 | `map_frame <- odom_frame` on TF | the correction; `map_frame <- base_frame` is then the SLAM estimate |
 | `rko_slam/sub_maps` (`PointCloud2`) | each closed sub-map, with a `sub_map_<i>` TF chain (`publish_sub_maps:=true`) |
