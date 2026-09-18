@@ -146,7 +146,7 @@ Offline, `odom_tum_path` takes the odometry from a TUM file instead of the bag's
 
 rko_slam publishes `map_frame <- odom_frame`, which makes `map_frame <- base_frame` the SLAM estimate.
 
-## Topics and frames
+## Topics
 
 Subscribed:
 
