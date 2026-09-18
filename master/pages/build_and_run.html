@@ -454,17 +454,13 @@ on the <a class="reference internal" href="configuration.html"><span class="doc"
 </div>
 <section id="online">
 <h3>Online<a class="headerlink" href="#online" title="Link to this heading">#</a></h3>
-<p>Next to a running rko_lio, give it rko_lio’s deskewed scan. The base frame is found for you (see
-<a class="reference internal" href="#what-gets-autodetected">below</a>):</p>
+<p>Next to a running rko_lio, give rko_slam rko_lio’s deskewed scan:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan
 </pre></div>
 </div>
 <p>Add <code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> to open RViz with the default view: sub-maps, keypose graph and closures.</p>
-<p>The same launch file can spawn the rko_lio front-end for you. rko_lio’s <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan</span></code> is forced on and
-rko_slam consumes that topic. Give <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> here, since rko_lio is not running yet when it would be detected:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>odometry:<span class="o">=</span><span class="nb">true</span><span class="w"> </span>base_frame:<span class="o">=</span>base_link<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>rko_lio_config_file:<span class="o">=</span>my_rko_lio.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>rko_lio_lidar_topic:<span class="o">=</span>/os_cloud_node/points<span class="w"> </span>rko_lio_imu_topic:<span class="o">=</span>/os_cloud_node/imu
+<p>The same launch file can start rko_lio for you, see <a class="reference internal" href="#starting-rko-lio">Starting rko_lio</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>odometry:<span class="o">=</span><span class="nb">true</span>
 </pre></div>
 </div>
 </section>
@@ -478,25 +474,29 @@ LiDAR odometry qualifies. In my thesis the same back-end ran unchanged on top of
 robot.</p>
 <p>With another odometry the scans are usually raw, so set <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code> and rko_slam deskews them itself with
 the same TF:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>deskew:<span class="o">=</span><span class="nb">true</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/points<span class="w"> </span>base_frame:<span class="o">=</span>base_link<span class="w"> </span>deskew:<span class="o">=</span><span class="nb">true</span>
 </pre></div>
 </div>
-<p>If the odometry publishes under other names, give <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>, <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> and <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> explicitly.</p>
+<p>If its odometry frame is not <code class="docutils literal notranslate"><span class="pre">odom</span></code>, give <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> as well. If it publishes <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> as the TF child of
+<code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, set <code class="docutils literal notranslate"><span class="pre">invert_map_tf:=true</span></code>, and rko_slam publishes <code class="docutils literal notranslate"><span class="pre">map_frame</span></code> as the child of <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>.</p>
 </section>
 <section id="offline">
 <h3>Offline<a class="headerlink" href="#offline" title="Link to this heading">#</a></h3>
 <p>Offline, the node self-drains a bag (every scan is processed faster than frame-rate if possible). The odometry
 comes from the bag’s own <code class="docutils literal notranslate"><span class="pre">/tf</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan
 </pre></div>
 </div>
 <p>If the odometry you want is not in the bag, <code class="docutils literal notranslate"><span class="pre">odom_tum_path</span></code> takes it from a TUM trajectory file instead, see
 <a class="reference internal" href="#frames">Frames</a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span>odom_tum_path:<span class="o">=</span>/data/odometry_tum.txt
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>lidar_topic:<span class="o">=</span>/points<span class="w"> </span>base_frame:<span class="o">=</span>base_link<span class="w"> </span>deskew:<span class="o">=</span><span class="nb">true</span><span class="w"> </span>odom_tum_path:<span class="o">=</span>/data/odometry_tum.txt
 </pre></div>
 </div>
 <p>Nothing is written unless you ask for it, see <a class="reference internal" href="#outputs">Outputs</a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>dump_results:<span class="o">=</span><span class="nb">true</span><span class="w"> </span>results_dir:<span class="o">=</span>results<span class="w"> </span>run_name:<span class="o">=</span>my_run
 </pre></div>
 </div>
@@ -510,22 +510,50 @@ dumped by default):</p>
 </pre></div>
 </div>
 </section>
-<section id="what-gets-autodetected">
-<h3>What gets autodetected<a class="headerlink" href="#what-gets-autodetected" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is required and has no default, and <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is optional. With <code class="docutils literal notranslate"><span class="pre">autodetect:=true</span></code>, the
-default, the launch file fills in whichever of the two you left unset:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is the one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code> topic there is. If several exist, the launch stops and lists
-them so you can pick. Next to a running rko_lio there are at least two, the raw scan and the deskewed one, so
-give <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> in that case.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is the first of <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, <code class="docutils literal notranslate"><span class="pre">base_footprint</span></code>, <code class="docutils literal notranslate"><span class="pre">base</span></code> found in the TF tree, otherwise the scan’s
-own <code class="docutils literal notranslate"><span class="pre">frame_id</span></code>. Either way the TF tree must connect it to the scan’s frame, or the launch stops and says so.</p></li>
-</ul>
-<p>Online this means waiting for the topics and TF to show up, <code class="docutils literal notranslate"><span class="pre">autodetect_timeout</span></code> (10 s) long. Offline it is read
-from the bag. Anything you did give is used as is, and with both given nothing is detected at all;
-<code class="docutils literal notranslate"><span class="pre">autodetect:=false</span></code> turns it off. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code>, <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> is set to rko_lio’s deskewed scan topic
-and not searched for, but the base frame detection needs a message on that topic and rko_lio only starts
-afterwards, so give <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> too.</p>
+<section id="starting-rko-lio">
+<h3>Starting rko_lio<a class="headerlink" href="#starting-rko-lio" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> starts an rko_lio online node next to rko_slam. With <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>, rko_lio runs on that
+file as it is. rko_slam reads rko_lio’s deskewed scan unless you give it a <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> of your own, so the file
+has to set <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan:</span> <span class="pre">true</span></code> and the launch stops if it does not. Without the file, rko_lio
+configures itself with its own
+<a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection">autodetection</a>, waiting for the
+topics and TF to show up, and publishes its deskewed scan. For anything else, run rko_lio with its own launch
+file.</p>
+<p>Whatever you leave unset on rko_slam is taken from how rko_lio is configured:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>rko_slam</p></th>
+<th class="head"><p>rko_lio</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>, the scans rko_slam subscribes to</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">deskewed_scan_topic</span></code>, the scans rko_lio publishes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>rko_lio’s own <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code>, the raw scans it subscribes to, is not in that table and rko_slam never sets it:
+rko_lio takes it from <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code> or finds it itself, as it does its IMU topic.</p>
+<p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> always resolves: from <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code> if it defines <code class="docutils literal notranslate"><span class="pre">deskewed_scan_topic</span></code>, otherwise from
+rko_lio’s default <code class="docutils literal notranslate"><span class="pre">rko_lio/deskewed_scan</span></code>. Taking it also turns <code class="docutils literal notranslate"><span class="pre">deskew</span></code> off, since that cloud is already
+deskewed. The rest are taken only if rko_lio has a value for them, which means what <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>
+defines, or what rko_lio’s autodetection found when there is no config file. A parameter that neither you nor
+rko_lio defines keeps rko_slam’s own default: <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> is <code class="docutils literal notranslate"><span class="pre">odom</span></code>, <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code> is <code class="docutils literal notranslate"><span class="pre">false</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">base_frame</span></code> unset means the scan’s frame.</p>
+<p>The two frames also go the other way: set <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> or <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> on rko_slam and rko_lio is started with
+them, so both nodes work in the same body and publish the odometry in the same frame. They override
+<code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code> if it defines them too, the same way <code class="docutils literal notranslate"><span class="pre">use_sim_time</span></code> does, since what you set on rko_slam is
+for this run and rko_lio’s file is not.</p>
 </section>
 </section>
 <section id="frames">
@@ -550,7 +578,7 @@ scan into <code class="docutils literal notranslate"><span class="pre">base_fram
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code>)</p></td>
-<td><p>the scans, deskewed unless <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
+<td><p>the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> on TF</p></td>
 <td><p>the odometry, looked up at each scan’s timestamp</p></td>
@@ -570,7 +598,7 @@ scan into <code class="docutils literal notranslate"><span class="pre">base_fram
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">odom_frame</span></code> on TF</p></td>
-<td><p>the correction; <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> is then the SLAM estimate</p></td>
+<td><p>the correction, flipped by <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code>; <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> is then the SLAM estimate</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rko_slam/sub_maps</span></code> (<code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>)</p></td>
 <td><p>each closed sub-map, with a <code class="docutils literal notranslate"><span class="pre">sub_map_&lt;i&gt;</span></code> TF chain (<code class="docutils literal notranslate"><span class="pre">publish_sub_maps:=true</span></code>)</p></td>
@@ -599,7 +627,7 @@ the closure edges, as markers on <code class="docutils literal notranslate"><spa
 <li><p><code class="docutils literal notranslate"><span class="pre">publish_closure_maps:=true</span></code>, each accepted closure as the two sub-maps it matched, one colour each, on
 <code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, so you can see what got matched to what.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns all three on and opens RViz with the default view, <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>, patched with your
+<p><code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns all three on and opens RViz with the default view, <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>, customised with your
 frames. With <code class="docutils literal notranslate"><span class="pre">odometry:=true</span></code> it also shows rko_lio’s local map and deskewed scan. Pass your own config with
 <code class="docutils literal notranslate"><span class="pre">rviz_config_file:=</span></code> and it is used unchanged, with nothing forced on.</p>
 <figure>
@@ -719,7 +747,7 @@ written with <code class="docutils literal notranslate"><span class="pre">dump_r
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-odometry">The odometry</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#offline">Offline</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-session-alignment">Multi-session alignment</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-autodetected">What gets autodetected</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#starting-rko-lio">Starting rko_lio</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frames">Frames</a></li>
