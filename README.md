@@ -64,8 +64,7 @@ colcon build --packages-select rko_lio rko_slam
 Two entrypoints: `slam.launch.py` (`mode:=online|offline`) and `align.launch.py`. `-s` lists every parameter
 with its documentation, and anything you leave unset keeps the node's own default.
 
-Online, next to a running rko_lio, consuming its deskewed scan. The base frame is autodetected when you leave it
-unset:
+Online, next to a running rko_lio, consuming its deskewed scan:
 
 ```bash
 ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=true
@@ -74,7 +73,8 @@ ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=tr
 Offline, self-draining a bag, with the odometry from the bag's own `/tf`, and writing the run to disk:
 
 ```bash
-ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag dump_results:=true
+ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
+  lidar_topic:=/rko_lio/deskewed_scan dump_results:=true
 ```
 
 Multi-session alignment of the run directories those runs wrote:
@@ -84,7 +84,7 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 ```
 
 Running with another odometry, spawning rko_lio from the same launch file, taking the odometry from a TUM file,
-what gets autodetected, what a run writes to disk, every parameter and what it does, and how the system works
+what a run writes to disk, every parameter and what it does, and how the system works
 are all in the [docs](https://prbonn.github.io/rko_slam/).
 
 ## Acknowledgments and Citation
