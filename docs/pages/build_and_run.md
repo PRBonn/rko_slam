@@ -45,11 +45,15 @@ ros2 launch rko_slam slam.launch.py -s
 
 ### Online
 
-Next to a running rko_lio, give rko_slam rko_lio's deskewed scan:
+Next to a running rko_lio, give rko_slam rko_lio's deskewed scan and the IMU rko_lio reads:
 
 ```bash
-ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan
+ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu
 ```
+
+The IMU levels the map: each sub-map gets a measured up direction and the pose graph pulls it onto gravity, see
+{doc}`How it works <how_it_works>`. The IMU's frame has to be connected to `base_frame` by a static transform on TF.
+Leaving `imu_topic` unset still runs, without the gravity edges, which is a suboptimal way to run rko_slam.
 
 Add `rviz:=true` to open RViz with the default view: sub-maps, keypose graph and closures.
 
@@ -79,7 +83,7 @@ If its odometry frame is not `odom`, give `odom_frame` as well. If it publishes 
 
 ### Offline
 
-Offline, the node self-drains a bag (every scan is processed faster than frame-rate if possible). The odometry comes
+Offline, the node drains the bag as fast as it can process it, never waiting on message timestamps. The odometry comes
 from the bag's own `/tf`:
 
 ```bash
@@ -124,16 +128,18 @@ It sets these, and passing them is an error:
 | --------------------------------- | ----------------------------------------------------------------- |
 | rko_lio's `publish_deskewed_scan` | true, it is what rko_slam subscribes to                           |
 | rko_slam's `lidar_topic`          | rko_lio's deskewed scan topic                                     |
+| rko_slam's `imu_topic`            | rko_lio's `imu_topic`, the IMU rko_lio reads                      |
 | rko_slam's `deskew`               | false, that scan is already deskewed                              |
 | rko_slam's `invert_map_tf`        | rko_lio's `invert_odom_tf`, so both publish in the same direction |
 
 `base_frame`, `odom_frame` and `use_sim_time` are set once and passed to both nodes, so the two cannot disagree.
 Everything else is rko_slam's, exactly as under `slam.launch.py`.
 
-rko_lio's own settings, its raw `lidar_topic` and `imu_topic` among them, come from `rko_lio_config_file`, used as it is
-apart from the values in the table above and the three shared ones. Without that file rko_lio configures itself with its
+rko_lio's own settings, its raw `lidar_topic` and `imu_topic` among them, come from `rko_lio_config_file`. The file is
+used as it is, except for the values in the table above and the three shared ones, which override it. A file that sets
+`publish_deskewed_scan: false` is refused. Without the file, rko_lio configures itself with its
 [autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection), waiting for the topics
-and TF to show up. A config file that sets `publish_deskewed_scan: false` is refused.
+and TF to show up.
 
 For anything this does not allow, run rko_lio with its own launch file and rko_slam with `slam.launch.py`.
 
@@ -144,7 +150,8 @@ the scan's frame, the `frame_id` of the `PointCloud2`.
 
 The odometry is the pose of `base_frame` in `odom_frame`, read from TF at each scan's timestamp. A static transform on
 TF connects `base_frame` to the scan's frame, and rko_slam reads it once, on the first scan, to transform every scan
-into `base_frame` before adding it to the sub-maps.
+into `base_frame` before adding it to the sub-maps. With an IMU, another static transform connects `base_frame` to the
+IMU's frame, read once on the first IMU message after the first scan.
 
 Offline, `odom_tum_path` takes the odometry from a TUM file instead of the bag's `/tf`. The file holds the pose of
 `base_frame` in `odom_frame`.
@@ -155,11 +162,13 @@ rko_slam publishes `map_frame <- odom_frame`, which makes `map_frame <- base_fra
 
 Subscribed:
 
-| Topic / transform                         | What                                                                      |
-| ----------------------------------------- | ------------------------------------------------------------------------- |
-| `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, taken as already deskewed unless you set `deskew:=true`        |
-| `odom_frame <- base_frame` on TF          | the odometry, looked up at each scan's timestamp                          |
-| `base_frame <- the scan's frame` on TF    | static, read once on the first scan to bring every scan into `base_frame` |
+| Topic / transform                         | What                                                                         |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, taken as already deskewed unless you set `deskew:=true`           |
+| `imu_topic` (`sensor_msgs/Imu`)           | the IMU whose accelerometer levels the map, the same one your odometry reads |
+| `odom_frame <- base_frame` on TF          | the odometry, looked up at each scan's timestamp                             |
+| `base_frame <- the scan's frame` on TF    | static, read once on the first scan to bring every scan into `base_frame`    |
+| `base_frame <- the IMU's frame` on TF     | static, read once on the first IMU message                                   |
 
 Published:
 
@@ -182,9 +191,9 @@ Nothing is published for display unless you ask for it. Three publishers, each o
 - `publish_closure_maps:=true`, each accepted closure as the two sub-maps it matched, one colour each, on
   `rko_slam/closure_maps`, so you can see what got matched to what.
 
-`rviz:=true` turns all three on and opens RViz with the default view, `config/default.rviz`, customised with your
-frames. Under `odometry_and_slam.launch.py` it also shows rko_lio's deskewed scan, and its local map when rko_lio
-publishes one: `rviz:=true` turns that on for you unless `rko_lio_config_file` decides it. Pass your own config with
+`rviz:=true` turns all three on and opens RViz with the default view, `config/default.rviz`, set to your frames. Under
+`odometry_and_slam.launch.py` it also shows rko_lio's deskewed scan and its local map; with your own
+`rko_lio_config_file`, the local map shows only if that file publishes one. Pass your own config with
 `rviz_config_file:=` and it is used unchanged, with nothing forced on.
 
 <figure>
@@ -197,14 +206,14 @@ publishes one: `rviz:=true` turns that on for you unless `rko_lio_config_file` d
 Nothing is written unless you ask for it. With `dump_results:=true`, a SLAM run (`slam.launch.py`) writes
 `<results_dir>/<run_name>_<n>/`:
 
-| File                     | What                                                                                                                                                                       |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `*_tum.txt`              | the trajectory                                                                                                                                                             |
-| `*_keypose_graph.g2o`    | the keypose pose graph                                                                                                                                                     |
-| `*_config.yaml`          | the config dumped for reproducibility                                                                                                                                      |
-| `*_profile.txt`          | profiling logs                                                                                                                                                             |
-| `*_trajectory.png`       | the trajectory as an image, loop closures in red                                                                                                                           |
-| `sub_maps/sub_map_*.ply` | the sub-maps, one file each, in the frame of their keypose. Usable as a map for a localization system, and the input to `align.launch.py` (`dump_sub_maps`, on by default) |
+| File                     | What                                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `*_tum.txt`              | the trajectory                                                                                                                                              |
+| `*_keypose_graph.g2o`    | the keypose pose graph                                                                                                                                      |
+| `*_config.yaml`          | the config the run used                                                                                                                                     |
+| `*_profile.txt`          | profiling logs                                                                                                                                              |
+| `*_trajectory.png`       | the trajectory as an image, loop closures in red                                                                                                            |
+| `sub_maps/sub_map_*.ply` | the sub-maps, in the frame of their keypose. Usable as a map for a localization system, and the input to `align.launch.py` (`dump_sub_maps`, on by default) |
 
 `align.launch.py` always writes `<results_dir>/<run_name>_<n>/`, and needs the runs it merges to have been written with
 `dump_results:=true`:
@@ -213,4 +222,4 @@ Nothing is written unless you ask for it. With `dump_results:=true`, a SLAM run 
 | --------------------------- | ----------------------------------------------------------------------- |
 | `*_joint_keypose_graph.g2o` | the joint pose graph over all sessions                                  |
 | `*_session_<i>_tum.txt`     | each session's trajectory in the joint frame, `<i>` in `run_dirs` order |
-| `*_config.yaml`             | the config dumped for reproducibility, with the run directories         |
+| `*_config.yaml`             | the config the run used, with the run directories                       |

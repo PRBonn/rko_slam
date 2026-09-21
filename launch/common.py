@@ -32,7 +32,7 @@ CLOSURE_PARAMETERS = [
         "name": "density_threshold",
         "default": "0.05",
         "type": "float",
-        "description": "How occupied a cell must be to count when looking for a closure",
+        "description": "How full a cell must be, against the fullest cell of the same sub-map, to count",
     },
     {
         "name": "hamming_distance_threshold",
@@ -44,7 +44,7 @@ CLOSURE_PARAMETERS = [
         "name": "inliers_threshold",
         "default": "5",
         "type": "int",
-        "description": "How many points must agree before a candidate closure is checked properly",
+        "description": "How many matched features must agree on the same alignment before the candidate is refined",
     },
     {
         "name": "overlap_threshold",
@@ -59,7 +59,7 @@ POSE_GRAPH_PARAMETERS = [
         "name": "rotation_info_scale",
         "default": "100.0",
         "type": "float",
-        "description": "How much more the optimizer trusts rotation than translation. 100 is about 5.7 degrees of assumed error",
+        "description": "How much more the optimizer trusts rotation than translation",
     },
     {
         "name": "closure_info_scale",
@@ -72,6 +72,12 @@ POSE_GRAPH_PARAMETERS = [
         "default": "1.0",
         "type": "float",
         "description": "Closures that disagree by more than this (m) are given less weight rather than believed",
+    },
+    {
+        "name": "gravity_info_scale",
+        "default": "100.0",
+        "type": "float",
+        "description": "How much the optimizer trusts each sub-map's measured up direction against the rest of the graph",
     },
 ]
 

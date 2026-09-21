@@ -10,6 +10,7 @@
 #include <rclcpp/qos.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp/version.h>
+#include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
@@ -22,6 +23,7 @@ namespace {
 class OnlineNode : public BaseNode {
 public:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr scan_sub;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener;
   OnlineNode(OnlineNode&&) = delete;
   OnlineNode(const OnlineNode&) = delete;
@@ -41,12 +43,18 @@ public:
     scan_sub = node->create_subscription<sensor_msgs::msg::PointCloud2>(
         lidar_topic, qos_lidar,
         [this](const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) { lidar_callback(msg); });
+    if (!imu_topic.empty()) {
+      imu_sub = node->create_subscription<sensor_msgs::msg::Imu>(
+          imu_topic, rclcpp::SensorDataQoS().keep_last(1000),
+          [this](const sensor_msgs::msg::Imu::ConstSharedPtr& msg) { imu_callback(msg); });
+    }
 
     RCLCPP_INFO_STREAM(
-        node->get_logger(), node->get_name()
-                                << " up. lidar=" << lidar_topic << " base=" << base_frame << " odom=" << odom_frame
-                                << " map=" << map_frame << " run_dir="
-                                << (run_output ? run_output->dir.string() : std::string{"<dump_results is false>"}));
+        node->get_logger(),
+        node->get_name() << " up. lidar=" << lidar_topic
+                         << " imu=" << (imu_topic.empty() ? std::string{"<unset>"} : imu_topic)
+                         << " base=" << base_frame << " odom=" << odom_frame << " map=" << map_frame << " run_dir="
+                         << (run_output ? run_output->dir.string() : std::string{"<dump_results is false>"}));
   }
 
   ~OnlineNode() {

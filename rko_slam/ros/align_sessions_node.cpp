@@ -39,8 +39,8 @@ int main(int argc, char* const* argv) {
       static_cast<float>(node->declare_parameter<double>("density_threshold", detector_config.density_threshold));
   detector_config.hamming_distance_threshold = static_cast<int>(
       node->declare_parameter<std::int64_t>("hamming_distance_threshold", detector_config.hamming_distance_threshold));
-  detector_config.inliers_threshold = static_cast<std::size_t>(node->declare_parameter<std::int64_t>(
-      "inliers_threshold", static_cast<std::int64_t>(detector_config.inliers_threshold)));
+  detector_config.inliers_threshold =
+      static_cast<int>(node->declare_parameter<std::int64_t>("inliers_threshold", detector_config.inliers_threshold));
   detector_config.no_of_sub_maps_to_skip = static_cast<int>(
       node->declare_parameter<std::int64_t>("no_of_sub_maps_to_skip", detector_config.no_of_sub_maps_to_skip));
   const auto overlap_threshold = static_cast<float>(node->declare_parameter<double>(
@@ -53,6 +53,8 @@ int main(int argc, char* const* argv) {
       static_cast<int>(node->declare_parameter<std::int64_t>("max_iterations", pose_graph_config.max_iterations));
   pose_graph_config.closure_kernel_delta =
       node->declare_parameter<double>("closure_kernel_delta", pose_graph_config.closure_kernel_delta);
+  pose_graph_config.gravity_info_scale =
+      node->declare_parameter<double>("gravity_info_scale", pose_graph_config.gravity_info_scale);
 
   const std::vector<std::filesystem::path> dirs(run_dirs.cbegin(), run_dirs.cend());
 

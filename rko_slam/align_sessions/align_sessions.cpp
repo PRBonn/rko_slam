@@ -4,6 +4,7 @@
 #include <charconv>
 #include <cstdint>
 #include <format>
+#include <optional>
 #include <ranges>
 #include <rko_lio/core/error.hpp>
 #include <stdexcept>
@@ -34,7 +35,8 @@ struct SessionSubMap {
 struct Session {
   fs::path run_dir;
   std::vector<SessionSubMap> sub_maps;
-  std::vector<core::PoseGraph::EdgeView> edges;
+  std::vector<core::PoseGraph::Se3EdgeView> se3_edges;
+  std::vector<core::PoseGraph::GravityEdgeView> gravity_edges;
   std::vector<core::TrajectorySample> tum;
   core::VoxelHashMap::Config voxel_map_config;
   core::KeyposeId global_id_offset = 0; // global id of this session's keypose 0
@@ -96,7 +98,8 @@ Session load_session(const fs::path& run_dir) {
                                                 run_dir.string(), keypose_graph.num_keyposes(), plys.size()));
   }
 
-  session.edges = keypose_graph.edges();
+  session.se3_edges = keypose_graph.se3_edges();
+  session.gravity_edges = keypose_graph.gravity_edges();
   session.tum = core::read_tum(run_dir / (stem + "_tum.txt"));
 
   std::vector<std::size_t> keypose_rows;
@@ -182,7 +185,7 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
           continue; // intra-session: already an edge in that session's graph
         }
         ++candidates_considered;
-        if (candidate.number_of_inliers < detector_config.inliers_threshold) {
+        if (std::cmp_less(candidate.number_of_inliers, detector_config.inliers_threshold)) {
           ++rejected_below_inliers;
           continue;
         }
@@ -327,7 +330,10 @@ std::unique_ptr<core::PoseGraph> build_joint_graph(const std::vector<Session>& s
     for (std::size_t id = 0; id < session.sub_maps.size(); ++id) {
       joint->add_keypose(session.global_id_offset + id, world_T_map.value() * session.sub_maps.at(id).map_T_keypose);
     }
-    for (const core::PoseGraph::EdgeView& edge : session.edges) {
+    for (const core::PoseGraph::GravityEdgeView& gravity : session.gravity_edges) {
+      joint->add_gravity_edge(session.global_id_offset + gravity.keypose_id, gravity.measured_up);
+    }
+    for (const core::PoseGraph::Se3EdgeView& edge : session.se3_edges) {
       const core::KeyposeId from_id = session.global_id_offset + edge.from_id;
       const core::KeyposeId to_id = session.global_id_offset + edge.to_id;
       if (core::is_closure_pair(edge.from_id, edge.to_id)) {
@@ -345,7 +351,14 @@ std::unique_ptr<core::PoseGraph> build_joint_graph(const std::vector<Session>& s
                             sessions.at(closure.target_session_index).global_id_offset + closure.target_sub_map_id,
                             closure.refined_source_T_target);
   }
-  joint->set_keypose_fixed(sessions.at(reference).global_id_offset, true);
+  const core::KeyposeId reference_id = sessions.at(reference).global_id_offset;
+  if (!joint->gravity_edges().empty()) {
+    joint->add_gauge_edge(reference_id);
+  } else {
+    joint->set_keypose_fixed(reference_id, true);
+    spdlog::warn("no gravity edges in any aligned session. running rko_slam without an IMU is a suboptimal way to "
+                 "run it");
+  }
   return joint;
 }
 

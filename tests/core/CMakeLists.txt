@@ -1,6 +1,7 @@
 add_executable(
   rko_slam_core_tests
   test_closure_thread_synthetic.cpp
+  test_edges.cpp
   test_icp.cpp
   test_info_scale.cpp
   test_pose_graph.cpp

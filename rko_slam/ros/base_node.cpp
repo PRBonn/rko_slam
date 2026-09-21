@@ -1,6 +1,7 @@
 #include "rko_slam/ros/base_node.hpp"
 
 #include <UTL/profiler.hpp>
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -26,6 +27,7 @@
 #include <rko_lio/ros/utils/utils.hpp>
 #include <spdlog/spdlog.h>
 #include <std_msgs/msg/header.hpp>
+#include <tf2/time.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "rko_slam/core/run_artifacts.hpp"
@@ -131,6 +133,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
 
   lidar_topic = node->declare_parameter<std::string>("lidar_topic"); // required
   base_frame = node->declare_parameter<std::string>("base_frame", base_frame);
+  imu_topic = node->declare_parameter<std::string>("imu_topic", imu_topic);
   odom_frame = node->declare_parameter<std::string>("odom_frame", odom_frame);
   map_frame = node->declare_parameter<std::string>("map_frame", map_frame);
   invert_map_tf = node->declare_parameter<bool>("invert_map_tf", invert_map_tf);
@@ -179,8 +182,8 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
       node->declare_parameter<double>("density_threshold", slam_config.closure_detector.density_threshold));
   slam_config.closure_detector.hamming_distance_threshold = static_cast<int>(node->declare_parameter<std::int64_t>(
       "hamming_distance_threshold", slam_config.closure_detector.hamming_distance_threshold));
-  slam_config.closure_detector.inliers_threshold = static_cast<std::size_t>(node->declare_parameter<std::int64_t>(
-      "inliers_threshold", static_cast<std::int64_t>(slam_config.closure_detector.inliers_threshold)));
+  slam_config.closure_detector.inliers_threshold = static_cast<int>(
+      node->declare_parameter<std::int64_t>("inliers_threshold", slam_config.closure_detector.inliers_threshold));
   slam_config.closure_detector.no_of_sub_maps_to_skip = static_cast<int>(node->declare_parameter<std::int64_t>(
       "no_of_sub_maps_to_skip", slam_config.closure_detector.no_of_sub_maps_to_skip));
 
@@ -195,27 +198,25 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
       node->declare_parameter<double>("closure_info_scale", slam_config.pose_graph.closure_info_scale);
   slam_config.pose_graph.closure_kernel_delta =
       node->declare_parameter<double>("closure_kernel_delta", slam_config.pose_graph.closure_kernel_delta);
+  slam_config.pose_graph.gravity_info_scale =
+      node->declare_parameter<double>("gravity_info_scale", slam_config.pose_graph.gravity_info_scale);
 
   slam = std::make_unique<core::SLAM>(slam_config, sub_map_builder->config.voxel_map);
 }
 
-OptionalPose BaseNode::resolve_base_T_lidar(const std_msgs::msg::Header& scan_header) {
-  if (base_T_lidar) {
-    return base_T_lidar;
+OptionalPose BaseNode::resolve_extrinsic(const std_msgs::msg::Header& header, const tf2::Duration timeout) {
+  if (base_frame == header.frame_id) {
+    return Sophus::SE3f{};
   }
-  if (base_frame == scan_header.frame_id) {
-    base_T_lidar = Sophus::SE3f{};
-    return base_T_lidar;
-  }
-  base_T_lidar = rko_lio::ros::utils::get_transform(tf_buffer, scan_header.frame_id, base_frame,
-                                                    to_ns(scan_header.stamp), tf_lookup_timeout);
-  if (base_T_lidar) {
-    RCLCPP_INFO_STREAM(node->get_logger(), "Resolved " << base_frame << " <- " << scan_header.frame_id);
+  const OptionalPose pose = rko_lio::ros::utils::get_transform(
+      tf_buffer, header.frame_id, base_frame, to_ns(header.stamp), timeout, /*warn_when_unavailable=*/false);
+  if (pose) {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resolved " << base_frame << " <- " << header.frame_id);
   } else {
     RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
-                                "Waiting for extrinsic " << base_frame << " <- " << scan_header.frame_id);
+                                "Waiting for extrinsic " << base_frame << " <- " << header.frame_id);
   }
-  return base_T_lidar;
+  return pose;
 }
 
 void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) {
@@ -229,8 +230,10 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
   if (base_frame.empty()) {
     base_frame = msg->header.frame_id;
   }
-  const OptionalPose extrinsic = resolve_base_T_lidar(msg->header);
-  if (!extrinsic) {
+  if (!base_T_lidar) {
+    base_T_lidar = resolve_extrinsic(msg->header, tf_lookup_timeout);
+  }
+  if (!base_T_lidar) {
     ++scans_dropped;
     return;
   }
@@ -246,7 +249,7 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
       return;
     }
     scan.points = rko_lio::ros::utils::point_cloud2_to_eigen(msg);
-    transform_points(*extrinsic, scan.points);
+    transform_points(*base_T_lidar, scan.points);
     scan.odom_T_base = *odom_T_base;
     scan.end_time = to_ns(msg->header.stamp);
   } else {
@@ -273,7 +276,7 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
       return;
     }
 
-    transform_points(*extrinsic, points_lidar);
+    transform_points(*base_T_lidar, points_lidar);
 
     if (timestamps.max > timestamps.min) {
       // Constant-velocity deskewing to scan-end.
@@ -302,6 +305,44 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
     }
     closure_task = std::async(std::launch::async, &BaseNode::process_closure, this, std::move(*finished));
   }
+}
+
+void BaseNode::imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr& msg) {
+  using rko_lio::ros::utils::ros_xyz_to_eigen_vector;
+  if (base_frame.empty()) {
+    return;
+  }
+  if (msg->header.frame_id.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
+                                "dropping imu message: header.frame_id is empty, cannot resolve the extrinsic");
+    return;
+  }
+  if (!base_T_imu) {
+    base_T_imu = resolve_extrinsic(msg->header, tf2::Duration::zero());
+  }
+  if (!base_T_imu) {
+    return;
+  }
+  const core::Nsec stamp = to_ns(msg->header.stamp);
+  const Sophus::SO3f& base_R_imu = base_T_imu->so3();
+  const Eigen::Vector3f lever_arm = -base_T_imu->translation();
+  const Eigen::Vector3f angular_velocity = base_R_imu * ros_xyz_to_eigen_vector(msg->angular_velocity);
+  // rko_lio's lever-arm threshold, a 5000 Hz IMU
+  constexpr std::chrono::microseconds kMinAngularAccelerationInterval{200};
+  Eigen::Vector3f angular_acceleration = Eigen::Vector3f::Zero();
+  if (previous_imu_sample && std::chrono::abs(stamp - previous_imu_sample->time) >= kMinAngularAccelerationInterval) {
+    angular_acceleration = (angular_velocity - previous_imu_sample->angular_velocity) /
+                           rko_lio::core::to_seconds<float>(stamp - previous_imu_sample->time);
+  }
+  const core::ImuSample sample{
+      .time = stamp,
+      .angular_velocity = angular_velocity,
+      .specific_force = (base_R_imu * ros_xyz_to_eigen_vector(msg->linear_acceleration)) +
+                        angular_acceleration.cross(lever_arm) +
+                        angular_velocity.cross(angular_velocity.cross(lever_arm)),
+  };
+  previous_imu_sample = sample;
+  sub_map_builder->add_imu_sample(sample);
 }
 
 void BaseNode::process_closure(core::FinishedSubMap finished) {
@@ -415,6 +456,7 @@ void BaseNode::write_run_config(const std::string_view extra) const {
       << std::format("lidar_timestamps.multiplier_to_seconds: {}\n", timestamps_config.multiplier_to_seconds)
       << "lidar_timestamps.force_absolute: " << timestamps_config.force_absolute << '\n'
       << "lidar_timestamps.force_relative: " << timestamps_config.force_relative << '\n'
+      << "imu_topic: " << imu_topic << '\n'
       << sub_map_builder->config.to_yaml() << slam->config.closure_detector.to_yaml()
       << std::format("overlap_threshold: {}\n", slam->config.closure_overlap_threshold)
       << slam->config.pose_graph.to_yaml() << "publish_sub_maps: " << publish_sub_maps << '\n'
@@ -460,7 +502,7 @@ void BaseNode::publish_keypose_graph_markers(const std::shared_ptr<const core::K
 
   auto odom_edges = make_marker(header, "pose_graph_edges_odom", 1, Marker::LINE_LIST, 0.3, 0.95F, 0.5F, 0.1F);
   auto closure_edges = make_marker(header, "pose_graph_edges_closure", 2, Marker::LINE_LIST, 0.9, 0.95F, 0.1F, 0.1F);
-  for (const auto& edge : slam->pose_graph.edges()) {
+  for (const auto& edge : slam->pose_graph.se3_edges()) {
     auto& bucket = core::is_closure_pair(edge.from_id, edge.to_id) ? closure_edges : odom_edges;
     bucket.points.push_back(pose_to_point(keyposes->map_T_keypose.at(edge.from_id)));
     bucket.points.push_back(pose_to_point(keyposes->map_T_keypose.at(edge.to_id)));
@@ -508,6 +550,7 @@ void BaseNode::dump_results_to_disk() {
 
   RCLCPP_INFO_STREAM(node->get_logger(),
                      "sub_maps=" << slam->sub_maps.size() << " closures=" << slam->pose_graph.num_closure_edges()
+                                 << " gravity_edges=" << slam->pose_graph.gravity_edges().size()
                                  << " scans_processed=" << scans_processed << " scans_dropped=" << scans_dropped);
 }
 

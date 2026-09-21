@@ -52,7 +52,7 @@ public:
   // Not concurrent with process_finished_sub_map.
   void save_run_artifacts(const std::filesystem::path& dir, const std::string_view run_name) const;
 
-  const Config config;
+  Config config;
   PoseGraph pose_graph;
   ClosureDetector closure_detector;
   // Finished sub-maps, indexed by id.

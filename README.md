@@ -25,17 +25,18 @@
 
 rko_slam is a ROS2 LiDAR-inertial SLAM system. It runs on top of a LiDAR-inertial odometry. An odometry tells you how
 you moved, and over a long enough run its estimate drifts: come back to a place you have been before and the two visits
-do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR, recognizes the revisit, and corrects
-the whole trajectory behind you. You keep the odometry as it is, and you additionally get a `map <- odom` correction on
-TF, a pose graph, and the sub-maps the system built along the way.
+do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR and IMU, recognizes the revisit, and
+corrects the whole trajectory behind you. You keep the odometry as it is, and you additionally get a `map <- odom`
+correction on TF, a pose graph, and the sub-maps the system built along the way.
 
 The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry package,
 which is also a build dependency. At run time any odometry that publishes `odom <- base` on TF and is locally consistent
-will do, wheel odometry included.
+will do - LiDAR-only odometry, wheel odometry, whatever you already run. The IMU is optional as well: leave `imu_topic`
+unset and rko_slam runs on the LiDAR alone.
 
-The same detector works across runs, not just within one, as an offline step. Give it the run directories of several
-sessions of the same place - different days, different directions, whatever - and it finds where they overlap and solves
-all of them into one frame.
+The same revisit detector works across runs, not just within one, as an offline step. Give it the run directories of
+several sessions of the same place - different days, different directions, whatever - and it finds where they overlap
+and solves all of them into one frame.
 
 <p align="center">
   <picture>
@@ -73,14 +74,14 @@ lists every parameter with its documentation, and anything you leave unset keeps
 Online, next to a running rko_lio, consuming its deskewed scan:
 
 ```bash
-ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan rviz:=true
+ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu rviz:=true
 ```
 
 Offline, self-draining a bag, with the odometry from the bag's own `/tf`, and writing the run to disk:
 
 ```bash
 ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
-  lidar_topic:=/rko_lio/deskewed_scan dump_results:=true
+  lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu dump_results:=true
 ```
 
 Multi-session alignment of the run directories those runs wrote:
@@ -95,9 +96,10 @@ TUM file, what a run writes to disk, every parameter and what it does, and how t
 
 ## Acknowledgments and Citation
 
-This work is essentially a reimplementation of [KISS-SLAM](https://github.com/PRBonn/kiss-slam) but for ROS2. And relies
-on my lidar inertial odometry package [rko_lio](https://github.com/PRBonn/rko_lio) for much of the internals. This was
-developed as part of my thesis work.
+This work was developed as part of my thesis (published soon), and much of it is inspired by
+[KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2.
+rko_slam also relies heavily on [rko_lio](https://github.com/PRBonn/rko_lio), my lidar inertial odometry package, for
+much of its internals.
 
 If you find this package useful, consider leaving a star ⭐ here and on KISS-SLAM, and citing the original publication:
 

@@ -96,6 +96,11 @@ configurable_parameters = [
         "description": "Deskew the input scan here, from its per-point timestamps and the odom TF. Leave false for /rko_lio/deskewed_scan, which is already deskewed to scan-end time",
     },
     {
+        "name": "imu_topic",
+        "default": "",
+        "description": "IMU topic. Its accelerometer gives each sub-map a measured up direction that levels the map; unset, no IMU is used",
+    },
+    {
         "modes": ("online",),
         "name": "tf_lookup_timeout_ms",
         "default": "80",

@@ -24,6 +24,8 @@ struct SubMap {
   // Per-voxel mean and normal, index-aligned with each other; the closure refinement's ICP target.
   std::vector<Eigen::Vector3f> centroids;
   std::vector<Eigen::Vector3f> normals;
+  // Gravity's reaction in the keypose frame (m/s², expected length g).
+  std::optional<Eigen::Vector3f> measured_up;
 };
 
 struct FinishedSubMap {

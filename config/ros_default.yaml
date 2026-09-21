@@ -11,6 +11,7 @@
 # invert_map_tf: false  # odometry_and_slam.launch.py sets it to rko_lio's invert_odom_tf and refuses it
 # deskew: false  # leave false when the odometry already publishes a deskewed cloud and you consume that.
 #                 odometry_and_slam.launch.py sets it false and refuses it as an argument
+# imu_topic: <unset, no IMU>  # odometry_and_slam.launch.py sets it to rko_lio's imu_topic and refuses it
 # lidar_timestamps.multiplier_to_seconds: 0.0
 # lidar_timestamps.force_absolute: false
 # lidar_timestamps.force_relative: false
@@ -41,6 +42,7 @@
 # rotation_info_scale: 100.0
 # closure_info_scale: 1.0
 # closure_kernel_delta: 1.0
+# gravity_info_scale: 100.0
 # max_iterations: 10
 #
 # --- rviz ---

@@ -4,6 +4,7 @@ add_library(rko_slam::core ALIAS rko_slam.core)
 target_sources(
   rko_slam.core
   PRIVATE closure.cpp
+          edges.cpp
           pose_graph.cpp
           run_artifacts.cpp
           slam.cpp
@@ -13,6 +14,7 @@ target_sources(
          HEADERS
          FILES
          closure.hpp
+         edges.hpp
          pose_graph.hpp
          run_artifacts.hpp
          slam.hpp
