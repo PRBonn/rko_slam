@@ -17,8 +17,10 @@
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rko_lio/core/process_timestamps.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
+#include <tf2/time.hpp>
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -36,6 +38,7 @@ public:
 
   std::string lidar_topic;
   std::string base_frame;
+  std::string imu_topic;
 
   std::string odom_frame{"odom"};
   std::string map_frame{"map"};
@@ -55,6 +58,8 @@ public:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr keypose_graph_pub;
 
   std::optional<Sophus::SE3f> base_T_lidar;
+  std::optional<Sophus::SE3f> base_T_imu;
+  std::optional<core::ImuSample> previous_imu_sample;
   std::atomic<core::Nsec> latest_scan_time{core::Nsec{0}};
   std::size_t scans_processed = 0;
   std::size_t scans_dropped = 0;
@@ -85,10 +90,12 @@ public:
   BaseNode& operator=(const BaseNode&) = delete;
   BaseNode& operator=(BaseNode&&) = delete;
 
-  std::optional<Sophus::SE3f> resolve_base_T_lidar(const std_msgs::msg::Header& scan_header);
+  std::optional<Sophus::SE3f> resolve_extrinsic(const std_msgs::msg::Header& header, const tf2::Duration timeout);
 
   // sub-map integration; a sealed sub-map is handed to `closure_task`.
   void lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg);
+
+  void imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr& msg);
 
   // Runs on `closure_task`: the closure search, the pose-graph update and everything published off the result.
   void process_closure(core::FinishedSubMap finished);

@@ -32,7 +32,7 @@ public:
     float density_map_resolution = 0.5F;
     float density_threshold = 0.05F;
     int hamming_distance_threshold = 50;
-    std::size_t inliers_threshold = 5;
+    int inliers_threshold = 5;
     int no_of_sub_maps_to_skip = 3;
 
     // icp search distance fixed based on the map
@@ -56,10 +56,11 @@ public:
   std::vector<ClosureCandidate> query_all(const KeyposeId keypose_id, const std::vector<Eigen::Vector3f>& points);
 
 private:
+  Config config;
+
   // the PIMPL
   std::unique_ptr<map_closures::MapClosures> detector;
 
-  std::size_t inliers_threshold;
   // Upstream needs a dense, monotonic-from-0 id stream and caller keypose ids can have gaps, so it is fed a
   // private dense id and the returned candidate ids are translated back.
   std::vector<KeyposeId> local_to_global;

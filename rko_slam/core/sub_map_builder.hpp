@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -13,6 +14,13 @@
 #include "rko_slam/core/voxel_hash_map.hpp"
 
 namespace rko_slam::core {
+
+// In the base frame (rad/s, m/s²).
+struct ImuSample {
+  Nsec time{0};
+  Eigen::Vector3f angular_velocity = Eigen::Vector3f::Zero();
+  Eigen::Vector3f specific_force = Eigen::Vector3f::Zero();
+};
 
 // Owns one live sub-map, integrated in its keypose-relative frame and keyposed at its first-scan odom pose.
 class SubMapBuilder {
@@ -36,12 +44,23 @@ public:
                                                 const Nsec end_time,
                                                 const Sophus::SE3f& odom_T_base);
 
+  // Kept until the live sub-map closes; dropped when none is open.
+  void add_imu_sample(const ImuSample& sample) {
+    if (live) {
+      live->imu_samples.push_back(sample);
+    }
+  }
+
   // empty if no scan ever arrived
   std::optional<FinishedSubMap> finalize();
 
   Config config;
   KeyposeId next_id = 0;
-  std::optional<SubMap> live;
+  struct LiveSubMap {
+    SubMap sub_map;
+    std::vector<ImuSample> imu_samples;
+  };
+  std::optional<LiveSubMap> live;
   VoxelHashMap voxel_map;
 };
 

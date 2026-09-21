@@ -33,7 +33,14 @@ SLAM::process_finished_sub_map(std::unique_ptr<SubMap> sub_map, const std::vecto
   UTL_PROFILER_SCOPE("SLAM::process_finished_sub_map");
   if (sub_maps.empty()) {
     pose_graph.add_keypose(sub_map->id, sub_map->odom_T_keypose.cast<double>());
-    pose_graph.set_keypose_fixed(sub_map->id, true);
+    if (sub_map->measured_up) {
+      pose_graph.add_gauge_edge(sub_map->id);
+    } else {
+      // nothing else anchors the graph yet, and the solve is singular without an anchor
+      pose_graph.set_keypose_fixed(sub_map->id, true);
+      spdlog::warn("no gravity measurement in the first sub-map: holding its keypose fixed until one arrives. "
+                   "running rko_slam without an IMU is a suboptimal way to run it");
+    }
   }
 
   sub_maps.push_back(std::move(sub_map));
@@ -44,6 +51,15 @@ SLAM::process_finished_sub_map(std::unique_ptr<SubMap> sub_map, const std::vecto
         (just_finished.odom_T_keypose.inverse() * *just_finished.odom_T_next_keypose).cast<double>();
     pose_graph.add_keypose(just_finished.id + 1, pose_graph.get_keypose(just_finished.id) * keypose_T_next_keypose);
     pose_graph.add_odom_edge(just_finished.id, just_finished.id + 1, keypose_T_next_keypose);
+  }
+  if (just_finished.measured_up) {
+    const KeyposeId first_id = sub_maps.front()->id;
+    if (pose_graph.is_keypose_fixed(first_id)) {
+      // gravity observes roll and pitch from here on, and a fully fixed keypose would fight those edges
+      pose_graph.set_keypose_fixed(first_id, false);
+      pose_graph.add_gauge_edge(first_id);
+    }
+    pose_graph.add_gravity_edge(just_finished.id, just_finished.measured_up->cast<double>());
   }
 
   std::optional<std::pair<KeyposeId, KeyposeId>> accepted;
@@ -92,7 +108,7 @@ void SLAM::save_run_artifacts(const std::filesystem::path& dir, const std::strin
   }
 
   std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> closures;
-  for (const auto& edge : pose_graph.edges()) {
+  for (const auto& edge : pose_graph.se3_edges()) {
     if (is_closure_pair(edge.from_id, edge.to_id)) {
       closures.emplace_back(pose_graph.get_keypose(edge.from_id).translation().cast<float>(),
                             pose_graph.get_keypose(edge.to_id).translation().cast<float>());

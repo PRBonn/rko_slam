@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: PRBonn/rko_lio
-          ref: 48ca72a34acc38d31ae5eccb6ed70c748fccb0f0
+          ref: 2865c1cff98eacb1e2270c36eb97f3e2684a51e8
           path: src/rko_lio
       - name: Keep apt archives for the cache
         run: |

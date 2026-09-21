@@ -15,15 +15,15 @@ TEST_CASE("pose_graph: a closure edge is removed by its id pair, the odom chain 
   pose_graph.add_odom_edge(0, 1, Sophus::SE3d{});
   pose_graph.add_odom_edge(1, 2, Sophus::SE3d{});
   pose_graph.add_closure_edge(0, 2, Sophus::SE3d{});
-  REQUIRE(pose_graph.edges().size() == 3);
+  REQUIRE(pose_graph.se3_edges().size() == 3);
   REQUIRE(pose_graph.num_closure_edges() == 1);
 
   pose_graph.remove_closure_edge(0, 1);
   pose_graph.remove_closure_edge(1, 2);
   pose_graph.remove_closure_edge(2, 0);
-  REQUIRE(pose_graph.edges().size() == 3);
+  REQUIRE(pose_graph.se3_edges().size() == 3);
 
   pose_graph.remove_closure_edge(0, 2);
-  REQUIRE(pose_graph.edges().size() == 2);
+  REQUIRE(pose_graph.se3_edges().size() == 2);
   REQUIRE(pose_graph.num_closure_edges() == 0);
 }

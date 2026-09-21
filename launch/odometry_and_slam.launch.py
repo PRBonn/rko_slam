@@ -24,6 +24,7 @@ rko_lio_odometry = load_module(rko_lio_launch / "odometry.launch.py")
 
 FORCED = {
     "lidar_topic": "rko_lio's deskewed scan topic",
+    "imu_topic": "rko_lio's imu_topic",
     "deskew": "false, since that scan is already deskewed",
     "invert_map_tf": "rko_lio's invert_odom_tf",
 }
@@ -120,6 +121,7 @@ def launch_setup(context, *args, **kwargs):
         **given,
         **{name: odom_params[name] for name in SHARED if name in odom_params},
         "lidar_topic": rko_lio_value(odom_params, "deskewed_scan_topic"),
+        "imu_topic": rko_lio_value(odom_params, "imu_topic"),
         "deskew": False,
         "invert_map_tf": rko_lio_value(odom_params, "invert_odom_tf"),
     }

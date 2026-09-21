@@ -64,6 +64,14 @@ the ones worth changing first are `splitting_distance` and `overlap_threshold`.
   publishes a deskewed cloud and you consume that, which is the case with `/rko_lio/deskewed_scan`.
   `odometry_and_slam.launch.py` sets it false and refuses it as an argument.
 
+- **imu_topic**
+
+  The `sensor_msgs/Imu` topic, the same IMU your odometry reads. Its accelerometer gives each sub-map a measured up
+  direction and the pose graph levels the map with it, see {doc}`How it works <how_it_works>`. Its frame must be
+  connected to `base_frame` by a static transform on TF. `slam.launch.py` still runs without it, without the gravity
+  edges, which is a suboptimal way to run rko_slam. `odometry_and_slam.launch.py` always sets it to rko_lio's
+  `imu_topic` and refuses it as an argument.
+
 - **tf_lookup_timeout_ms** (`int`, online only, default `80`)
 
   How long a TF lookup blocks before the scan is dropped, both the odometry and the static
@@ -97,22 +105,23 @@ the ones worth changing first are `splitting_distance` and `overlap_threshold`.
 
 ## Finding a revisit
 
-These shape how a candidate revisit is found. They can be left at their defaults; the knob that decides what is accepted
-is `overlap_threshold` below.
+These shape how a candidate revisit is found, and can be left at their defaults.
 
 - **density_map_resolution** (`float`, default `0.5`), **density_threshold** (`float`, default `0.05`)
 
-  Each sub-map is turned into a top-down density image, and places are recognized in that image. The cell size and how
-  occupied a cell must be to count. Not the first knobs to reach for.
+  Each sub-map is turned into a top-down image, one cell per `density_map_resolution` metres, and places are recognized
+  in that image. `density_threshold` is how full a cell must be, against the fullest cell of the same sub-map, to show
+  up in that image at all.
 
 - **hamming_distance_threshold** (`int`, default `50`)
 
-  How different two places may look and still be called a match. Lower is stricter. Not the first knob to reach for
-  either.
+  How different two places may look and still be called a match, on a scale of 0 to 256: 0 accepts only identical ones.
+  Lower is stricter.
 
 - **inliers_threshold** (`int`, default `5`)
 
-  How many matched points must agree before a candidate closure is checked properly, with the refinement below.
+  How many matched features between the two sub-maps must agree on the same alignment for the candidate to be worth
+  refining. Fewer than this and it is dropped.
 
 - **no_of_sub_maps_to_skip** (`int`, default `3`)
 
@@ -135,9 +144,8 @@ These can be left at their defaults.
 
 - **rotation_info_scale** (`float`, default `100.0`)
 
-  Each pose-graph edge is weighted by a block-diagonal information matrix with isotropic translation and rotation
-  blocks. This is the fixed multiple the rotation block is set to, accounting for the scale difference between the
-  metre-scale translation and radian-scale rotation residuals.
+  How much the optimizer trusts the rotation of a pose-graph edge against its translation. Higher holds the rotation of
+  the odometry and closure edges more rigidly.
 
 - **closure_info_scale** (`float`, default `1.0`)
 
@@ -148,9 +156,14 @@ These can be left at their defaults.
   Closures that disagree with the rest of the graph by more than this many metres are given less weight rather than
   believed.
 
+- **gravity_info_scale** (`float`, default `100.0`)
+
+  How much the optimizer trusts each sub-map's measured up direction against the rest of the graph. Only used with an
+  `imu_topic`, and in multi-session alignment of runs that had one.
+
 - **max_iterations** (`int`, default `10`)
 
-  Most optimizer iterations at each split.
+  The optimizer runs at most this many iterations at each split.
 
 ## Output
 
@@ -162,7 +175,7 @@ These can be left at their defaults.
 - **dump_sub_maps** (`bool`, default `true`)
 
   Also write each sub-map under `<run>/sub_maps/`, which multi-session alignment needs. Ignored when `dump_results` is
-  off. On a long run this adds up, at a rate the sub-map parameters set.
+  off. On a long run this can lead to significant disk usage.
 
 - **results_dir** (default `results`), **run_name** (default `rko_slam` online, the bag's name offline)
 
@@ -178,10 +191,10 @@ These can be left at their defaults.
 
 - **rviz** (`bool`, default `false`), **rviz_config_file** (default `config/default.rviz`)
 
-  Launch RViz alongside. With the default config, the launch file customises it for this run: your frames, plus
-  rko_lio's deskewed scan under `odometry_and_slam.launch.py` and its local map when rko_lio publishes one, and it turns
-  the three publishers above on. Any other config is passed to RViz unchanged and you can configure the behaviour as
-  desired.
+  Launch RViz alongside. With the default config, the launch file sets this run's frames in it and turns the three
+  publishers above on. Under `odometry_and_slam.launch.py` it also shows rko_lio's deskewed scan and its local map; with
+  your own `rko_lio_config_file`, the local map shows only if that file publishes one. Any other RViz config is passed
+  through unchanged, with nothing forced on.
 
 ## odometry_and_slam.launch.py only
 
@@ -207,9 +220,9 @@ These can be left at their defaults.
 
 `align.launch.py` reads the run directories and nothing live, so none of the input, mode, output or visualization
 parameters above apply. The sub-map parameters come from each run's dumped config, and all runs must agree on
-`voxel_size` and `max_points_per_voxel`. What it takes is the [Finding a revisit](#finding-a-revisit),
-[Accepting a closure](#accepting-a-closure) and [Pose graph](#pose-graph) parameters with the same defaults,
-`config_file` and `log_level`, and:
+`voxel_size` and `max_points_per_voxel`. It takes the [Finding a revisit](#finding-a-revisit),
+[Accepting a closure](#accepting-a-closure) and [Pose graph](#pose-graph) parameters with the same defaults, plus
+`config_file`, `log_level` and:
 
 - **run_dirs** (required)
 
@@ -221,9 +234,8 @@ parameters above apply. The sub-map parameters come from each run's dumped confi
 
 - **no_of_sub_maps_to_skip** (`int`, default `0`)
 
-  Zero here, since neighbouring sub-maps from different sessions are real candidates. Settable, like every parameter on
-  this page.
+  Zero here, since neighbouring sub-maps from different sessions are real candidates.
 
 - **max_iterations** (`int`, default `100`)
 
-  Most optimizer iterations over the merged graph.
+  The optimizer runs at most this many iterations over the merged graph.

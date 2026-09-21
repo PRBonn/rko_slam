@@ -20,6 +20,7 @@
 #include <rko_lio/ros/utils/time.hpp>
 #include <rko_lio/ros/utils/transforms.hpp>
 #include <rosbag2_storage/serialized_bag_message.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <spdlog/spdlog.h>
 #include <std_msgs/msg/float32_multi_array.hpp>
@@ -50,6 +51,7 @@ public:
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr bag_progress_pub;
 
   rclcpp::Serialization<sensor_msgs::msg::PointCloud2> lidar_serializer;
+  rclcpp::Serialization<sensor_msgs::msg::Imu> imu_serializer;
   std::size_t odom_trajectory_cursor = 0;
   std::size_t scans_skipped_out_of_trajectory = 0;
 
@@ -76,21 +78,25 @@ public:
                                                  << odom_trajectory.back().time.count() << "ns]");
     }
 
-    bag = std::make_unique<rko_lio::ros::utils::BufferableBag>(bag_path, std::vector<std::string>{lidar_topic},
-                                                               tf_buffer, tf2::durationFromSec(0.0),
+    std::vector<std::string> topics{lidar_topic};
+    if (!imu_topic.empty()) {
+      topics.push_back(imu_topic);
+    }
+    bag = std::make_unique<rko_lio::ros::utils::BufferableBag>(bag_path, topics, tf_buffer, tf2::durationFromSec(0.0),
                                                                std::chrono::seconds(1), !odom_tum_path);
     RCLCPP_INFO_STREAM(node->get_logger(),
-                       "rko_slam_offline opened " << bag_path << " (" << bag->message_count() << " lidar msgs)");
+                       "rko_slam_offline opened " << bag_path << " (" << bag->message_count() << " msgs)");
 
     total_bag_msgs = bag->message_count();
     bag_start_time = std::chrono::steady_clock::now();
     bag_progress_pub = node->create_publisher<std_msgs::msg::Float32MultiArray>("rko_slam/bag_progress", 10);
 
     RCLCPP_INFO_STREAM(
-        node->get_logger(), node->get_name()
-                                << " up. lidar=" << lidar_topic << " base=" << base_frame << " odom=" << odom_frame
-                                << " map=" << map_frame << " run_dir="
-                                << (run_output ? run_output->dir.string() : std::string{"<dump_results is false>"}));
+        node->get_logger(),
+        node->get_name() << " up. lidar=" << lidar_topic
+                         << " imu=" << (imu_topic.empty() ? std::string{"<unset>"} : imu_topic)
+                         << " base=" << base_frame << " odom=" << odom_frame << " map=" << map_frame << " run_dir="
+                         << (run_output ? run_output->dir.string() : std::string{"<dump_results is false>"}));
   }
 
   ~OfflineNode() {
@@ -124,6 +130,13 @@ public:
     }
 
     lidar_callback(cloud_msg);
+  }
+
+  void dispatch_imu_message(const rosbag2_storage::SerializedBagMessage& bag_msg) {
+    const auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
+    const rclcpp::SerializedMessage serialized(*bag_msg.serialized_data);
+    imu_serializer.deserialize_message(&serialized, imu_msg.get());
+    imu_callback(imu_msg);
   }
 
   void publish_bag_progress() const {
@@ -163,7 +176,11 @@ public:
       const rosbag2_storage::SerializedBagMessage bag_msg = bag->PopNextMessage();
       ++processed_bag_msgs;
       publish_bag_progress();
-      dispatch_lidar_message(bag_msg);
+      if (bag_msg.topic_name == lidar_topic) {
+        dispatch_lidar_message(bag_msg);
+      } else if (bag_msg.topic_name == imu_topic) {
+        dispatch_imu_message(bag_msg);
+      }
     }
 
     // The last closure publishes, and dump_results_to_disk's drain runs after shutdown has begun.

@@ -96,7 +96,7 @@ TEST_CASE("process_finished_sub_map: keyposes publication is atomic and monotoni
   REQUIRE(final_keyposes);
   REQUIRE(final_keyposes->map_T_keypose.size() == slam.sub_maps.size());
   rko_slam::core::KeyposeId highest_keypose_id = 0;
-  for (const auto& edge : slam.pose_graph.edges()) {
+  for (const auto& edge : slam.pose_graph.se3_edges()) {
     highest_keypose_id = std::max({highest_keypose_id, edge.from_id, edge.to_id});
   }
   REQUIRE(highest_keypose_id + 1 == slam.sub_maps.size());

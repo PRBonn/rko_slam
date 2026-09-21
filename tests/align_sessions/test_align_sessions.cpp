@@ -8,6 +8,7 @@
 #include <format>
 #include <fstream>
 #include <optional>
+#include <utility>
 
 #include <cmath>
 #include <filesystem>
@@ -97,7 +98,8 @@ std::vector<Eigen::Vector3f> pillar_world(const unsigned seed) {
 void write_session(const fs::path& run_dir,
                    const std::vector<std::vector<Eigen::Vector3f>>& clouds,
                    const std::vector<Sophus::SE3f>& keyposes,
-                   const std::int64_t t0_ns) {
+                   const std::int64_t t0_ns,
+                   const std::vector<std::optional<Eigen::Vector3f>>& measured_ups = {}) {
   REQUIRE(clouds.size() == keyposes.size());
   constexpr std::size_t kScansPerSubMap = 3;
 
@@ -118,6 +120,11 @@ void write_session(const fs::path& run_dir,
   pose_graph.set_keypose_fixed(0, true);
   for (std::size_t k = 0; k + 1 < keyposes.size(); ++k) {
     pose_graph.add_odom_edge(k, k + 1, (keyposes.at(k).inverse() * keyposes.at(k + 1)).cast<double>());
+  }
+  for (std::size_t k = 0; k < measured_ups.size(); ++k) {
+    if (measured_ups.at(k)) {
+      pose_graph.add_gravity_edge(k, measured_ups.at(k)->cast<double>());
+    }
   }
   const std::string stem = run_dir.filename().string();
   {
@@ -161,7 +168,7 @@ TEST_CASE("align: cloud-replay parity - dumped+reloaded clouds reproduce the clo
   const auto replay_candidates = replay.query_all(2, shared_back);
   REQUIRE(!replay_candidates.empty());
   REQUIRE(replay_candidates.front().source_id == 0);
-  REQUIRE(replay_candidates.front().number_of_inliers >= detector_config.inliers_threshold);
+  REQUIRE(std::cmp_greater_equal(replay_candidates.front().number_of_inliers, detector_config.inliers_threshold));
   fs::remove_all(dir);
 }
 
@@ -214,6 +221,45 @@ TEST_CASE("align: two sessions with a shared place align to the known offset", "
   const Sophus::SE3f expected_first = world_offset * b_keypose0;
   // closure residual scale, not exactness
   REQUIRE_THAT((tum_b.front().pose.inverse() * expected_first).log().norm(), Catch::Matchers::WithinAbs(0.0, 0.5));
+  fs::remove_all(dir);
+}
+
+TEST_CASE("align: the sub-maps' up directions level sessions recorded tilted", "[align_sessions]") {
+  const auto dir = temp_dir("gravity");
+  const std::vector<Eigen::Vector3f> shared = pillar_world(7);
+  // Session A's frame is `tilt` off the world about its first keypose; B is placed as in the two-session case.
+  const Sophus::SO3f tilt = Sophus::SO3f::rotX(0.1F) * Sophus::SO3f::rotY(-0.05F);
+  const Sophus::SE3f world_offset = yaw_xy(0.3, 25.0, -10.0);
+  const std::vector<Sophus::SE3f> a_keyposes{yaw_xy(0.0, 0.0, 0.0), yaw_xy(0.1, 50.0, 5.0)};
+  const Sophus::SE3f b_keypose0 = world_offset.inverse() * a_keyposes.at(1);
+  const std::vector<Sophus::SE3f> b_keyposes{b_keypose0, b_keypose0 * yaw_xy(-0.2, 40.0, 0.0)};
+  const auto up_in = [](const Sophus::SO3f& world_R_keypose) {
+    return Eigen::Vector3f(world_R_keypose.inverse() * Eigen::Vector3f::UnitZ());
+  };
+  const auto measured_ups_of = [&](const Sophus::SE3f& a_T_session, const std::vector<Sophus::SE3f>& keyposes) {
+    std::vector<std::optional<Eigen::Vector3f>> measured_ups;
+    measured_ups.reserve(keyposes.size());
+    for (const Sophus::SE3f& keypose : keyposes) {
+      measured_ups.emplace_back(9.81F * up_in(tilt * a_T_session.so3() * keypose.so3()));
+    }
+    return measured_ups;
+  };
+  write_session(dir / "a_0", {pillar_world(11), shared}, a_keyposes, 1'000'000'000LL,
+                measured_ups_of(Sophus::SE3f{}, a_keyposes));
+  write_session(dir / "b_0", {shared, pillar_world(23)}, b_keyposes, 2'000'000'000'000LL,
+                measured_ups_of(world_offset, b_keyposes));
+
+  const std::optional<AlignResult> aligned =
+      align(kDetector, kOverlapThreshold, kPoseGraph, {dir / "a_0", dir / "b_0"}, dir / "out", "aligned");
+  REQUIRE(aligned.has_value());
+  const AlignResult& result = *aligned;
+  REQUIRE(result.reference_session == 0);
+  const auto tum_a = read_tum(result.out_run_dir / (result.out_run_name + "_session_0_tum.txt"));
+  const auto tum_b = read_tum(result.out_run_dir / (result.out_run_name + "_session_1_tum.txt"));
+  REQUIRE((up_in(a_keyposes.at(0).so3()) - up_in(tilt)).norm() > 0.1F); // recorded tilted
+  CHECK((up_in(tum_a.front().pose.so3()) - up_in(tilt)).norm() < 0.01F);
+  CHECK((up_in(tum_b.front().pose.so3()) - up_in(tilt * world_offset.so3() * b_keypose0.so3())).norm() < 0.01F);
+  CHECK(tum_a.front().pose.translation().norm() < 1e-4F);
   fs::remove_all(dir);
 }
 

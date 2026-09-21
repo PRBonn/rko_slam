@@ -11,6 +11,8 @@
 #include <fstream>
 #include <random>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "rko_slam/core/pose_graph.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
@@ -78,7 +80,7 @@ TEST_CASE("run_artifacts: a saved pose graph loads back with its edges", "[run_a
   PoseGraph loaded(config);
   REQUIRE(loaded.load(dir / "g.g2o"));
   REQUIRE(loaded.num_keyposes() == 3);
-  const auto edges = loaded.edges();
+  const auto edges = loaded.se3_edges();
   REQUIRE(edges.size() == 3);
   std::size_t n_closure = 0;
   for (const auto& edge : edges) {
@@ -91,6 +93,33 @@ TEST_CASE("run_artifacts: a saved pose graph loads back with its edges", "[run_a
   REQUIRE(odom != edges.end());
   REQUIRE_THAT(((pose0.inverse() * pose1).inverse() * odom->from_T_to).log().norm(),
                Catch::Matchers::WithinAbs(0.0, 1e-6));
+  fs::remove_all(dir);
+}
+
+TEST_CASE("run_artifacts: a saved pose graph holds every edge it solved", "[run_artifacts]") {
+  const auto dir = temp_dir();
+  PoseGraph pose_graph{PoseGraph::Config{}};
+  const Sophus::SE3d pose1 = se3(0, 0, 0.1, 1.0, 0.0, 0.0);
+  pose_graph.add_keypose(0, Sophus::SE3d{});
+  pose_graph.add_keypose(1, pose1);
+  pose_graph.add_gauge_edge(0);
+  pose_graph.add_gravity_edge(0, Eigen::Vector3d::UnitZ());
+  pose_graph.add_gravity_edge(1, Eigen::Vector3d::UnitZ());
+  pose_graph.add_odom_edge(0, 1, pose1);
+  REQUIRE(pose_graph.save(dir / "g.g2o"));
+
+  std::ifstream file(dir / "g.g2o");
+  std::vector<std::string> tags_and_ids;
+  for (std::string line; std::getline(file, line);) {
+    tags_and_ids.push_back(line.substr(0, line.find(' ', line.find(' ') + 1)));
+  }
+  CHECK(tags_and_ids == std::vector<std::string>{"PARAMS_SE3OFFSET 0", "VERTEX_SE3:QUAT 0", "VERTEX_SE3:QUAT 1",
+                                                 "EDGE_SE3_PRIOR 0", "EDGE_GRAVITY 0", "EDGE_GRAVITY 1",
+                                                 "EDGE_SE3:QUAT 0"});
+  PoseGraph loaded{PoseGraph::Config{}};
+  REQUIRE(loaded.load(dir / "g.g2o"));
+  CHECK(loaded.se3_edges().size() == 1);
+  CHECK(loaded.gravity_edges().size() == 2);
   fs::remove_all(dir);
 }
 

@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <string>
 #include <tsl/robin_map.h>
+#include <utility>
 #include <vector>
 
 #include <UTL/profiler.hpp>
@@ -100,8 +101,7 @@ std::string ClosureDetector::Config::to_yaml() const {
 }
 
 ClosureDetector::ClosureDetector(const Config& detector_config)
-    : detector(std::make_unique<map_closures::MapClosures>(to_upstream(detector_config))),
-      inliers_threshold(detector_config.inliers_threshold) {}
+    : config(detector_config), detector(std::make_unique<map_closures::MapClosures>(to_upstream(config))) {}
 ClosureDetector::~ClosureDetector() = default;
 
 std::optional<ClosureCandidate> ClosureDetector::query(const KeyposeId keypose_id,
@@ -109,7 +109,7 @@ std::optional<ClosureCandidate> ClosureDetector::query(const KeyposeId keypose_i
   UTL_PROFILER_SCOPE("ClosureDetector::query");
   const int local_id = register_local_id(keypose_id);
   const map_closures::ClosureCandidate raw = detector->GetBestClosure(local_id, to_upstream_cloud(points));
-  if (raw.number_of_inliers < inliers_threshold) {
+  if (std::cmp_less(raw.number_of_inliers, config.inliers_threshold)) {
     return std::nullopt;
   }
   return from_upstream(raw, local_to_global);

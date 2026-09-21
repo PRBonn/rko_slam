@@ -31,6 +31,7 @@ public:
     double rotation_info_scale = 100.0;
     // Cauchy delta on closure edges, in metres; odom edges stay quadratic.
     double closure_kernel_delta = 1.0;
+    double gravity_info_scale = 100.0;
 
     std::string to_yaml() const;
   };
@@ -46,6 +47,7 @@ public:
   void add_keypose(const KeyposeId keypose_id, const Sophus::SE3d& pose);
 
   void set_keypose_fixed(const KeyposeId keypose_id, const bool fixed);
+  bool is_keypose_fixed(const KeyposeId keypose_id) const;
 
   Sophus::SE3d get_keypose(const KeyposeId keypose_id) const;
 
@@ -57,10 +59,15 @@ public:
 
   void remove_closure_edge(const KeyposeId from_id, const KeyposeId to_id);
 
+  // `measured_up` is in the keypose frame, of any length.
+  void add_gravity_edge(const KeyposeId keypose_id, const Eigen::Vector3d& measured_up);
+
+  void add_gauge_edge(const KeyposeId keypose_id);
+
   // Returns false if g2o throws or the graph has no edges.
   bool optimize();
 
-  // g2o text format: VERTEX_SE3:QUAT + EDGE_SE3:QUAT + FIX 0.
+  // g2o text format.
   bool save(const std::filesystem::path& path) const;
 
   bool load(const std::filesystem::path& path);
@@ -68,12 +75,18 @@ public:
   std::size_t num_keyposes() const;
   std::size_t num_closure_edges() const;
 
-  struct EdgeView {
+  struct Se3EdgeView {
     KeyposeId from_id;
     KeyposeId to_id;
     Sophus::SE3d from_T_to;
   };
-  std::vector<EdgeView> edges() const;
+  std::vector<Se3EdgeView> se3_edges() const;
+
+  struct GravityEdgeView {
+    KeyposeId keypose_id;
+    Eigen::Vector3d measured_up;
+  };
+  std::vector<GravityEdgeView> gravity_edges() const;
 
   // Chi2 at the current vertex configuration.
   double edge_chi2(const KeyposeId from_id, const KeyposeId to_id);
