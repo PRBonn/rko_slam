@@ -133,7 +133,7 @@ public:
   }
 
   void dispatch_imu_message(const rosbag2_storage::SerializedBagMessage& bag_msg) {
-    auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
+    const auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
     const rclcpp::SerializedMessage serialized(*bag_msg.serialized_data);
     imu_serializer.deserialize_message(&serialized, imu_msg.get());
     imu_callback(imu_msg);
