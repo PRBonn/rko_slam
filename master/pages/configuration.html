@@ -471,6 +471,13 @@ it to rko_lio’s <code class="docutils literal notranslate"><span class="pre">i
 publishes a deskewed cloud and you consume that, which is the case with <code class="docutils literal notranslate"><span class="pre">/rko_lio/deskewed_scan</span></code>.
 <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it false and refuses it as an argument.</p>
 </li>
+<li><p><strong>imu_topic</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">sensor_msgs/Imu</span></code> topic, the same IMU your odometry reads. Its accelerometer gives each sub-map a measured up
+direction and the pose graph levels the map with it, see <a class="reference internal" href="how_it_works.html"><span class="doc">How it works</span></a>. Its frame must be
+connected to <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> by a static transform on TF. <code class="docutils literal notranslate"><span class="pre">slam.launch.py</span></code> still runs without it, without the gravity
+edges, which is a suboptimal way to run rko_slam. <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> always sets it to rko_lio’s
+<code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> and refuses it as an argument.</p>
+</li>
 <li><p><strong>tf_lookup_timeout_ms</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, online only, default <code class="docutils literal notranslate"><span class="pre">80</span></code>)</p>
 <p>How long a TF lookup blocks before the scan is dropped, both the odometry and the static
 <code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">scan's</span> <span class="pre">frame</span></code>.</p>
@@ -504,19 +511,20 @@ the overlap check see the sub-map at this resolution.</p>
 </section>
 <section id="finding-a-revisit">
 <h2>Finding a revisit<a class="headerlink" href="#finding-a-revisit" title="Link to this heading">#</a></h2>
-<p>These shape how a candidate revisit is found. They can be left at their defaults; the knob that decides what is accepted
-is <code class="docutils literal notranslate"><span class="pre">overlap_threshold</span></code> below.</p>
+<p>These shape how a candidate revisit is found, and can be left at their defaults.</p>
 <ul>
 <li><p><strong>density_map_resolution</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>), <strong>density_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">0.05</span></code>)</p>
-<p>Each sub-map is turned into a top-down density image, and places are recognized in that image. The cell size and how
-occupied a cell must be to count. Not the first knobs to reach for.</p>
+<p>Each sub-map is turned into a top-down image, one cell per <code class="docutils literal notranslate"><span class="pre">density_map_resolution</span></code> metres, and places are recognized
+in that image. <code class="docutils literal notranslate"><span class="pre">density_threshold</span></code> is how full a cell must be, against the fullest cell of the same sub-map, to show
+up in that image at all.</p>
 </li>
 <li><p><strong>hamming_distance_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">50</span></code>)</p>
-<p>How different two places may look and still be called a match. Lower is stricter. Not the first knob to reach for
-either.</p>
+<p>How different two places may look and still be called a match, on a scale of 0 to 256: 0 accepts only identical ones.
+Lower is stricter.</p>
 </li>
 <li><p><strong>inliers_threshold</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">5</span></code>)</p>
-<p>How many matched points must agree before a candidate closure is checked properly, with the refinement below.</p>
+<p>How many matched features between the two sub-maps must agree on the same alignment for the candidate to be worth
+refining. Fewer than this and it is dropped.</p>
 </li>
 <li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">3</span></code>)</p>
 <p>How many of the most recent sub-maps to leave out of the search, so a sub-map does not match its own neighbours. Keep
@@ -541,9 +549,8 @@ false closures at 0.4, and 0.3 when merging sessions that barely overlap.</p>
 <p>These can be left at their defaults.</p>
 <ul>
 <li><p><strong>rotation_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
-<p>Each pose-graph edge is weighted by a block-diagonal information matrix with isotropic translation and rotation
-blocks. This is the fixed multiple the rotation block is set to, accounting for the scale difference between the
-metre-scale translation and radian-scale rotation residuals.</p>
+<p>How much the optimizer trusts the rotation of a pose-graph edge against its translation. Higher holds the rotation of
+the odometry and closure edges more rigidly.</p>
 </li>
 <li><p><strong>closure_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
 <p>How much the optimizer trusts closures against odometry. Above 1 trusts closures more.</p>
@@ -552,8 +559,12 @@ metre-scale translation and radian-scale rotation residuals.</p>
 <p>Closures that disagree with the rest of the graph by more than this many metres are given less weight rather than
 believed.</p>
 </li>
+<li><p><strong>gravity_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
+<p>How much the optimizer trusts each sub-map’s measured up direction against the rest of the graph. Only used with an
+<code class="docutils literal notranslate"><span class="pre">imu_topic</span></code>, and in multi-session alignment of runs that had one.</p>
+</li>
 <li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">10</span></code>)</p>
-<p>Most optimizer iterations at each split.</p>
+<p>The optimizer runs at most this many iterations at each split.</p>
 </li>
 </ul>
 </section>
@@ -566,7 +577,7 @@ believed.</p>
 </li>
 <li><p><strong>dump_sub_maps</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">true</span></code>)</p>
 <p>Also write each sub-map under <code class="docutils literal notranslate"><span class="pre">&lt;run&gt;/sub_maps/</span></code>, which multi-session alignment needs. Ignored when <code class="docutils literal notranslate"><span class="pre">dump_results</span></code> is
-off. On a long run this adds up, at a rate the sub-map parameters set.</p>
+off. On a long run this can lead to significant disk usage.</p>
 </li>
 <li><p><strong>results_dir</strong> (default <code class="docutils literal notranslate"><span class="pre">results</span></code>), <strong>run_name</strong> (default <code class="docutils literal notranslate"><span class="pre">rko_slam</span></code> online, the bag’s name offline)</p>
 <p>Where the run directory goes, and its name. A number is appended so nothing is overwritten.</p>
@@ -582,10 +593,10 @@ two-tone cloud on <code class="docutils literal notranslate"><span class="pre">r
 <code class="docutils literal notranslate"><span class="pre">rko_slam/keypose_graph</span></code>. For what that looks like, see <a class="reference internal" href="build_and_run.html#visualization"><span class="std std-ref">Visualization</span></a>.</p>
 </li>
 <li><p><strong>rviz</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>, default <code class="docutils literal notranslate"><span class="pre">false</span></code>), <strong>rviz_config_file</strong> (default <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>)</p>
-<p>Launch RViz alongside. With the default config, the launch file customises it for this run: your frames, plus
-rko_lio’s deskewed scan under <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> and its local map when rko_lio publishes one, and it turns
-the three publishers above on. Any other config is passed to RViz unchanged and you can configure the behaviour as
-desired.</p>
+<p>Launch RViz alongside. With the default config, the launch file sets this run’s frames in it and turns the three
+publishers above on. Under <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> it also shows rko_lio’s deskewed scan and its local map; with
+your own <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>, the local map shows only if that file publishes one. Any other RViz config is passed
+through unchanged, with nothing forced on.</p>
 </li>
 </ul>
 </section>
@@ -616,9 +627,9 @@ refused. Without the file, rko_lio configures itself with its
 <h2>Multi-session alignment<a class="headerlink" href="#multi-session-alignment" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> reads the run directories and nothing live, so none of the input, mode, output or visualization
 parameters above apply. The sub-map parameters come from each run’s dumped config, and all runs must agree on
-<code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code>. What it takes is the <a class="reference internal" href="#finding-a-revisit">Finding a revisit</a>,
-<a class="reference internal" href="#accepting-a-closure">Accepting a closure</a> and <a class="reference internal" href="#pose-graph">Pose graph</a> parameters with the same defaults,
-<code class="docutils literal notranslate"><span class="pre">config_file</span></code> and <code class="docutils literal notranslate"><span class="pre">log_level</span></code>, and:</p>
+<code class="docutils literal notranslate"><span class="pre">voxel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">max_points_per_voxel</span></code>. It takes the <a class="reference internal" href="#finding-a-revisit">Finding a revisit</a>,
+<a class="reference internal" href="#accepting-a-closure">Accepting a closure</a> and <a class="reference internal" href="#pose-graph">Pose graph</a> parameters with the same defaults, plus
+<code class="docutils literal notranslate"><span class="pre">config_file</span></code>, <code class="docutils literal notranslate"><span class="pre">log_level</span></code> and:</p>
 <ul>
 <li><p><strong>run_dirs</strong> (required)</p>
 <p>The run directories to merge, at least two, as a list: <code class="docutils literal notranslate"><span class="pre">run_dirs:=&quot;[results/run_1,</span> <span class="pre">results/run_2]&quot;</span></code>.</p>
@@ -627,11 +638,10 @@ parameters above apply. The sub-map parameters come from each run’s dumped con
 <p>Where the merged run goes, and its name. A number is appended so nothing is overwritten.</p>
 </li>
 <li><p><strong>no_of_sub_maps_to_skip</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">0</span></code>)</p>
-<p>Zero here, since neighbouring sub-maps from different sessions are real candidates. Settable, like every parameter on
-this page.</p>
+<p>Zero here, since neighbouring sub-maps from different sessions are real candidates.</p>
 </li>
 <li><p><strong>max_iterations</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, default <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
-<p>Most optimizer iterations over the merged graph.</p>
+<p>The optimizer runs at most this many iterations over the merged graph.</p>
 </li>
 </ul>
 </section>

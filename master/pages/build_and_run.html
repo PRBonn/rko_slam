@@ -453,10 +453,13 @@ parameter does is on the <a class="reference internal" href="configuration.html"
 </div>
 <section id="online">
 <h3>Online<a class="headerlink" href="#online" title="Link to this heading">#</a></h3>
-<p>Next to a running rko_lio, give rko_slam rko_lio’s deskewed scan:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan
+<p>Next to a running rko_lio, give rko_slam rko_lio’s deskewed scan and the IMU rko_lio reads:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan<span class="w"> </span>imu_topic:<span class="o">=</span>/your/imu
 </pre></div>
 </div>
+<p>The IMU levels the map: each sub-map gets a measured up direction and the pose graph pulls it onto gravity, see
+<a class="reference internal" href="how_it_works.html"><span class="doc">How it works</span></a>. The IMU’s frame has to be connected to <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> by a static transform on TF.
+Leaving <code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> unset still runs, without the gravity edges, which is a suboptimal way to run rko_slam.</p>
 <p>Add <code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> to open RViz with the default view: sub-maps, keypose graph and closures.</p>
 <p>To run the odometry too, use the other entrypoint, see <a class="reference internal" href="#running-rko-lio-with-it">Running rko_lio with it</a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>odometry_and_slam.launch.py
@@ -480,7 +483,7 @@ TF:</p>
 </section>
 <section id="offline">
 <h3>Offline<a class="headerlink" href="#offline" title="Link to this heading">#</a></h3>
-<p>Offline, the node self-drains a bag (every scan is processed faster than frame-rate if possible). The odometry comes
+<p>Offline, the node drains the bag as fast as it can process it, never waiting on message timestamps. The odometry comes
 from the bag’s own <code class="docutils literal notranslate"><span class="pre">/tf</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>rko_slam<span class="w"> </span>slam.launch.py<span class="w"> </span>mode:<span class="o">=</span>offline<span class="w"> </span>bag_path:<span class="o">=</span>/data/my_bag<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>lidar_topic:<span class="o">=</span>/rko_lio/deskewed_scan
@@ -526,10 +529,13 @@ only.</p>
 <tr class="row-odd"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code></p></td>
 <td><p>rko_lio’s deskewed scan topic</p></td>
 </tr>
-<tr class="row-even"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">deskew</span></code></p></td>
+<tr class="row-even"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">imu_topic</span></code></p></td>
+<td><p>rko_lio’s <code class="docutils literal notranslate"><span class="pre">imu_topic</span></code>, the IMU rko_lio reads</p></td>
+</tr>
+<tr class="row-odd"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">deskew</span></code></p></td>
 <td><p>false, that scan is already deskewed</p></td>
 </tr>
-<tr class="row-odd"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code></p></td>
+<tr class="row-even"><td><p>rko_slam’s <code class="docutils literal notranslate"><span class="pre">invert_map_tf</span></code></p></td>
 <td><p>rko_lio’s <code class="docutils literal notranslate"><span class="pre">invert_odom_tf</span></code>, so both publish in the same direction</p></td>
 </tr>
 </tbody>
@@ -537,10 +543,11 @@ only.</p>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">base_frame</span></code>, <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code> and <code class="docutils literal notranslate"><span class="pre">use_sim_time</span></code> are set once and passed to both nodes, so the two cannot disagree.
 Everything else is rko_slam’s, exactly as under <code class="docutils literal notranslate"><span class="pre">slam.launch.py</span></code>.</p>
-<p>rko_lio’s own settings, its raw <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> among them, come from <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>, used as it is
-apart from the values in the table above and the three shared ones. Without that file rko_lio configures itself with its
+<p>rko_lio’s own settings, its raw <code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> and <code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> among them, come from <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>. The file is
+used as it is, except for the values in the table above and the three shared ones, which override it. A file that sets
+<code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan:</span> <span class="pre">false</span></code> is refused. Without the file, rko_lio configures itself with its
 <a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection">autodetection</a>, waiting for the topics
-and TF to show up. A config file that sets <code class="docutils literal notranslate"><span class="pre">publish_deskewed_scan:</span> <span class="pre">false</span></code> is refused.</p>
+and TF to show up.</p>
 <p>For anything this does not allow, run rko_lio with its own launch file and rko_slam with <code class="docutils literal notranslate"><span class="pre">slam.launch.py</span></code>.</p>
 </section>
 </section>
@@ -550,7 +557,8 @@ and TF to show up. A config file that sets <code class="docutils literal notrans
 the scan’s frame, the <code class="docutils literal notranslate"><span class="pre">frame_id</span></code> of the <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>.</p>
 <p>The odometry is the pose of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> in <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>, read from TF at each scan’s timestamp. A static transform on
 TF connects <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the scan’s frame, and rko_slam reads it once, on the first scan, to transform every scan
-into <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> before adding it to the sub-maps.</p>
+into <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> before adding it to the sub-maps. With an IMU, another static transform connects <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the
+IMU’s frame, read once on the first IMU message after the first scan.</p>
 <p>Offline, <code class="docutils literal notranslate"><span class="pre">odom_tum_path</span></code> takes the odometry from a TUM file instead of the bag’s <code class="docutils literal notranslate"><span class="pre">/tf</span></code>. The file holds the pose of
 <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> in <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>.</p>
 <p>rko_slam publishes <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">odom_frame</span></code>, which makes <code class="docutils literal notranslate"><span class="pre">map_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> the SLAM estimate.</p>
@@ -568,11 +576,17 @@ into <code class="docutils literal notranslate"><span class="pre">base_frame</sp
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code>)</p></td>
 <td><p>the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> on TF</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/Imu</span></code>)</p></td>
+<td><p>the IMU whose accelerometer levels the map, the same one your odometry reads</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">odom_frame</span> <span class="pre">&lt;-</span> <span class="pre">base_frame</span></code> on TF</p></td>
 <td><p>the odometry, looked up at each scan’s timestamp</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">scan's</span> <span class="pre">frame</span></code> on TF</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">scan's</span> <span class="pre">frame</span></code> on TF</p></td>
 <td><p>static, read once on the first scan to bring every scan into <code class="docutils literal notranslate"><span class="pre">base_frame</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_frame</span> <span class="pre">&lt;-</span> <span class="pre">the</span> <span class="pre">IMU's</span> <span class="pre">frame</span></code> on TF</p></td>
+<td><p>static, read once on the first IMU message</p></td>
 </tr>
 </tbody>
 </table>
@@ -615,9 +629,9 @@ closure edges, as markers on <code class="docutils literal notranslate"><span cl
 <li><p><code class="docutils literal notranslate"><span class="pre">publish_closure_maps:=true</span></code>, each accepted closure as the two sub-maps it matched, one colour each, on
 <code class="docutils literal notranslate"><span class="pre">rko_slam/closure_maps</span></code>, so you can see what got matched to what.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns all three on and opens RViz with the default view, <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>, customised with your
-frames. Under <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> it also shows rko_lio’s deskewed scan, and its local map when rko_lio
-publishes one: <code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns that on for you unless <code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code> decides it. Pass your own config with
+<p><code class="docutils literal notranslate"><span class="pre">rviz:=true</span></code> turns all three on and opens RViz with the default view, <code class="docutils literal notranslate"><span class="pre">config/default.rviz</span></code>, set to your frames. Under
+<code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> it also shows rko_lio’s deskewed scan and its local map; with your own
+<code class="docutils literal notranslate"><span class="pre">rko_lio_config_file</span></code>, the local map shows only if that file publishes one. Pass your own config with
 <code class="docutils literal notranslate"><span class="pre">rviz_config_file:=</span></code> and it is used unchanged, with nothing forced on.</p>
 <figure>
   <img src="../_static/img/rviz_default_view.png" alt="RViz with the default view on an Oxford Spires sequence: sub-maps, the keypose graph with odometry and closure edges, and a two-tone closure map">
@@ -642,7 +656,7 @@ publishes one: <code class="docutils literal notranslate"><span class="pre">rviz
 <td><p>the keypose pose graph</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_config.yaml</span></code></p></td>
-<td><p>the config dumped for reproducibility</p></td>
+<td><p>the config the run used</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*_profile.txt</span></code></p></td>
 <td><p>profiling logs</p></td>
@@ -651,7 +665,7 @@ publishes one: <code class="docutils literal notranslate"><span class="pre">rviz
 <td><p>the trajectory as an image, loop closures in red</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sub_maps/sub_map_*.ply</span></code></p></td>
-<td><p>the sub-maps, one file each, in the frame of their keypose. Usable as a map for a localization system, and the input to <code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> (<code class="docutils literal notranslate"><span class="pre">dump_sub_maps</span></code>, on by default)</p></td>
+<td><p>the sub-maps, in the frame of their keypose. Usable as a map for a localization system, and the input to <code class="docutils literal notranslate"><span class="pre">align.launch.py</span></code> (<code class="docutils literal notranslate"><span class="pre">dump_sub_maps</span></code>, on by default)</p></td>
 </tr>
 </tbody>
 </table>
@@ -672,7 +686,7 @@ publishes one: <code class="docutils literal notranslate"><span class="pre">rviz
 <td><p>each session’s trajectory in the joint frame, <code class="docutils literal notranslate"><span class="pre">&lt;i&gt;</span></code> in <code class="docutils literal notranslate"><span class="pre">run_dirs</span></code> order</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*_config.yaml</span></code></p></td>
-<td><p>the config dumped for reproducibility, with the run directories</p></td>
+<td><p>the config the run used, with the run directories</p></td>
 </tr>
 </tbody>
 </table>
