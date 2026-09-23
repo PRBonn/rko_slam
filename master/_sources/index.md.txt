@@ -2,13 +2,13 @@
 myst:
   html_meta:
     description: >-
-      rko_slam is a ROS2 SLAM system on top of a LiDAR-inertial odometry: drift correction and
+      rko_slam is ROS2 LiDAR-inertial SLAM for your odometry: drift correction and
       multi-session alignment.
 ---
 
 # rko_slam
 
-**ROS2 SLAM on top of a LiDAR-inertial odometry: drift correction and multi-session alignment.**
+**ROS2 LiDAR-inertial SLAM for your odometry: drift correction and multi-session alignment.**
 
 <div class="pair">
   <figure><figcaption>rko_lio</figcaption><img class="only-dark" src="_static/img/loop_closing_odometry_dark.png" alt="a drive with the odometry alone"><img class="only-light" src="_static/img/loop_closing_odometry_light.png" alt="a drive with the odometry alone"></figure>
