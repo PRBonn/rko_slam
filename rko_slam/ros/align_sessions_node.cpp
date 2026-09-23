@@ -17,6 +17,7 @@
 
 #include "rko_slam/align_sessions/align_sessions.hpp"
 #include "rko_slam/core/closure.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 int main(int argc, char* const* argv) {
   rclcpp::init(argc, argv);
@@ -26,7 +27,7 @@ int main(int argc, char* const* argv) {
   logger->set_level(spdlog::level::trace);
   spdlog::set_default_logger(std::move(logger));
 
-  rko_slam::core::PoseGraph::Config pose_graph_config{.max_iterations = 100};
+  rko_slam::pgo::PoseGraph::Config pose_graph_config{.max_iterations = 100};
   rko_slam::core::ClosureDetector::Config detector_config{.no_of_sub_maps_to_skip = 0};
 
   const std::vector<std::string> run_dirs = node->declare_parameter<std::vector<std::string>>("run_dirs"); // required

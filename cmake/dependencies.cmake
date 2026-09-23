@@ -24,7 +24,6 @@ else()
 endif()
 
 # No usable system package exists for these, so they are fetched either way.
-include(${CMAKE_CURRENT_LIST_DIR}/dependencies/g2o/g2o.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies/map_closures/map_closures.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies/utl/utl.cmake)
 endblock()

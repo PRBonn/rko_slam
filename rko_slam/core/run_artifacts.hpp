@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <rko_lio/core/util.hpp>
 #include <filesystem>
 #include <sophus/se3.hpp>
 #include <string>
@@ -8,11 +9,16 @@
 #include <utility>
 #include <vector>
 
-#include "rko_slam/core/pose_graph.hpp"
-#include "rko_slam/core/types.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
 
 namespace rko_slam::core {
+
+using rko_lio::core::Nsec;
+
+struct TrajectorySample {
+  Nsec time{0};
+  Sophus::SE3f pose;
+};
 
 // Binary little-endian PLY, float32 xyz, in the cloud's own frame. Creates the parent directory.
 bool write_ply_xyz(const std::filesystem::path& path, const std::vector<Eigen::Vector3f>& points);

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <Eigen/Core>
@@ -13,6 +14,8 @@
 #include "rko_slam/core/voxel_hash_map.hpp"
 
 using rko_slam::core::fill_sub_map;
+using rko_slam::core::FinishedSubMap;
+using rko_slam::core::ImuSample;
 using rko_slam::core::Nsec;
 using rko_slam::core::SubMap;
 using rko_slam::core::SubMapBuilder;
@@ -167,4 +170,107 @@ TEST_CASE("SubMapBuilder: the splitting scan opens the next sub-map", "[sub_map]
   REQUIRE_THAT(static_cast<double>(sealed.at(0)->local_trajectory.front().translation().norm()), WithinAbs(0.0, 1e-6));
   REQUIRE_THAT(static_cast<double>(live.local_trajectory.front().translation().norm()), WithinAbs(0.0, 1e-6));
   REQUIRE(sealed.at(0)->local_trajectory.size() + live.local_trajectory.size() == 13);
+}
+
+namespace {
+
+constexpr float kGravity = 9.81F;
+constexpr std::int64_t kScanPeriod = 100'000'000;
+constexpr std::int64_t kSamplesPerScan = 10;
+
+} // namespace
+
+TEST_CASE("SubMapBuilder: up is gravity's reaction while the platform accelerates and turns", "[sub_map]") {
+  // 0.5 * |acceleration| * t^2 crosses 4 m at the 31st scan, which seals the first sub-map
+  const Sophus::SO3f odom_R_keypose = Sophus::SO3f::rotZ(0.4F) * Sophus::SO3f::rotY(0.1F);
+  const Eigen::Vector3f acceleration(0.8F, -0.3F, 0.1F);
+  const Eigen::Vector3f gravity_reaction(0.0F, 0.0F, kGravity);
+  constexpr float kYawRate = 0.5F;
+  const auto odom_R_base = [&](const std::int64_t nanoseconds) {
+    return odom_R_keypose * Sophus::SO3f::rotZ(kYawRate * 1e-9F * static_cast<float>(nanoseconds));
+  };
+
+  // each scan interval's samples arrive `delay` scans late, newest first
+  for (const std::int64_t delay : {0, 2}) {
+    CAPTURE(delay);
+    SubMapBuilder builder({.splitting_distance = 4.0F});
+    std::optional<Eigen::Vector3f> measured_up;
+    for (std::int64_t scan = 0; scan < 40 && !measured_up; ++scan) {
+      std::vector<ImuSample> samples;
+      for (std::int64_t index = kSamplesPerScan; index >= 1 && scan > delay; --index) {
+        const std::int64_t time = ((scan - delay - 1) * kScanPeriod) + (index * kScanPeriod / kSamplesPerScan);
+        samples.push_back(
+            {.time = Nsec{time}, .specific_force = odom_R_base(time).inverse() * (acceleration + gravity_reaction)});
+      }
+      const float time = 1e-9F * static_cast<float>(scan * kScanPeriod);
+      const Sophus::SE3f odom_T_base(odom_R_base(scan * kScanPeriod), 0.5F * acceleration * time * time);
+      for (const ImuSample& sample : samples) {
+        builder.add_imu_sample(sample);
+      }
+      if (auto finished = builder.add_to_live_map({}, Nsec{scan * kScanPeriod}, odom_T_base)) {
+        REQUIRE(finished->sub_map->scan_times.size() == 31);
+        measured_up = finished->sub_map->measured_up;
+        REQUIRE(measured_up.has_value());
+      }
+    }
+    REQUIRE(measured_up.has_value());
+    const Eigen::Vector3f expected = odom_R_keypose.inverse() * gravity_reaction;
+    CHECK((measured_up.value_or(Eigen::Vector3f::Zero()) - expected).norm() < 1e-3F);
+  }
+}
+
+TEST_CASE("SubMapBuilder: a run too short to split is still levelled, at finalize", "[sub_map]") {
+  const Sophus::SO3f odom_R_keypose = Sophus::SO3f::rotZ(0.4F) * Sophus::SO3f::rotY(0.1F);
+  const Eigen::Vector3f acceleration(0.8F, -0.3F, 0.1F);
+  const Eigen::Vector3f gravity_reaction(0.0F, 0.0F, kGravity);
+  constexpr float kYawRate = 0.5F;
+  const auto odom_R_base = [&](const std::int64_t nanoseconds) {
+    return odom_R_keypose * Sophus::SO3f::rotZ(kYawRate * 1e-9F * static_cast<float>(nanoseconds));
+  };
+
+  // 1000 m apart: the drive never reaches a split, so the only sub-map is the one finalize() closes
+  SubMapBuilder builder({.splitting_distance = 1000.0F});
+  for (std::int64_t scan = 0; scan < 20; ++scan) {
+    for (std::int64_t index = 1; index <= kSamplesPerScan && scan > 0; ++index) {
+      const std::int64_t time = ((scan - 1) * kScanPeriod) + (index * kScanPeriod / kSamplesPerScan);
+      builder.add_imu_sample(
+          {.time = Nsec{time}, .specific_force = odom_R_base(time).inverse() * (acceleration + gravity_reaction)});
+    }
+    const float time = 1e-9F * static_cast<float>(scan * kScanPeriod);
+    const Sophus::SE3f odom_T_base(odom_R_base(scan * kScanPeriod), 0.5F * acceleration * time * time);
+    REQUIRE(!builder.add_to_live_map({}, Nsec{scan * kScanPeriod}, odom_T_base).has_value());
+  }
+
+  const std::optional<FinishedSubMap> finished = builder.finalize();
+  REQUIRE(finished.has_value());
+  const std::optional<Eigen::Vector3f>& measured_up = finished->sub_map->measured_up;
+  REQUIRE(measured_up.has_value());
+  const Eigen::Vector3f expected = odom_R_keypose.inverse() * gravity_reaction;
+  CHECK((measured_up.value_or(Eigen::Vector3f::Zero()) - expected).norm() < 1e-3F);
+}
+
+TEST_CASE("SubMapBuilder: no up before the first scan, without samples, or inside one scan interval", "[sub_map]") {
+  const ImuSample at_or_before_the_first_scan{
+      .time = Nsec{0},
+      .specific_force = Eigen::Vector3f(0.0F, 0.0F, kGravity),
+  };
+
+  SubMapBuilder without_samples({.splitting_distance = 1.0F});
+  REQUIRE(!without_samples.add_to_live_map({}, Nsec{0}, Sophus::SE3f{}).has_value());
+  without_samples.add_imu_sample(at_or_before_the_first_scan);
+  bool has_up = true;
+  if (auto finished = without_samples.add_to_live_map({}, Nsec{1}, Sophus::SE3f::transX(2.0F))) {
+    has_up = finished->sub_map->measured_up.has_value();
+  }
+  CHECK(!has_up);
+
+  SubMapBuilder one_interval({.splitting_distance = 1000.0F});
+  one_interval.add_to_live_map({}, Nsec{0}, Sophus::SE3f{});
+  one_interval.add_imu_sample({.time = Nsec{5}, .specific_force = Eigen::Vector3f(0.0F, 0.0F, kGravity)});
+  one_interval.add_to_live_map({}, Nsec{10}, Sophus::SE3f{});
+  has_up = true;
+  if (auto finished = one_interval.finalize()) {
+    has_up = finished->sub_map->measured_up.has_value();
+  }
+  CHECK(!has_up);
 }

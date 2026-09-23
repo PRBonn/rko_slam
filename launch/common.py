@@ -57,9 +57,9 @@ CLOSURE_PARAMETERS = [
 POSE_GRAPH_PARAMETERS = [
     {
         "name": "rotation_info_scale",
-        "default": "100.0",
+        "default": "25.0",
         "type": "float",
-        "description": "How much more the optimizer trusts rotation than translation",
+        "description": "How much more the optimizer trusts rotation than translation; the square of the range at which the two cost the same",
     },
     {
         "name": "closure_info_scale",

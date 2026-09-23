@@ -11,7 +11,6 @@
 #include <Eigen/Core>
 
 #include "rko_slam/core/sub_map.hpp"
-#include "rko_slam/core/types.hpp"
 
 namespace map_closures {
 class MapClosures;
@@ -20,8 +19,8 @@ class MapClosures;
 namespace rko_slam::core {
 
 struct ClosureCandidate {
-  KeyposeId source_id = 0;
-  KeyposeId target_id = 0;
+  std::size_t source_id = 0;
+  std::size_t target_id = 0;
   Sophus::SE3f target_T_source;
   std::size_t number_of_inliers = 0;
 };
@@ -49,11 +48,13 @@ public:
   ClosureDetector(ClosureDetector&&) = delete;
   ClosureDetector& operator=(ClosureDetector&&) = delete;
 
+  // `keypose_id` is the index upstream numbers its maps by, so it has to arrive dense and monotonic from 0.
+
   // The top-inlier candidate with at least `config.inliers_threshold` inliers.
-  std::optional<ClosureCandidate> query(const KeyposeId keypose_id, const std::vector<Eigen::Vector3f>& points);
+  std::optional<ClosureCandidate> query(const std::size_t keypose_id, const std::vector<Eigen::Vector3f>& points);
 
   // Every candidate with its raw inlier count, unfiltered by inliers_threshold.
-  std::vector<ClosureCandidate> query_all(const KeyposeId keypose_id, const std::vector<Eigen::Vector3f>& points);
+  std::vector<ClosureCandidate> query_all(const std::size_t keypose_id, const std::vector<Eigen::Vector3f>& points);
 
 private:
   Config config;
@@ -61,10 +62,6 @@ private:
   // the PIMPL
   std::unique_ptr<map_closures::MapClosures> detector;
 
-  // Upstream needs a dense, monotonic-from-0 id stream and caller keypose ids can have gaps, so it is fed a
-  // private dense id and the returned candidate ids are translated back.
-  std::vector<KeyposeId> local_to_global;
-  int register_local_id(const KeyposeId global_id);
 };
 
 struct ClosureRefinement {

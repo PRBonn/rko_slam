@@ -18,10 +18,11 @@
 #include <string>
 
 #include "rko_slam/align_sessions/align_sessions.hpp"
+#include "rko_slam/pgo/io.hpp"
 #include "rko_slam/core/closure.hpp"
-#include "rko_slam/core/pose_graph.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
 #include "rko_slam/core/sub_map_builder.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 namespace fs = std::filesystem;
 using namespace rko_slam::core;
@@ -30,7 +31,7 @@ using rko_slam::align_sessions::AlignResult;
 
 namespace {
 
-const PoseGraph::Config kPoseGraph{.max_iterations = 100};
+const rko_slam::pgo::PoseGraph::Config kPoseGraph{.max_iterations = 100};
 const ClosureDetector::Config kDetector{.no_of_sub_maps_to_skip = 0};
 constexpr float kOverlapThreshold = ClosureRefinement::kDefaultOverlapThreshold;
 
@@ -113,19 +114,19 @@ void write_session(const fs::path& run_dir,
     }
   }
 
-  PoseGraph pose_graph{PoseGraph::Config{}};
-  for (std::size_t k = 0; k < keyposes.size(); ++k) {
-    pose_graph.add_keypose(k, keyposes.at(k).cast<double>());
+  rko_slam::pgo::PoseGraph pose_graph;
+  for (const Sophus::SE3f& keypose : keyposes) {
+    pose_graph.add_keypose(keypose.cast<double>());
   }
-  pose_graph.set_keypose_fixed(0, true);
   for (std::size_t k = 0; k + 1 < keyposes.size(); ++k) {
-    pose_graph.add_odom_edge(k, k + 1, (keyposes.at(k).inverse() * keyposes.at(k + 1)).cast<double>());
+    pose_graph.add_odometry_edge(k, k + 1, (keyposes.at(k).inverse() * keyposes.at(k + 1)).cast<double>());
   }
   for (std::size_t k = 0; k < measured_ups.size(); ++k) {
     if (measured_ups.at(k)) {
       pose_graph.add_gravity_edge(k, measured_ups.at(k)->cast<double>());
     }
   }
+  pose_graph.anchor_at(0);
   const std::string stem = run_dir.filename().string();
   {
     const VoxelHashMap::Config voxel_map = SubMapBuilder::Config{}.voxel_map;
@@ -133,7 +134,7 @@ void write_session(const fs::path& run_dir,
     config << std::format("voxel_size: {}\nmax_points_per_voxel: {}\n", voxel_map.voxel_size,
                           voxel_map.max_points_per_voxel);
   }
-  REQUIRE(pose_graph.save(run_dir / (stem + "_keypose_graph.g2o")));
+  REQUIRE(rko_slam::pgo::save(pose_graph, run_dir / (stem + "_keypose_graph.g2o")));
   REQUIRE(write_tum(run_dir / (stem + "_tum.txt"), tum));
 }
 
@@ -310,13 +311,13 @@ TEST_CASE("align: a second connected component is dropped whole", "[align_sessio
 
   std::ifstream joint(result.out_run_dir / (result.out_run_name + "_joint_keypose_graph.g2o"));
   std::size_t vertices = 0;
-  std::size_t edges = 0;
+  std::size_t pose_edges = 0;
   for (std::string line; std::getline(joint, line);) {
     vertices += static_cast<std::size_t>(line.starts_with("VERTEX_SE3"));
-    edges += static_cast<std::size_t>(line.starts_with("EDGE_SE3"));
+    pose_edges += static_cast<std::size_t>(line.starts_with("EDGE_SE3"));
   }
   REQUIRE(vertices == 4);
-  REQUIRE(edges == 3);
+  REQUIRE(pose_edges == 3);
   fs::remove_all(dir);
 }
 

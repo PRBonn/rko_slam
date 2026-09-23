@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <rko_lio/core/util.hpp>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -7,14 +9,15 @@
 #include <Eigen/Core>
 #include <sophus/se3.hpp>
 
-#include "rko_slam/core/types.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
 
 namespace rko_slam::core {
 
+using rko_lio::core::Nsec;
+
 // Point fields are in the keypose-relative frame; the map-frame keypose lives in the PoseGraph under `id`.
 struct SubMap {
-  KeyposeId id = 0;
+  std::size_t id = 0;
   Sophus::SE3f odom_T_keypose;
   // set only when a split sealed this one, so the trailing sub-map has none
   std::optional<Sophus::SE3f> odom_T_next_keypose;

@@ -3,7 +3,7 @@
 rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything locally
 consistent publishing `odom <- base`), reads the same IMU that odometry reads, and publishes a `map <- odom` correction.
 The pipeline is inspired by [KISS-SLAM](https://github.com/PRBonn/kiss-slam), uses
-[MapClosures](https://github.com/PRBonn/MapClosures) for detecting revisits, and a g2o pose graph.
+[MapClosures](https://github.com/PRBonn/MapClosures) for detecting revisits, and a pose graph.
 
 ## Sub-maps
 
@@ -51,7 +51,7 @@ the size of the smaller one, so 0 to 1. That is what `overlap_threshold` gates.
 ## Closing the loop
 
 The system inserts an accepted closure as a new edge, with a Cauchy robust kernel on it to down-weight inconsistent or
-outlier closures, and re-solves the graph immediately (Dogleg, Cholmod). The keyposes move, it rebuilds the trajectory
+outlier closures, and re-solves the graph immediately (Dogleg). The keyposes move, it rebuilds the trajectory
 from them and publishes the difference between where the odometry thinks you are and where the graph now says you are as
 `map <- odom`.
 

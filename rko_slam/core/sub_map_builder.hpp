@@ -10,7 +10,6 @@
 #include <sophus/se3.hpp>
 
 #include "rko_slam/core/sub_map.hpp"
-#include "rko_slam/core/types.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
 
 namespace rko_slam::core {
@@ -55,7 +54,7 @@ public:
   std::optional<FinishedSubMap> finalize();
 
   Config config;
-  KeyposeId next_id = 0;
+  std::size_t next_id = 0;
   struct LiveSubMap {
     SubMap sub_map;
     std::vector<ImuSample> imu_samples;

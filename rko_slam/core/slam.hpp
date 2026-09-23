@@ -13,29 +13,27 @@
 #include <vector>
 
 #include "rko_slam/core/closure.hpp"
-#include "rko_slam/core/pose_graph.hpp"
 #include "rko_slam/core/sub_map.hpp"
-#include "rko_slam/core/types.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 namespace rko_slam::core {
 
-// Index is the keypose id; `back()` is the live keypose.
+// Index is the keypose id; `back()` is the live keypose, and map_T_odom is its map_T_keypose * keypose_T_odom.
 struct Keyposes {
   std::vector<Sophus::SE3f> map_T_keypose;
-  std::vector<Sophus::SE3f> odom_T_keypose;
+  Sophus::SE3f map_T_odom;
 };
 
 class SLAM {
 public:
   struct Config {
-    PoseGraph::Config pose_graph = {};
+    pgo::PoseGraph::Config pose_graph = {};
     ClosureDetector::Config closure_detector = {};
     float closure_overlap_threshold = ClosureRefinement::kDefaultOverlapThreshold;
   };
 
-  // `voxel_map_config` must be the sub-map builder's.
-  SLAM(const Config slam_config, const VoxelHashMap::Config& voxel_map_config);
+  SLAM(const Config slam_config, float sub_map_voxel_size);
 
   SLAM(const SLAM&) = delete;
   SLAM& operator=(const SLAM&) = delete;
@@ -43,7 +41,7 @@ public:
   SLAM& operator=(SLAM&&) = delete;
   ~SLAM() = default;
 
-  std::optional<std::pair<KeyposeId, KeyposeId>> process_finished_sub_map(std::unique_ptr<SubMap> sub_map,
+  std::optional<std::pair<std::size_t, std::size_t>> process_finished_sub_map(std::unique_ptr<SubMap> sub_map,
                                                                           const std::vector<Eigen::Vector3f>& points);
 
   // Safe from any thread. nullptr until the first process_finished_sub_map.
@@ -52,14 +50,14 @@ public:
   // Not concurrent with process_finished_sub_map.
   void save_run_artifacts(const std::filesystem::path& dir, const std::string_view run_name) const;
 
-  Config config;
-  PoseGraph pose_graph;
+  const Config config;
+  pgo::PoseGraph pose_graph;
   ClosureDetector closure_detector;
   // Finished sub-maps, indexed by id.
   std::vector<std::unique_ptr<SubMap>> sub_maps;
 
 private:
-  VoxelHashMap::Config voxel_map_config;
+  float sub_map_voxel_size;
 
   void update_keyposes(const SubMap& just_finished);
 

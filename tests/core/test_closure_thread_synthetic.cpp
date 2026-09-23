@@ -40,7 +40,7 @@ TEST_CASE("process_finished_sub_map: keyposes publication is atomic and monotoni
   sub_map_config.voxel_map = {.voxel_size = 0.5F, .max_points_per_voxel = 20};
   rko_slam::core::SubMapBuilder builder(sub_map_config);
   const rko_slam::core::SLAM::Config slam_config;
-  rko_slam::core::SLAM slam(slam_config, sub_map_config.voxel_map);
+  rko_slam::core::SLAM slam(slam_config, sub_map_config.voxel_map.voxel_size);
 
   const auto cloud = cube_cloud(0.4F, 6);
 
@@ -95,8 +95,8 @@ TEST_CASE("process_finished_sub_map: keyposes publication is atomic and monotoni
   auto final_keyposes = slam.latest_keyposes();
   REQUIRE(final_keyposes);
   REQUIRE(final_keyposes->map_T_keypose.size() == slam.sub_maps.size());
-  rko_slam::core::KeyposeId highest_keypose_id = 0;
-  for (const auto& edge : slam.pose_graph.se3_edges()) {
+  std::size_t highest_keypose_id = 0;
+  for (const auto& edge : slam.pose_graph.pose_edges) {
     highest_keypose_id = std::max({highest_keypose_id, edge.from_id, edge.to_id});
   }
   REQUIRE(highest_keypose_id + 1 == slam.sub_maps.size());
