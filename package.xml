@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?><package format="3">
   <name>rko_slam</name>
   <version>0.0.1</version>
-  <description>ROS2 SLAM on top of a LiDAR-inertial odometry: drift correction and multi-session alignment</description>
+  <description>ROS2 LiDAR-inertial SLAM for your odometry: drift correction and multi-session alignment</description>
   <maintainer email="rm.meher97@gmail.com">Meher Malladi</maintainer>
   <license>MIT</license>
   <url type="website">https://prbonn.github.io/rko_slam/</url>
