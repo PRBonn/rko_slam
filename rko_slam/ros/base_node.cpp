@@ -38,8 +38,8 @@ using rko_lio::ros::utils::to_ns;
 using OptionalPose = std::optional<Sophus::SE3f>;
 
 std::size_t closure_count(const rko_slam::pgo::PoseGraph& pose_graph) {
-  return static_cast<std::size_t>(
-      std::ranges::count(pose_graph.pose_edges, rko_slam::pgo::PoseEdge::Kind::closure, &rko_slam::pgo::PoseEdge::kind));
+  return static_cast<std::size_t>(std::ranges::count(pose_graph.pose_edges, rko_slam::pgo::PoseEdge::Kind::closure,
+                                                     &rko_slam::pgo::PoseEdge::kind));
 }
 
 struct Scan {

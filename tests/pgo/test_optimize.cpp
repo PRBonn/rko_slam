@@ -151,7 +151,8 @@ TEST_CASE("pgo: a 20 km loop started 600 m off by heading drift converges to its
   PoseGraph pose_graph(Config{.max_iterations = 100});
   pose_graph.add_keypose(Sophus::SE3d{});
   pose_graph.anchor_at(0);
-  const auto measure = [&truth, &pose_graph](const std::size_t from_id, const std::size_t to_id, const PoseEdge::Kind kind) {
+  const auto measure = [&truth, &pose_graph](const std::size_t from_id, const std::size_t to_id,
+                                             const PoseEdge::Kind kind) {
     const Sophus::SE3d from_T_to = truth.at(from_id).inverse() * truth.at(to_id);
     if (kind == PoseEdge::Kind::closure) {
       pose_graph.add_closure_edge(from_id, to_id, from_T_to);

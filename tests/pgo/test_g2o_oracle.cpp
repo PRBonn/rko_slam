@@ -42,7 +42,8 @@ std::vector<Sophus::SE3d> loop_keyposes() {
 PoseGraph noisy_loop() {
   const std::vector<Sophus::SE3d> truth = loop_keyposes();
   PoseGraph pose_graph;
-  const auto measure = [&truth, &pose_graph](const std::size_t from_id, const std::size_t to_id, const PoseEdge::Kind kind) {
+  const auto measure = [&truth, &pose_graph](const std::size_t from_id, const std::size_t to_id,
+                                             const PoseEdge::Kind kind) {
     const auto phase = static_cast<double>(pose_graph.pose_edges.size());
     const Sophus::Vector6d noise =
         (Sophus::Vector6d() << 0.05 * std::sin(phase), 0.05 * std::cos(1.3 * phase), 0.03 * std::sin(2.1 * phase),

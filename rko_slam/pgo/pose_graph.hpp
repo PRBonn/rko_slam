@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstddef>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <sophus/se3.hpp>
 #include <string>
@@ -117,7 +117,7 @@ struct PoseGraph {
     double closure_kernel_delta = 1.0;
     // Weight on a measured up, per rad^2 of tilt.
     double gravity_info_scale = 100.0;
-  
+
     std::string to_yaml() const;
   };
 
@@ -142,7 +142,8 @@ struct PoseGraph {
   }
 
   void add_odometry_edge(const std::size_t from_id, const std::size_t to_id, const Sophus::SE3d& from_T_to) {
-    pose_edges.push_back({.from_id = from_id, .to_id = to_id, .from_T_to = from_T_to, .kind = PoseEdge::Kind::odometry});
+    pose_edges.push_back(
+        {.from_id = from_id, .to_id = to_id, .from_T_to = from_T_to, .kind = PoseEdge::Kind::odometry});
   }
 
   void add_closure_edge(const std::size_t from_id, const std::size_t to_id, const Sophus::SE3d& from_T_to) {

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <rko_lio/core/util.hpp>
 #include <filesystem>
+#include <rko_lio/core/util.hpp>
 #include <sophus/se3.hpp>
 #include <string>
 #include <string_view>

@@ -8,7 +8,6 @@
 
 #include <rko_lio/core/voxel_down_sample.hpp> // brings rko_lio::core::VoxelHash
 
-
 namespace rko_slam::core {
 
 struct VoxelHashMap {

@@ -41,8 +41,8 @@ public:
   SLAM& operator=(SLAM&&) = delete;
   ~SLAM() = default;
 
-  std::optional<std::pair<std::size_t, std::size_t>> process_finished_sub_map(std::unique_ptr<SubMap> sub_map,
-                                                                          const std::vector<Eigen::Vector3f>& points);
+  std::optional<std::pair<std::size_t, std::size_t>>
+  process_finished_sub_map(std::unique_ptr<SubMap> sub_map, const std::vector<Eigen::Vector3f>& points);
 
   // Safe from any thread. nullptr until the first process_finished_sub_map.
   std::shared_ptr<const Keyposes> latest_keyposes() const;

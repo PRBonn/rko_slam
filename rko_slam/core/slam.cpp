@@ -48,7 +48,8 @@ SLAM::process_finished_sub_map(std::unique_ptr<SubMap> sub_map, const std::vecto
   if (just_finished.odom_T_next_keypose) {
     const Sophus::SE3d keypose_T_next_keypose =
         (just_finished.odom_T_keypose.inverse() * *just_finished.odom_T_next_keypose).cast<double>();
-    const std::size_t next_id = pose_graph.add_keypose(pose_graph.keyposes.at(just_finished.id) * keypose_T_next_keypose);
+    const std::size_t next_id =
+        pose_graph.add_keypose(pose_graph.keyposes.at(just_finished.id) * keypose_T_next_keypose);
     pose_graph.add_odometry_edge(just_finished.id, next_id, keypose_T_next_keypose);
   }
   if (just_finished.measured_up) {

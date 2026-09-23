@@ -84,10 +84,10 @@ TEST_CASE("pgo: anchor Jacobians match central differences", "[pgo]") {
     // where it is held, and 1.2 rad off it, which is further than an anchor ever drifts
     for (const Sophus::SE3d& map_T_held : {keypose, keypose * pose_at(phase + 23.0, 1.2, 10.0)}) {
       const Anchor anchor{.keypose_id = 0, .map_T_held = map_T_held};
-      CHECK(worst_scaled_gap<Sophus::SE3d::DoF>(anchor.linearize({keypose}).jacobian,
-                                                [&](const Sophus::Vector6d& delta) {
-                                                  return anchor.error({keypose * Sophus::SE3d::exp(delta)});
-                                                }) < 1e-5);
+      CHECK(
+          worst_scaled_gap<Sophus::SE3d::DoF>(anchor.linearize({keypose}).jacobian, [&](const Sophus::Vector6d& delta) {
+            return anchor.error({keypose * Sophus::SE3d::exp(delta)});
+          }) < 1e-5);
     }
   }
 }

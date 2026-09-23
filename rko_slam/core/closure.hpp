@@ -61,7 +61,6 @@ private:
 
   // the PIMPL
   std::unique_ptr<map_closures::MapClosures> detector;
-
 };
 
 struct ClosureRefinement {

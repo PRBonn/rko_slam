@@ -178,8 +178,7 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
           throw rko_lio::core::InputError(
               std::format("sub-map {} of session {} or sub-map {} of session {} has no points; "
                           "the run dir they were read from is incomplete",
-                          source_index.sub_map, source_index.session, target_index.sub_map,
-                          target_index.session));
+                          source_index.sub_map, source_index.session, target_index.sub_map, target_index.session));
         }
         const core::ClosureRefinement refinement = core::refine_closure(
             voxel_map_config.voxel_size, max_correspondence_distance, source, target, candidate.target_T_source);
@@ -261,12 +260,11 @@ std::vector<std::optional<Sophus::SE3d>> anchor_sessions(const std::vector<Sessi
       if (world_T_session.at(next_session)) {
         continue;
       }
-      auto connecting = accepted_closures | std::views::filter([&](const InterSessionClosure& closure) {
-                          return (closure.source.session == placed.session_index &&
-                                  closure.target.session == next_session) ||
-                                 (closure.source.session == next_session &&
-                                  closure.target.session == placed.session_index);
-                        });
+      auto connecting =
+          accepted_closures | std::views::filter([&](const InterSessionClosure& closure) {
+            return (closure.source.session == placed.session_index && closure.target.session == next_session) ||
+                   (closure.source.session == next_session && closure.target.session == placed.session_index);
+          });
       const auto best = std::ranges::max_element(connecting, {}, &InterSessionClosure::inliers);
       if (best == std::ranges::end(connecting)) {
         continue;
@@ -336,8 +334,8 @@ JointGraph build_joint_graph(const std::vector<Session>& sessions,
     if (source_ids.empty() || target_ids.empty()) {
       continue;
     }
-    joint.pose_graph.add_closure_edge(source_ids.at(closure.source.sub_map),
-                                      target_ids.at(closure.target.sub_map), closure.refined_source_T_target);
+    joint.pose_graph.add_closure_edge(source_ids.at(closure.source.sub_map), target_ids.at(closure.target.sub_map),
+                                      closure.refined_source_T_target);
   }
   if (joint.pose_graph.gravity_edges.empty()) {
     spdlog::warn("no gravity edges in any aligned session. running rko_slam without an IMU is a suboptimal way to "
@@ -346,9 +344,8 @@ JointGraph build_joint_graph(const std::vector<Session>& sessions,
   return joint;
 }
 
-std::vector<core::TrajectorySample> deform_trajectory(const Session& session,
-                                                      const std::vector<std::size_t>& keypose_ids,
-                                                      const pgo::PoseGraph& joint) {
+std::vector<core::TrajectorySample>
+deform_trajectory(const Session& session, const std::vector<std::size_t>& keypose_ids, const pgo::PoseGraph& joint) {
   std::vector<core::TrajectorySample> world_trajectory;
   world_trajectory.reserve(session.tum.size());
   std::size_t row = 0;
@@ -357,8 +354,7 @@ std::vector<core::TrajectorySample> deform_trajectory(const Session& session,
     const Sophus::SE3f world_T_map =
         (joint.keyposes.at(keypose_ids.at(id)) * sub_map.map_T_keypose.inverse()).cast<float>();
     const bool last = id + 1 == session.sub_maps.size();
-    while (row < session.tum.size() &&
-           (last || session.tum.at(row).time < session.sub_maps.at(id + 1).keypose_time)) {
+    while (row < session.tum.size() && (last || session.tum.at(row).time < session.sub_maps.at(id + 1).keypose_time)) {
       world_trajectory.push_back({.time = session.tum.at(row).time, .pose = world_T_map * session.tum.at(row).pose});
       ++row;
     }
@@ -442,8 +438,8 @@ std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_c
       continue;
     }
     const fs::path tum_path = out_dir / std::format("{}_session_{}_tum.txt", resolved_name, session_index);
-    if (!core::write_tum(tum_path, deform_trajectory(sessions.at(session_index),
-                                                     joint.keypose_ids.at(session_index), joint.pose_graph))) {
+    if (!core::write_tum(tum_path, deform_trajectory(sessions.at(session_index), joint.keypose_ids.at(session_index),
+                                                     joint.pose_graph))) {
       spdlog::error("failed to write {}", tum_path.string());
     }
   }

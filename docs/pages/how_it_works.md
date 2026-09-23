@@ -51,8 +51,8 @@ the size of the smaller one, so 0 to 1. That is what `overlap_threshold` gates.
 ## Closing the loop
 
 The system inserts an accepted closure as a new edge, with a Cauchy robust kernel on it to down-weight inconsistent or
-outlier closures, and re-solves the graph immediately (Dogleg). The keyposes move, it rebuilds the trajectory
-from them and publishes the difference between where the odometry thinks you are and where the graph now says you are as
+outlier closures, and re-solves the graph immediately (Dogleg). The keyposes move, it rebuilds the trajectory from them
+and publishes the difference between where the odometry thinks you are and where the graph now says you are as
 `map <- odom`.
 
 ## Keeping the map level

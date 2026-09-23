@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstddef>
-#include <rko_lio/core/util.hpp>
 #include <memory>
 #include <optional>
+#include <rko_lio/core/util.hpp>
 #include <vector>
 
 #include <Eigen/Core>

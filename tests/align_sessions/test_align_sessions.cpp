@@ -18,10 +18,10 @@
 #include <string>
 
 #include "rko_slam/align_sessions/align_sessions.hpp"
-#include "rko_slam/pgo/io.hpp"
 #include "rko_slam/core/closure.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
 #include "rko_slam/core/sub_map_builder.hpp"
+#include "rko_slam/pgo/io.hpp"
 #include "rko_slam/pgo/pose_graph.hpp"
 
 namespace fs = std::filesystem;

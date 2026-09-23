@@ -45,9 +45,8 @@ Sophus::Matrix6d anchor_information(const PoseGraph& pose_graph) {
   Sophus::Matrix6d information = Sophus::Matrix6d::Zero();
   information.topLeftCorner<3, 3>() = kAnchorInformation * Eigen::Matrix3d::Identity();
   information.bottomRightCorner<3, 3>() =
-      kAnchorInformation * (pose_graph.gravity_edges.empty()
-                                ? Eigen::Matrix3d::Identity()
-                                : Eigen::Matrix3d(up_in_held * up_in_held.transpose()));
+      kAnchorInformation * (pose_graph.gravity_edges.empty() ? Eigen::Matrix3d::Identity()
+                                                             : Eigen::Matrix3d(up_in_held * up_in_held.transpose()));
   return information;
 }
 
@@ -180,8 +179,7 @@ dogleg_step(const Eigen::VectorXd& gauss_newton, const Eigen::VectorXd& steepest
 }
 
 // The keyposes moved by their own segments of the step.
-std::vector<Sophus::SE3d> stepped_keyposes(const std::vector<Sophus::SE3d>& keyposes,
-                                                  const Eigen::VectorXd& step) {
+std::vector<Sophus::SE3d> stepped_keyposes(const std::vector<Sophus::SE3d>& keyposes, const Eigen::VectorXd& step) {
   std::vector<Sophus::SE3d> moved;
   moved.reserve(keyposes.size());
   for (std::size_t keypose_id = 0; keypose_id < keyposes.size(); ++keypose_id) {
@@ -192,8 +190,7 @@ std::vector<Sophus::SE3d> stepped_keyposes(const std::vector<Sophus::SE3d>& keyp
 }
 
 // Ceres' parameter_tolerance test, on the [quaternion, translation] parameters.
-bool parameters_settled(const std::vector<Sophus::SE3d>& keyposes,
-                               const std::vector<Sophus::SE3d>& candidate) {
+bool parameters_settled(const std::vector<Sophus::SE3d>& keyposes, const std::vector<Sophus::SE3d>& candidate) {
   constexpr double kParameterTolerance = 1e-8;
 
   double parameters_squared = 0.0;
@@ -281,16 +278,14 @@ PoseGraph::Outcome PoseGraph::optimize() {
 
     const Eigen::VectorXd gauss_newton = solver.solve(-system.b);
     // The Cauchy point: the model's minimum along -b, at t = ||b||^2 / (b^T H b).
-    const Eigen::VectorXd steepest_descent =
-        -(system.b.squaredNorm() / system.b.dot(system.H * system.b)) * system.b;
+    const Eigen::VectorXd steepest_descent = -(system.b.squaredNorm() / system.b.dot(system.H * system.b)) * system.b;
 
     bool accepted = false;
     for (int trial = 0; trial < kMaxStepTrials; ++trial) {
       const Eigen::VectorXd step = dogleg_step(gauss_newton, steepest_descent, trust_region);
       std::vector<Sophus::SE3d> candidate = stepped_keyposes(keyposes, step);
       const double candidate_cost = robust_cost(*this, candidate);
-      if (parameters_settled(keyposes, candidate) ||
-          std::abs(cost - candidate_cost) <= kFunctionTolerance * cost) {
+      if (parameters_settled(keyposes, candidate) || std::abs(cost - candidate_cost) <= kFunctionTolerance * cost) {
         return Outcome::converged;
       }
       const double gain_ratio = (cost - candidate_cost) / predicted_gain(system, step);

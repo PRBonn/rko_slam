@@ -19,9 +19,9 @@
 namespace fs = std::filesystem;
 
 using Config = rko_slam::pgo::PoseGraph::Config;
-using rko_slam::pgo::PoseEdge;
 using rko_slam::pgo::GravityEdge;
 using rko_slam::pgo::load;
+using rko_slam::pgo::PoseEdge;
 using rko_slam::pgo::PoseGraph;
 using rko_slam::pgo::save;
 
@@ -125,8 +125,8 @@ TEST_CASE("pgo: a saved graph loads back with its poses and edge kinds", "[pgo]"
   REQUIRE(pose_edges.size() == 3);
   REQUIRE(std::ranges::count(pose_edges, PoseEdge::Kind::closure, &PoseEdge::kind) == 1);
   // The text holds six significant digits, so a pose comes back agreeing to ~1e-6, not to double epsilon.
-  const auto odom =
-      std::find_if(pose_edges.begin(), pose_edges.end(), [](const auto& edge) { return edge.from_id == 0 && edge.to_id == 1; });
+  const auto odom = std::find_if(pose_edges.begin(), pose_edges.end(),
+                                 [](const auto& edge) { return edge.from_id == 0 && edge.to_id == 1; });
   REQUIRE(odom != pose_edges.end());
   REQUIRE(((pose0.inverse() * pose1).inverse() * odom->from_T_to).log().norm() < 1e-5);
   fs::remove_all(dir);
