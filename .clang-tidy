@@ -9,10 +9,11 @@
 #   avoid-pragma-once                every compiler we target supports it
 #   template-virtual-member-function only fires inside rclcpp's own templates, never our code
 #   else-after-return                early return style is used deliberately
+#   security.ArrayBound              throws inside Eigen's sparse internals
 #   avoid-const-params-in-decls      a reader seeing a non-const parameter in a header assumes it is mutable;
 #                                    the compiler dropping it there is not a reason to stop saying it
 Checks: >
-  bugprone-*, clang-analyzer-*, concurrency-*, cppcoreguidelines-*, misc-*, modernize-*, performance-*, portability-*, readability-*, -bugprone-easily-swappable-parameters, -bugprone-exception-escape, -cppcoreguidelines-avoid-magic-numbers, -cppcoreguidelines-non-private-member-variables-in-classes, -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access, -cppcoreguidelines-pro-bounds-pointer-arithmetic, -misc-include-cleaner, -misc-non-private-member-variables-in-classes, -modernize-use-nodiscard, -modernize-use-ranges, -modernize-use-trailing-return-type, -portability-avoid-pragma-once, -portability-template-virtual-member-function, -readability-avoid-const-params-in-decls, -readability-else-after-return, -readability-magic-numbers
+  bugprone-*, clang-analyzer-*, concurrency-*, cppcoreguidelines-*, misc-*, modernize-*, performance-*, portability-*, readability-*, -bugprone-easily-swappable-parameters, -bugprone-exception-escape, -clang-analyzer-security.ArrayBound, -cppcoreguidelines-avoid-magic-numbers, -cppcoreguidelines-non-private-member-variables-in-classes, -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access, -cppcoreguidelines-pro-bounds-pointer-arithmetic, -misc-include-cleaner, -misc-non-private-member-variables-in-classes, -modernize-use-nodiscard, -modernize-use-ranges, -modernize-use-trailing-return-type, -portability-avoid-pragma-once, -portability-template-virtual-member-function, -readability-avoid-const-params-in-decls, -readability-else-after-return, -readability-magic-numbers
 
 HeaderFilterRegex: "rko_slam/.*\\.hpp$"
 # sophus formats assertions through fmt consteval strings, which clang's frontend rejects

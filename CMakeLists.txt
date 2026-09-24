@@ -20,6 +20,7 @@ find_package(rosbag2_storage REQUIRED CONFIG)
 
 include(cmake/dependencies.cmake)
 
+add_subdirectory(rko_slam/pgo)
 add_subdirectory(rko_slam/core)
 add_subdirectory(rko_slam/align_sessions)
 add_subdirectory(rko_slam/ros)

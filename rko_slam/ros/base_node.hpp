@@ -100,8 +100,7 @@ public:
   // Runs on `closure_task`: the closure search, the pose-graph update and everything published off the result.
   void process_closure(core::FinishedSubMap finished);
 
-  void
-  write_sub_map(const core::KeyposeId keypose_id, const core::Nsec keypose_time, std::vector<Eigen::Vector3f> points);
+  void write_sub_map(const std::size_t keypose_id, const core::Nsec keypose_time, std::vector<Eigen::Vector3f> points);
 
   // A closure's correction reaches tf on the scan after it.
   void broadcast_map_tf(const builtin_interfaces::msg::Time& stamp) const;

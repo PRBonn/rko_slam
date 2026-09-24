@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "rko_slam/core/closure.hpp"
-#include "rko_slam/core/pose_graph.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 namespace rko_slam::align_sessions {
 
@@ -28,7 +28,7 @@ struct AlignResult {
 // written in either case.
 std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_config,
                                  const float overlap_threshold,
-                                 const core::PoseGraph::Config& pose_graph_config,
+                                 const pgo::PoseGraph::Config& pose_graph_config,
                                  const std::vector<std::filesystem::path>& run_dirs,
                                  const std::filesystem::path& output_dir,
                                  const std::string_view run_name);

@@ -1,5 +1,7 @@
 #include "rko_slam/align_sessions/align_sessions.hpp"
 
+#include "rko_slam/pgo/io.hpp"
+
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
@@ -19,6 +21,7 @@
 #include "rko_slam/core/run_artifacts.hpp"
 #include "rko_slam/core/sub_map.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 namespace rko_slam::align_sessions {
 
@@ -28,25 +31,27 @@ namespace fs = std::filesystem;
 
 struct SessionSubMap {
   fs::path ply;
-  std::size_t n_scans = 0;
+  core::Nsec keypose_time{0};
   Sophus::SE3d map_T_keypose;
 };
 
 struct Session {
   fs::path run_dir;
   std::vector<SessionSubMap> sub_maps;
-  std::vector<core::PoseGraph::Se3EdgeView> se3_edges;
-  std::vector<core::PoseGraph::GravityEdgeView> gravity_edges;
+  std::vector<pgo::PoseEdge> pose_edges;
+  std::vector<pgo::GravityEdge> gravity_edges;
   std::vector<core::TrajectorySample> tum;
   core::VoxelHashMap::Config voxel_map_config;
-  core::KeyposeId global_id_offset = 0; // global id of this session's keypose 0
+};
+
+struct SubMapIndex {
+  std::size_t session = 0;
+  std::size_t sub_map = 0; // session-local
 };
 
 struct InterSessionClosure {
-  std::size_t source_session_index = 0;
-  std::size_t target_session_index = 0;
-  core::KeyposeId source_sub_map_id = 0; // session-local sub_map ids
-  core::KeyposeId target_sub_map_id = 0;
+  SubMapIndex source;
+  SubMapIndex target;
   std::size_t inliers = 0;
   Sophus::SE3d refined_source_T_target;
 };
@@ -88,47 +93,22 @@ Session load_session(const fs::path& run_dir) {
       .max_points_per_voxel = config["max_points_per_voxel"].as<unsigned int>(),
   };
 
-  core::PoseGraph keypose_graph{core::PoseGraph::Config{}};
-  const fs::path graph_path = run_dir / (stem + "_keypose_graph.g2o");
-  if (!keypose_graph.load(graph_path)) {
-    throw rko_lio::core::InputError(run_dir.string() + ": cannot read " + graph_path.filename().string());
-  }
-  if (keypose_graph.num_keyposes() != plys.size()) {
+  pgo::PoseGraph keypose_graph = pgo::load(run_dir / (stem + "_keypose_graph.g2o"));
+  if (keypose_graph.keyposes.size() != plys.size()) {
     throw rko_lio::core::InputError(std::format("{}: keypose graph has {} vertices but sub_maps/ has {} sub-maps",
-                                                run_dir.string(), keypose_graph.num_keyposes(), plys.size()));
+                                                run_dir.string(), keypose_graph.keyposes.size(), plys.size()));
   }
 
-  session.se3_edges = keypose_graph.se3_edges();
-  session.gravity_edges = keypose_graph.gravity_edges();
+  session.pose_edges = std::move(keypose_graph.pose_edges);
+  session.gravity_edges = std::move(keypose_graph.gravity_edges);
   session.tum = core::read_tum(run_dir / (stem + "_tum.txt"));
-
-  std::vector<std::size_t> keypose_rows;
-  keypose_rows.reserve(plys.size());
-  std::size_t row = 0;
-  for (std::size_t id = 0; id < plys.size(); ++id) {
-    const core::Nsec keypose_time = plys.at(id).first;
-    while (row < session.tum.size() && session.tum.at(row).time < keypose_time) {
-      ++row;
-    }
-    if (row == session.tum.size() || session.tum.at(row).time != keypose_time) {
-      throw rko_lio::core::InputError(std::format("{}: no TUM row at sub-map {}'s keypose time {} - artifacts are from "
-                                                  "different runs?",
-                                                  run_dir.string(), id, keypose_time.count()));
-    }
-    keypose_rows.push_back(row);
-  }
-  if (keypose_rows.front() != 0) {
-    throw rko_lio::core::InputError(
-        std::format("{}: {} TUM rows precede the first keypose", run_dir.string(), keypose_rows.front()));
-  }
 
   session.sub_maps.reserve(plys.size());
   for (std::size_t id = 0; id < plys.size(); ++id) {
-    const std::size_t end = (id + 1 < keypose_rows.size()) ? keypose_rows.at(id + 1) : session.tum.size();
     session.sub_maps.push_back({
         .ply = plys.at(id).second,
-        .n_scans = end - keypose_rows.at(id),
-        .map_T_keypose = keypose_graph.get_keypose(id),
+        .keypose_time = plys.at(id).first,
+        .map_T_keypose = keypose_graph.keyposes.at(id),
     });
   }
   return session;
@@ -136,7 +116,7 @@ Session load_session(const fs::path& run_dir) {
 
 std::unique_ptr<core::SubMap> rebuild_sub_map(const core::VoxelHashMap::Config& voxel_map_config,
                                               const std::vector<Eigen::Vector3f>& cloud,
-                                              const core::KeyposeId local_id) {
+                                              const std::size_t local_id) {
   core::VoxelHashMap voxel_map(voxel_map_config);
   voxel_map.add_points(cloud);
   auto sub_map = std::make_unique<core::SubMap>();
@@ -152,19 +132,17 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
                                                              const float overlap_threshold) {
   const float max_correspondence_distance = detector_config.correspondence_distance();
 
-  const auto session_of_global_id = [&](const core::KeyposeId global_id) -> std::size_t {
-    const auto first_starting_after = std::ranges::upper_bound(sessions, global_id, {}, &Session::global_id_offset);
-    return static_cast<std::size_t>(first_starting_after - sessions.begin()) - 1;
-  };
-
   core::ClosureDetector detector(detector_config);
-  std::unordered_map<core::KeyposeId, std::unique_ptr<core::SubMap>> cache;
-  const auto sub_map_for = [&](const std::size_t session_index, const core::KeyposeId local_id) -> const core::SubMap& {
-    const core::KeyposeId global_id = sessions.at(session_index).global_id_offset + local_id;
-    auto cached = cache.find(global_id);
+  // The detector numbers sub-maps in the order it is given them, so its id indexes this.
+  std::vector<SubMapIndex> registered;
+  std::unordered_map<std::size_t, std::unique_ptr<core::SubMap>> cache;
+  const auto sub_map_for = [&](const std::size_t detector_id) -> const core::SubMap& {
+    auto cached = cache.find(detector_id);
     if (cached == cache.end()) {
-      const fs::path& ply = sessions.at(session_index).sub_maps.at(local_id).ply;
-      cached = cache.emplace(global_id, rebuild_sub_map(voxel_map_config, core::read_ply_xyz(ply), local_id)).first;
+      const SubMapIndex index = registered.at(detector_id);
+      const fs::path& ply = sessions.at(index.session).sub_maps.at(index.sub_map).ply;
+      cached =
+          cache.emplace(detector_id, rebuild_sub_map(voxel_map_config, core::read_ply_xyz(ply), index.sub_map)).first;
     }
     return *cached->second;
   };
@@ -173,15 +151,17 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
   std::size_t candidates_considered = 0;
   std::size_t rejected_below_inliers = 0;
   std::size_t rejected_by_overlap = 0;
-  for (const Session& session : sessions) {
+  for (std::size_t session_index = 0; session_index < sessions.size(); ++session_index) {
+    const Session& session = sessions.at(session_index);
     for (std::size_t id = 0; id < session.sub_maps.size(); ++id) {
-      const core::KeyposeId global_id = session.global_id_offset + id;
+      const std::size_t detector_id = registered.size();
+      registered.push_back({.session = session_index, .sub_map = id});
       const std::vector<Eigen::Vector3f> cloud = core::read_ply_xyz(session.sub_maps.at(id).ply);
-      const std::vector<core::ClosureCandidate> candidates = detector.query_all(global_id, cloud);
+      const std::vector<core::ClosureCandidate> candidates = detector.query_all(detector_id, cloud);
       for (const auto& candidate : candidates) {
-        const std::size_t source_session_index = session_of_global_id(candidate.source_id);
-        const std::size_t target_session_index = session_of_global_id(candidate.target_id);
-        if (source_session_index == target_session_index) {
+        const SubMapIndex source_index = registered.at(candidate.source_id);
+        const SubMapIndex target_index = registered.at(candidate.target_id);
+        if (source_index.session == target_index.session) {
           continue; // intra-session: already an edge in that session's graph
         }
         ++candidates_considered;
@@ -189,20 +169,16 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
           ++rejected_below_inliers;
           continue;
         }
-        const core::KeyposeId source_sub_map_id =
-            candidate.source_id - sessions.at(source_session_index).global_id_offset;
-        const core::KeyposeId target_sub_map_id =
-            candidate.target_id - sessions.at(target_session_index).global_id_offset;
-        if (!cache.contains(global_id)) {
-          cache.emplace(global_id, rebuild_sub_map(voxel_map_config, cloud, id));
+        if (!cache.contains(detector_id)) {
+          cache.emplace(detector_id, rebuild_sub_map(voxel_map_config, cloud, id));
         }
-        const core::SubMap& source = sub_map_for(source_session_index, source_sub_map_id);
-        const core::SubMap& target = sub_map_for(target_session_index, target_sub_map_id);
+        const core::SubMap& source = sub_map_for(candidate.source_id);
+        const core::SubMap& target = sub_map_for(candidate.target_id);
         if (source.centroids.empty() || target.centroids.empty()) {
           throw rko_lio::core::InputError(
               std::format("sub-map {} of session {} or sub-map {} of session {} has no points; "
                           "the run dir they were read from is incomplete",
-                          source_sub_map_id, source_session_index, target_sub_map_id, target_session_index));
+                          source_index.sub_map, source_index.session, target_index.sub_map, target_index.session));
         }
         const core::ClosureRefinement refinement = core::refine_closure(
             voxel_map_config.voxel_size, max_correspondence_distance, source, target, candidate.target_T_source);
@@ -211,10 +187,8 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
           continue;
         }
         accepted_closures.push_back({
-            .source_session_index = source_session_index,
-            .target_session_index = target_session_index,
-            .source_sub_map_id = source_sub_map_id,
-            .target_sub_map_id = target_sub_map_id,
+            .source = source_index,
+            .target = target_index,
             .inliers = candidate.number_of_inliers,
             .refined_source_T_target = refinement.refined_target_T_source.cast<double>().inverse(),
         });
@@ -236,8 +210,8 @@ std::size_t session_reaching_most_others(const std::size_t n_sessions,
                                          const std::vector<InterSessionClosure>& accepted_closures) {
   std::vector<std::vector<std::size_t>> neighbours(n_sessions);
   for (const InterSessionClosure& closure : accepted_closures) {
-    neighbours.at(closure.source_session_index).push_back(closure.target_session_index);
-    neighbours.at(closure.target_session_index).push_back(closure.source_session_index);
+    neighbours.at(closure.source.session).push_back(closure.target.session);
+    neighbours.at(closure.target.session).push_back(closure.source.session);
   }
   std::vector<bool> reached(n_sessions, false);
   std::size_t best_start = 0;
@@ -286,28 +260,27 @@ std::vector<std::optional<Sophus::SE3d>> anchor_sessions(const std::vector<Sessi
       if (world_T_session.at(next_session)) {
         continue;
       }
-      auto connecting = accepted_closures | std::views::filter([&](const InterSessionClosure& closure) {
-                          return (closure.source_session_index == placed.session_index &&
-                                  closure.target_session_index == next_session) ||
-                                 (closure.source_session_index == next_session &&
-                                  closure.target_session_index == placed.session_index);
-                        });
+      auto connecting =
+          accepted_closures | std::views::filter([&](const InterSessionClosure& closure) {
+            return (closure.source.session == placed.session_index && closure.target.session == next_session) ||
+                   (closure.source.session == next_session && closure.target.session == placed.session_index);
+          });
       const auto best = std::ranges::max_element(connecting, {}, &InterSessionClosure::inliers);
       if (best == std::ranges::end(connecting)) {
         continue;
       }
       // stored source-to-target, but either end may be the already-placed session
-      const bool source_is_placed = best->source_session_index == placed.session_index;
-      const core::KeyposeId placed_sub_map_id = source_is_placed ? best->source_sub_map_id : best->target_sub_map_id;
-      const core::KeyposeId new_sub_map_id = source_is_placed ? best->target_sub_map_id : best->source_sub_map_id;
+      const bool source_is_placed = best->source.session == placed.session_index;
+      const SubMapIndex& placed_index = source_is_placed ? best->source : best->target;
+      const SubMapIndex& new_index = source_is_placed ? best->target : best->source;
       const Sophus::SE3d placed_keypose_T_new_keypose =
           source_is_placed ? best->refined_source_T_target : best->refined_source_T_target.inverse();
 
       const Sophus::SE3d world_T_placed_keypose =
-          placed.world_T_map * sessions.at(placed.session_index).sub_maps.at(placed_sub_map_id).map_T_keypose;
+          placed.world_T_map * sessions.at(placed_index.session).sub_maps.at(placed_index.sub_map).map_T_keypose;
       const Sophus::SE3d world_T_new_keypose = world_T_placed_keypose * placed_keypose_T_new_keypose;
       const Sophus::SE3d world_T_next_map =
-          world_T_new_keypose * sessions.at(next_session).sub_maps.at(new_sub_map_id).map_T_keypose.inverse();
+          world_T_new_keypose * sessions.at(new_index.session).sub_maps.at(new_index.sub_map).map_T_keypose.inverse();
       world_T_session.at(next_session) = world_T_next_map;
       to_visit.push_back({.session_index = next_session, .world_T_map = world_T_next_map});
     }
@@ -315,64 +288,75 @@ std::vector<std::optional<Sophus::SE3d>> anchor_sessions(const std::vector<Sessi
   return world_T_session;
 }
 
-std::unique_ptr<core::PoseGraph> build_joint_graph(const std::vector<Session>& sessions,
-                                                   const std::vector<std::optional<Sophus::SE3d>>& world_T_session,
-                                                   const std::vector<InterSessionClosure>& accepted_closures,
-                                                   const std::size_t reference,
-                                                   const core::PoseGraph::Config& pose_graph_config) {
-  auto joint = std::make_unique<core::PoseGraph>(pose_graph_config);
+struct JointGraph {
+  pgo::PoseGraph pose_graph;
+  // Indexed by session and then by that session's own sub-map id, giving its keypose in the joint graph. The inner
+  // vector is empty for a session that was dropped.
+  std::vector<std::vector<std::size_t>> keypose_ids;
+};
+
+JointGraph build_joint_graph(const std::vector<Session>& sessions,
+                             const std::vector<std::optional<Sophus::SE3d>>& world_T_session,
+                             const std::vector<InterSessionClosure>& accepted_closures,
+                             const std::size_t reference,
+                             const pgo::PoseGraph::Config& pose_graph_config) {
+  JointGraph joint{.pose_graph = pgo::PoseGraph(pose_graph_config)};
+  joint.keypose_ids.resize(sessions.size());
   for (std::size_t session_index = 0; session_index < sessions.size(); ++session_index) {
     const std::optional<Sophus::SE3d>& world_T_map = world_T_session.at(session_index);
     if (!world_T_map) {
       continue;
     }
     const Session& session = sessions.at(session_index);
-    for (std::size_t id = 0; id < session.sub_maps.size(); ++id) {
-      joint->add_keypose(session.global_id_offset + id, world_T_map.value() * session.sub_maps.at(id).map_T_keypose);
+    std::vector<std::size_t>& keypose_ids = joint.keypose_ids.at(session_index);
+    for (const SessionSubMap& sub_map : session.sub_maps) {
+      keypose_ids.push_back(joint.pose_graph.add_keypose(world_T_map.value() * sub_map.map_T_keypose));
     }
-    for (const core::PoseGraph::GravityEdgeView& gravity : session.gravity_edges) {
-      joint->add_gravity_edge(session.global_id_offset + gravity.keypose_id, gravity.measured_up);
+    if (session_index == reference) {
+      joint.pose_graph.anchor_at(keypose_ids.front());
     }
-    for (const core::PoseGraph::Se3EdgeView& edge : session.se3_edges) {
-      const core::KeyposeId from_id = session.global_id_offset + edge.from_id;
-      const core::KeyposeId to_id = session.global_id_offset + edge.to_id;
-      if (core::is_closure_pair(edge.from_id, edge.to_id)) {
-        joint->add_closure_edge(from_id, to_id, edge.from_T_to);
+    for (const pgo::PoseEdge& edge : session.pose_edges) {
+      const std::size_t from_id = keypose_ids.at(edge.from_id);
+      const std::size_t to_id = keypose_ids.at(edge.to_id);
+      if (edge.kind == pgo::PoseEdge::Kind::closure) {
+        joint.pose_graph.add_closure_edge(from_id, to_id, edge.from_T_to);
       } else {
-        joint->add_odom_edge(from_id, to_id, edge.from_T_to);
+        joint.pose_graph.add_odometry_edge(from_id, to_id, edge.from_T_to);
       }
+    }
+    for (const pgo::GravityEdge& gravity : session.gravity_edges) {
+      joint.pose_graph.add_gravity_edge(keypose_ids.at(gravity.keypose_id), gravity.measured_up);
     }
   }
   for (const InterSessionClosure& closure : accepted_closures) {
-    if (!world_T_session.at(closure.source_session_index) || !world_T_session.at(closure.target_session_index)) {
+    const std::vector<std::size_t>& source_ids = joint.keypose_ids.at(closure.source.session);
+    const std::vector<std::size_t>& target_ids = joint.keypose_ids.at(closure.target.session);
+    if (source_ids.empty() || target_ids.empty()) {
       continue;
     }
-    joint->add_closure_edge(sessions.at(closure.source_session_index).global_id_offset + closure.source_sub_map_id,
-                            sessions.at(closure.target_session_index).global_id_offset + closure.target_sub_map_id,
-                            closure.refined_source_T_target);
+    joint.pose_graph.add_closure_edge(source_ids.at(closure.source.sub_map), target_ids.at(closure.target.sub_map),
+                                      closure.refined_source_T_target);
   }
-  const core::KeyposeId reference_id = sessions.at(reference).global_id_offset;
-  if (!joint->gravity_edges().empty()) {
-    joint->add_gauge_edge(reference_id);
-  } else {
-    joint->set_keypose_fixed(reference_id, true);
+  if (joint.pose_graph.gravity_edges.empty()) {
     spdlog::warn("no gravity edges in any aligned session. running rko_slam without an IMU is a suboptimal way to "
                  "run it");
   }
   return joint;
 }
 
-std::vector<core::TrajectorySample> deform_trajectory(const Session& session, const core::PoseGraph& joint) {
+std::vector<core::TrajectorySample>
+deform_trajectory(const Session& session, const std::vector<std::size_t>& keypose_ids, const pgo::PoseGraph& joint) {
   std::vector<core::TrajectorySample> world_trajectory;
   world_trajectory.reserve(session.tum.size());
   std::size_t row = 0;
   for (std::size_t id = 0; id < session.sub_maps.size(); ++id) {
     const SessionSubMap& sub_map = session.sub_maps.at(id);
-    const Sophus::SE3d world_T_keypose = joint.get_keypose(session.global_id_offset + id);
-    const Sophus::SE3f world_T_map = (world_T_keypose * sub_map.map_T_keypose.inverse()).cast<float>();
-    for (std::size_t k = 0; k < sub_map.n_scans; ++k, ++row) {
-      const Sophus::SE3f& map_T_base = session.tum.at(row).pose;
-      world_trajectory.push_back({.time = session.tum.at(row).time, .pose = world_T_map * map_T_base});
+    const Sophus::SE3f world_T_map =
+        (joint.keyposes.at(keypose_ids.at(id)) * sub_map.map_T_keypose.inverse()).cast<float>();
+    const bool last = id + 1 == session.sub_maps.size();
+    while (row < session.tum.size() && (last || session.tum.at(row).time < session.sub_maps.at(id + 1).keypose_time)) {
+      world_trajectory.push_back({.time = session.tum.at(row).time, .pose = world_T_map * session.tum.at(row).pose});
+      ++row;
     }
   }
   return world_trajectory;
@@ -382,7 +366,7 @@ std::vector<core::TrajectorySample> deform_trajectory(const Session& session, co
 
 std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_config,
                                  const float overlap_threshold,
-                                 const core::PoseGraph::Config& pose_graph_config,
+                                 const pgo::PoseGraph::Config& pose_graph_config,
                                  const std::vector<std::filesystem::path>& run_dirs,
                                  const std::filesystem::path& output_dir,
                                  const std::string_view run_name) {
@@ -393,12 +377,8 @@ std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_c
 
   std::vector<Session> sessions;
   sessions.reserve(run_dirs.size());
-  core::KeyposeId next_global_id_offset = 0;
   for (const auto& dir : run_dirs) {
-    Session session = load_session(dir);
-    session.global_id_offset = next_global_id_offset;
-    next_global_id_offset += session.sub_maps.size();
-    sessions.push_back(std::move(session));
+    sessions.push_back(load_session(dir));
   }
 
   const core::VoxelHashMap::Config voxel_map_config = sessions.front().voxel_map_config;
@@ -437,18 +417,19 @@ std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_c
     return std::nullopt;
   }
 
-  const std::unique_ptr<core::PoseGraph> joint =
-      build_joint_graph(sessions, world_T_session, accepted_closures, reference, pose_graph_config);
-  if (!joint->optimize()) {
+  JointGraph joint = build_joint_graph(sessions, world_T_session, accepted_closures, reference, pose_graph_config);
+  const pgo::PoseGraph::Outcome outcome = joint.pose_graph.optimize();
+  if (outcome == pgo::PoseGraph::Outcome::failed) {
     throw std::runtime_error(std::format(
         "joint pose-graph optimization failed ({} inter-session closures); nothing written", accepted_closures.size()));
   }
+  spdlog::info("joint pose-graph optimization: {}", pgo::to_string(outcome));
 
   auto [resolved_name, out_dir] = core::resolve_run_dir(output_dir, run_name);
   result.out_run_name = resolved_name;
   result.out_run_dir = out_dir;
   const fs::path joint_path = out_dir / (resolved_name + "_joint_keypose_graph.g2o");
-  if (!joint->save(joint_path)) {
+  if (!pgo::save(joint.pose_graph, joint_path)) {
     spdlog::error("failed to write {}", joint_path.string());
   }
 
@@ -457,7 +438,8 @@ std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_c
       continue;
     }
     const fs::path tum_path = out_dir / std::format("{}_session_{}_tum.txt", resolved_name, session_index);
-    if (!core::write_tum(tum_path, deform_trajectory(sessions.at(session_index), *joint))) {
+    if (!core::write_tum(tum_path, deform_trajectory(sessions.at(session_index), joint.keypose_ids.at(session_index),
+                                                     joint.pose_graph))) {
       spdlog::error("failed to write {}", tum_path.string());
     }
   }

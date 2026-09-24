@@ -39,7 +39,7 @@
 # no_of_sub_maps_to_skip: 3
 #
 # --- pose graph ---
-# rotation_info_scale: 100.0
+# rotation_info_scale: 25.0
 # closure_info_scale: 1.0
 # closure_kernel_delta: 1.0
 # gravity_info_scale: 100.0

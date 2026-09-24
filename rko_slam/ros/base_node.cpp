@@ -31,10 +31,16 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "rko_slam/core/run_artifacts.hpp"
+#include "rko_slam/pgo/pose_graph.hpp"
 
 namespace {
 using rko_lio::ros::utils::to_ns;
 using OptionalPose = std::optional<Sophus::SE3f>;
+
+std::size_t closure_count(const rko_slam::pgo::PoseGraph& pose_graph) {
+  return static_cast<std::size_t>(std::ranges::count(pose_graph.pose_edges, rko_slam::pgo::PoseEdge::Kind::closure,
+                                                     &rko_slam::pgo::PoseEdge::kind));
+}
 
 struct Scan {
   std::vector<Eigen::Vector3f> points;
@@ -201,7 +207,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
   slam_config.pose_graph.gravity_info_scale =
       node->declare_parameter<double>("gravity_info_scale", slam_config.pose_graph.gravity_info_scale);
 
-  slam = std::make_unique<core::SLAM>(slam_config, sub_map_builder->config.voxel_map);
+  slam = std::make_unique<core::SLAM>(slam_config, sub_map_builder->config.voxel_map.voxel_size);
 }
 
 OptionalPose BaseNode::resolve_extrinsic(const std_msgs::msg::Header& header, const tf2::Duration timeout) {
@@ -348,7 +354,7 @@ void BaseNode::imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr& msg) {
 void BaseNode::process_closure(core::FinishedSubMap finished) {
   UTL_PROFILER_SCOPE("BaseNode::process_closure");
 
-  const core::KeyposeId keypose_id = finished.sub_map->id;
+  const std::size_t keypose_id = finished.sub_map->id;
   const core::Nsec keypose_time = finished.sub_map->scan_times.front();
   const auto accepted_closure = slam->process_finished_sub_map(std::move(finished.sub_map), finished.points);
   write_sub_map(keypose_id, keypose_time, std::move(finished.points));
@@ -375,14 +381,14 @@ void BaseNode::process_closure(core::FinishedSubMap finished) {
 
   if (accepted_closure) {
     const auto [source_id, target_id] = *accepted_closure;
-    RCLCPP_INFO_STREAM(node->get_logger(), "closure accepted " << source_id << " -> " << target_id << " (total="
-                                                               << slam->pose_graph.num_closure_edges() << ")");
+    RCLCPP_INFO_STREAM(node->get_logger(), "closure accepted " << source_id << " -> " << target_id
+                                                               << " (total=" << closure_count(slam->pose_graph) << ")");
   }
   RCLCPP_DEBUG_STREAM(node->get_logger(), "closure cycle done; sub_maps=" << slam->sub_maps.size() << " closures="
-                                                                          << slam->pose_graph.num_closure_edges());
+                                                                          << closure_count(slam->pose_graph));
 }
 
-void BaseNode::write_sub_map(const core::KeyposeId keypose_id,
+void BaseNode::write_sub_map(const std::size_t keypose_id,
                              const core::Nsec keypose_time,
                              std::vector<Eigen::Vector3f> points) {
   if (!run_output || !run_output->dump_sub_maps) {
@@ -398,7 +404,7 @@ void BaseNode::broadcast_map_tf(const builtin_interfaces::msg::Time& stamp) cons
   const auto keyposes = slam->latest_keyposes();
   Sophus::SE3f map_T_odom;
   if (keyposes && !keyposes->map_T_keypose.empty()) {
-    map_T_odom = keyposes->map_T_keypose.back() * keyposes->odom_T_keypose.back().inverse();
+    map_T_odom = keyposes->map_T_odom;
   }
   geometry_msgs::msg::TransformStamped out;
   out.header.stamp = stamp;
@@ -502,8 +508,8 @@ void BaseNode::publish_keypose_graph_markers(const std::shared_ptr<const core::K
 
   auto odom_edges = make_marker(header, "pose_graph_edges_odom", 1, Marker::LINE_LIST, 0.3, 0.95F, 0.5F, 0.1F);
   auto closure_edges = make_marker(header, "pose_graph_edges_closure", 2, Marker::LINE_LIST, 0.9, 0.95F, 0.1F, 0.1F);
-  for (const auto& edge : slam->pose_graph.se3_edges()) {
-    auto& bucket = core::is_closure_pair(edge.from_id, edge.to_id) ? closure_edges : odom_edges;
+  for (const pgo::PoseEdge& edge : slam->pose_graph.pose_edges) {
+    auto& bucket = edge.kind == pgo::PoseEdge::Kind::closure ? closure_edges : odom_edges;
     bucket.points.push_back(pose_to_point(keyposes->map_T_keypose.at(edge.from_id)));
     bucket.points.push_back(pose_to_point(keyposes->map_T_keypose.at(edge.to_id)));
   }
@@ -522,7 +528,7 @@ void BaseNode::dump_results_to_disk() {
     closure_task.get();
   }
   if (std::optional<core::FinishedSubMap> trailing = sub_map_builder->finalize()) {
-    const core::KeyposeId keypose_id = trailing->sub_map->id;
+    const std::size_t keypose_id = trailing->sub_map->id;
     const core::Nsec keypose_time = trailing->sub_map->scan_times.front();
     slam->process_finished_sub_map(std::move(trailing->sub_map), trailing->points);
     write_sub_map(keypose_id, keypose_time, std::move(trailing->points));
@@ -549,8 +555,8 @@ void BaseNode::dump_results_to_disk() {
 #endif
 
   RCLCPP_INFO_STREAM(node->get_logger(),
-                     "sub_maps=" << slam->sub_maps.size() << " closures=" << slam->pose_graph.num_closure_edges()
-                                 << " gravity_edges=" << slam->pose_graph.gravity_edges().size()
+                     "sub_maps=" << slam->sub_maps.size() << " closures=" << closure_count(slam->pose_graph)
+                                 << " gravity_edges=" << slam->pose_graph.gravity_edges.size()
                                  << " scans_processed=" << scans_processed << " scans_dropped=" << scans_dropped);
 }
 

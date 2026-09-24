@@ -47,11 +47,10 @@ std::vector<Eigen::Vector3d> to_upstream_cloud(const std::vector<Eigen::Vector3f
   return out;
 }
 
-ClosureCandidate from_upstream(const map_closures::ClosureCandidate& upstream,
-                               const std::vector<KeyposeId>& local_to_global) {
+ClosureCandidate from_upstream(const map_closures::ClosureCandidate& upstream) {
   return {
-      .source_id = local_to_global.at(static_cast<std::size_t>(upstream.source_id)),
-      .target_id = local_to_global.at(static_cast<std::size_t>(upstream.target_id)),
+      .source_id = static_cast<std::size_t>(upstream.source_id),
+      .target_id = static_cast<std::size_t>(upstream.target_id),
       .target_T_source = Sophus::SE3d(Eigen::Quaterniond(upstream.pose.block<3, 3>(0, 0)).normalized(),
                                       upstream.pose.block<3, 1>(0, 3))
                              .cast<float>(),
@@ -104,34 +103,28 @@ ClosureDetector::ClosureDetector(const Config& detector_config)
     : config(detector_config), detector(std::make_unique<map_closures::MapClosures>(to_upstream(config))) {}
 ClosureDetector::~ClosureDetector() = default;
 
-std::optional<ClosureCandidate> ClosureDetector::query(const KeyposeId keypose_id,
+std::optional<ClosureCandidate> ClosureDetector::query(const std::size_t keypose_id,
                                                        const std::vector<Eigen::Vector3f>& points) {
   UTL_PROFILER_SCOPE("ClosureDetector::query");
-  const int local_id = register_local_id(keypose_id);
-  const map_closures::ClosureCandidate raw = detector->GetBestClosure(local_id, to_upstream_cloud(points));
+  const map_closures::ClosureCandidate raw =
+      detector->GetBestClosure(static_cast<int>(keypose_id), to_upstream_cloud(points));
   if (std::cmp_less(raw.number_of_inliers, config.inliers_threshold)) {
     return std::nullopt;
   }
-  return from_upstream(raw, local_to_global);
+  return from_upstream(raw);
 }
 
-std::vector<ClosureCandidate> ClosureDetector::query_all(const KeyposeId keypose_id,
+std::vector<ClosureCandidate> ClosureDetector::query_all(const std::size_t keypose_id,
                                                          const std::vector<Eigen::Vector3f>& points) {
   UTL_PROFILER_SCOPE("ClosureDetector::query_all");
-  const int local_id = register_local_id(keypose_id);
-  const std::vector<map_closures::ClosureCandidate> raw = detector->GetClosures(local_id, to_upstream_cloud(points));
+  const std::vector<map_closures::ClosureCandidate> raw =
+      detector->GetClosures(static_cast<int>(keypose_id), to_upstream_cloud(points));
   std::vector<ClosureCandidate> out;
   out.reserve(raw.size());
   for (const auto& candidate : raw) {
-    out.push_back(from_upstream(candidate, local_to_global));
+    out.push_back(from_upstream(candidate));
   }
   return out;
-}
-
-int ClosureDetector::register_local_id(const KeyposeId global_id) {
-  const auto local = static_cast<int>(local_to_global.size());
-  local_to_global.push_back(global_id);
-  return local;
 }
 
 ClosureRefinement refine_closure(const float voxel_size,

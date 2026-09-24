@@ -16,7 +16,6 @@
   <depend>spdlog</depend>
   <depend>nanoflann</depend>
   <depend>robin-map-dev</depend>
-  <depend>suitesparse</depend>
   <depend>yaml-cpp</depend>
   <depend>rko_lio</depend>
 

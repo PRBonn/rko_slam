@@ -27,7 +27,6 @@
 #include <tf2/time.hpp>
 
 #include "rko_slam/core/run_artifacts.hpp"
-#include "rko_slam/core/types.hpp"
 #include "rko_slam/ros/base_node.hpp"
 
 namespace rko_slam::ros {

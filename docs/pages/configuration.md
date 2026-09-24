@@ -142,10 +142,11 @@ These shape how a candidate revisit is found, and can be left at their defaults.
 
 These can be left at their defaults.
 
-- **rotation_info_scale** (`float`, default `100.0`)
+- **rotation_info_scale** (`float`, default `25.0`)
 
   How much the optimizer trusts the rotation of a pose-graph edge against its translation. Higher holds the rotation of
-  the odometry and closure edges more rigidly.
+  the odometry and closure edges more rigidly. It is the square of the range at which a rotation error and a translation
+  error cost the same: the default corresponds to 5 m.
 
 - **closure_info_scale** (`float`, default `1.0`)
 
