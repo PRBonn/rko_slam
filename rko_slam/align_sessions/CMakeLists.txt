@@ -13,6 +13,6 @@ target_sources(
 
 target_link_libraries(
   rko_slam.align_sessions
-  PUBLIC rko_slam::core
+  PUBLIC rko_slam::core rko_slam::closures
   PRIVATE yaml-cpp::yaml-cpp)
 set_target_properties(rko_slam.align_sessions PROPERTIES POSITION_INDEPENDENT_CODE ON)

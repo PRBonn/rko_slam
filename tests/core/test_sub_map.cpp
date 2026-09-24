@@ -46,29 +46,39 @@ TEST_CASE("fill_sub_map: a voxel below the min point count yields nothing", "[su
   SubMap filled;
   fill_sub_map(map, filled);
   REQUIRE(map.points().size() == 4);
-  // Below kMinPointsForCovariance (3) per voxel -> no centroids/normals.
+  // Below kMinPointsForCovariance (10) per voxel -> no centroids/normals.
   REQUIRE(filled.centroids.empty());
   REQUIRE(filled.normals.empty());
 }
 
 TEST_CASE("fill_sub_map: single-voxel centroid + covariance shape", "[sub_map]") {
-  // One voxel with >= 3 points -> one centroid (the arithmetic mean) and one
-  // normal. The three points are pairwise beyond the 3.16 m dedup radius.
-  VoxelHashMap map({.voxel_size = 10.0F, .max_points_per_voxel = 10});
-  const std::vector<Eigen::Vector3f> points{{0.0F, 0.0F, 0.0F}, {5.0F, 0.0F, 0.0F}, {2.0F, 5.0F, 0.0F}};
+  // One voxel with >= 10 points -> one centroid (the arithmetic mean) and one
+  // normal. The twelve points are 5 m apart, beyond the 4.47 m dedup radius.
+  VoxelHashMap map({.voxel_size = 20.0F, .max_points_per_voxel = 20});
+  std::vector<Eigen::Vector3f> points;
+  for (int grid_x = 0; grid_x < 3; ++grid_x) {
+    for (int grid_y = 0; grid_y < 4; ++grid_y) {
+      points.emplace_back(static_cast<float>(grid_x) * 5.0F, static_cast<float>(grid_y) * 5.0F,
+                          static_cast<float>(grid_x + grid_y));
+    }
+  }
   map.add_points(points);
   REQUIRE(map.voxels.size() == 1);
-  REQUIRE(map.points().size() == 3);
+  REQUIRE(map.points().size() == 12);
 
   SubMap filled;
   fill_sub_map(map, filled);
-  REQUIRE(map.points().size() == 3);
+  REQUIRE(map.points().size() == 12);
   REQUIRE(filled.centroids.size() == 1);
   REQUIRE(filled.normals.size() == 1); // index-aligned with centroids
 
   // The map stores in float, so the double-precision oracle needs an explicit
   // cast and a float tolerance.
-  const Eigen::Vector3d expected_mean = (points.at(0) + points.at(1) + points.at(2)).cast<double>() / 3.0;
+  Eigen::Vector3d expected_mean = Eigen::Vector3d::Zero();
+  for (const auto& point : points) {
+    expected_mean += point.cast<double>();
+  }
+  expected_mean /= static_cast<double>(points.size());
   REQUIRE_THAT((filled.centroids.at(0).cast<double>() - expected_mean).norm(), WithinAbs(0.0, 1e-5));
 
   // Normal is a unit vector (smallest eigenvector of a symmetric 3x3).
@@ -109,7 +119,8 @@ TEST_CASE("fill_sub_map: covariance matches the solver oracle on a patch", "[sub
   // (n-1) normalisation and confirm fill_sub_map's normal is its smallest eigenvector.
   VoxelHashMap map({.voxel_size = 20.0F, .max_points_per_voxel = 400});
   const std::vector<Eigen::Vector3f> points{
-      {1.0F, 0.0F, 0.5F}, {4.0F, 1.0F, 0.5F}, {2.0F, 5.0F, 0.5F}, {6.0F, 3.0F, 0.5F}, {3.0F, 2.0F, 0.5F},
+      {1.0F, 0.0F, 0.5F}, {4.0F, 1.0F, 0.5F},  {2.0F, 5.0F, 0.5F},  {6.0F, 3.0F, 0.5F},  {3.0F, 2.0F, 0.5F},
+      {8.0F, 6.0F, 2.5F}, {10.0F, 9.0F, 1.0F}, {5.0F, 12.0F, 3.0F}, {12.0F, 3.0F, 4.0F}, {15.0F, 14.0F, 2.0F},
   };
   map.add_points(points);
   REQUIRE(map.points().size() == points.size());

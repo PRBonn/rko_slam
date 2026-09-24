@@ -46,7 +46,7 @@ carryover_points(const VoxelHashMap& voxel_map, const Sophus::SE3f& new_T_old, c
   carried.reserve(voxel_map.voxels.size() * voxel_map.max_points_per_voxel);
   const float sq_radius = radius * radius;
   for (const auto& [voxel, block] : voxel_map.voxels) {
-    if (block.empty() || (new_T_old * block.front()).squaredNorm() > sq_radius) {
+    if ((new_T_old * block.front()).squaredNorm() > sq_radius) {
       continue;
     }
     for (const auto& point : block) {

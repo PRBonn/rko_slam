@@ -57,9 +57,9 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 ## Citation
 
 This work was developed as part of my thesis (published soon), and much of it is inspired by
-[KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2. If
-you find it useful, consider leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and
-citing the original publication:
+[KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2.
+Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures). If you find it useful, consider
+leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and citing the original publication:
 
 ```bibtex
 @INPROCEEDINGS{kiss2025iros,

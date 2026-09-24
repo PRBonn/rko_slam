@@ -1,4 +1,4 @@
-# HBST, via map_closures, declares `uninstall` too, and cmake allows one name.
+# ament_cmake declares `uninstall` too, and cmake allows one name.
 FetchContent_Declare(
   nanoflann
   GIT_REPOSITORY https://github.com/jlblancoc/nanoflann.git

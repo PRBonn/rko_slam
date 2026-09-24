@@ -17,7 +17,6 @@
 #include <ostream>
 #include <rko_lio/core/error.hpp>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -141,9 +140,6 @@ std::pair<std::string, std::filesystem::path> resolve_run_dir(const std::filesys
 bool write_trajectory_png(const std::filesystem::path& path,
                           const std::vector<TrajectorySample>& trajectory,
                           const std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>>& closures) {
-  if (trajectory.empty()) {
-    throw std::invalid_argument("write_trajectory_png: nothing to draw");
-  }
   Eigen::Vector2f lower = trajectory.front().pose.translation().head<2>();
   Eigen::Vector2f upper = lower;
   for (const auto& sample : trajectory) {

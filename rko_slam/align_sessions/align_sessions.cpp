@@ -11,13 +11,13 @@
 #include <rko_lio/core/error.hpp>
 #include <stdexcept>
 #include <system_error>
-#include <unordered_map>
 #include <utility>
 
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
+#include "rko_slam/closures/refinement.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
 #include "rko_slam/core/sub_map.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
@@ -28,6 +28,7 @@ namespace rko_slam::align_sessions {
 namespace {
 
 namespace fs = std::filesystem;
+using closures::SubMapIndex;
 
 struct SessionSubMap {
   fs::path ply;
@@ -42,11 +43,6 @@ struct Session {
   std::vector<pgo::GravityEdge> gravity_edges;
   std::vector<core::TrajectorySample> tum;
   core::VoxelHashMap::Config voxel_map_config;
-};
-
-struct SubMapIndex {
-  std::size_t session = 0;
-  std::size_t sub_map = 0; // session-local
 };
 
 struct InterSessionClosure {
@@ -114,39 +110,29 @@ Session load_session(const fs::path& run_dir) {
   return session;
 }
 
-std::unique_ptr<core::SubMap> rebuild_sub_map(const core::VoxelHashMap::Config& voxel_map_config,
-                                              const std::vector<Eigen::Vector3f>& cloud,
-                                              const std::size_t local_id) {
+core::SubMap rebuild_sub_map(const core::VoxelHashMap::Config& voxel_map_config,
+                             const std::vector<Eigen::Vector3f>& cloud) {
   core::VoxelHashMap voxel_map(voxel_map_config);
   voxel_map.add_points(cloud);
-  auto sub_map = std::make_unique<core::SubMap>();
-  sub_map->id = local_id;
-  core::fill_sub_map(voxel_map, *sub_map);
+  core::SubMap sub_map;
+  core::fill_sub_map(voxel_map, sub_map);
   return sub_map;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity) c++23 views flatten the loop nest
+// The up the session's gravity edge measured for this sub-map, where the session had an IMU.
+std::optional<Eigen::Vector3f> measured_up_of(const Session& session, const std::size_t sub_map_id) {
+  const auto gravity = std::ranges::find(session.gravity_edges, sub_map_id, &pgo::GravityEdge::keypose_id);
+  if (gravity == session.gravity_edges.end()) {
+    return std::nullopt;
+  }
+  return gravity->measured_up.cast<float>();
+}
+
 std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<Session>& sessions,
-                                                             const core::ClosureDetector::Config& detector_config,
+                                                             const closures::ClosureDetector::Config& detector_config,
                                                              const core::VoxelHashMap::Config& voxel_map_config,
                                                              const float overlap_threshold) {
-  const float max_correspondence_distance = detector_config.correspondence_distance();
-
-  core::ClosureDetector detector(detector_config);
-  // The detector numbers sub-maps in the order it is given them, so its id indexes this.
-  std::vector<SubMapIndex> registered;
-  std::unordered_map<std::size_t, std::unique_ptr<core::SubMap>> cache;
-  const auto sub_map_for = [&](const std::size_t detector_id) -> const core::SubMap& {
-    auto cached = cache.find(detector_id);
-    if (cached == cache.end()) {
-      const SubMapIndex index = registered.at(detector_id);
-      const fs::path& ply = sessions.at(index.session).sub_maps.at(index.sub_map).ply;
-      cached =
-          cache.emplace(detector_id, rebuild_sub_map(voxel_map_config, core::read_ply_xyz(ply), index.sub_map)).first;
-    }
-    return *cached->second;
-  };
-
+  closures::ClosureDetector detector(detector_config);
   std::vector<InterSessionClosure> accepted_closures;
   std::size_t candidates_considered = 0;
   std::size_t rejected_below_inliers = 0;
@@ -154,41 +140,36 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
   for (std::size_t session_index = 0; session_index < sessions.size(); ++session_index) {
     const Session& session = sessions.at(session_index);
     for (std::size_t id = 0; id < session.sub_maps.size(); ++id) {
-      const std::size_t detector_id = registered.size();
-      registered.push_back({.session = session_index, .sub_map = id});
       const std::vector<Eigen::Vector3f> cloud = core::read_ply_xyz(session.sub_maps.at(id).ply);
-      const std::vector<core::ClosureCandidate> candidates = detector.query_all(detector_id, cloud);
-      for (const auto& candidate : candidates) {
-        const SubMapIndex source_index = registered.at(candidate.source_id);
-        const SubMapIndex target_index = registered.at(candidate.target_id);
-        if (source_index.session == target_index.session) {
+      const core::SubMap target = rebuild_sub_map(voxel_map_config, cloud);
+      const std::vector<closures::ClosureCandidate> candidates =
+          detector.query_all({.session = session_index, .sub_map = id}, measured_up_of(session, id),
+                             {.centroids = target.centroids, .normals = target.normals, .points = cloud});
+      for (const closures::ClosureCandidate& candidate : candidates) {
+        const SubMapIndex source_index = candidate.source;
+        if (source_index.session == session_index) {
           continue; // intra-session: already an edge in that session's graph
         }
         ++candidates_considered;
-        if (std::cmp_less(candidate.number_of_inliers, detector_config.inliers_threshold)) {
+        if (candidate.number_of_inliers < detector_config.inliers_threshold) {
           ++rejected_below_inliers;
           continue;
         }
-        if (!cache.contains(detector_id)) {
-          cache.emplace(detector_id, rebuild_sub_map(voxel_map_config, cloud, id));
-        }
-        const core::SubMap& source = sub_map_for(candidate.source_id);
-        const core::SubMap& target = sub_map_for(candidate.target_id);
+        const fs::path& source_ply = sessions.at(source_index.session).sub_maps.at(source_index.sub_map).ply;
+        const core::SubMap source = rebuild_sub_map(voxel_map_config, core::read_ply_xyz(source_ply));
         if (source.centroids.empty() || target.centroids.empty()) {
-          throw rko_lio::core::InputError(
-              std::format("sub-map {} of session {} or sub-map {} of session {} has no points; "
-                          "the run dir they were read from is incomplete",
-                          source_index.sub_map, source_index.session, target_index.sub_map, target_index.session));
+          continue; // the detector matches on raw points, so either side can be a candidate with nothing for icp
         }
-        const core::ClosureRefinement refinement = core::refine_closure(
-            voxel_map_config.voxel_size, max_correspondence_distance, source, target, candidate.target_T_source);
+        const closures::ClosureRefinement refinement =
+            closures::refine_closure(voxel_map_config.voxel_size, detector_config.correspondence_distance(),
+                                     source.centroids, target.centroids, target.normals, candidate.target_T_source);
         if (refinement.overlap < overlap_threshold) {
           ++rejected_by_overlap;
           continue;
         }
         accepted_closures.push_back({
             .source = source_index,
-            .target = target_index,
+            .target = candidate.target,
             .inliers = candidate.number_of_inliers,
             .refined_source_T_target = refinement.refined_target_T_source.cast<double>().inverse(),
         });
@@ -197,11 +178,11 @@ std::vector<InterSessionClosure> find_inter_session_closures(const std::vector<S
   }
 
   if (accepted_closures.empty()) {
-    spdlog::info("no inter-session closures validated: 0 of {} candidates across {} sessions ({} below "
-                 "inliers_threshold, {} failed overlap validation). Tune closure detection "
-                 "(density_map_resolution / hamming_distance_threshold / inliers_threshold / overlap_threshold) "
-                 "if these sessions should overlap.",
-                 candidates_considered, sessions.size(), rejected_below_inliers, rejected_by_overlap);
+    spdlog::info(
+        "no inter-session closures validated: 0 of {} candidates across {} sessions ({} below "
+        "inliers_threshold, {} failed overlap validation). Tune closure detection (density_map_resolution / "
+        "hamming_distance_threshold / inliers_threshold / overlap_threshold) if these sessions should overlap.",
+        candidates_considered, sessions.size(), rejected_below_inliers, rejected_by_overlap);
   }
   return accepted_closures;
 }
@@ -364,7 +345,7 @@ deform_trajectory(const Session& session, const std::vector<std::size_t>& keypos
 
 } // namespace
 
-std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_config,
+std::optional<AlignResult> align(const closures::ClosureDetector::Config& detector_config,
                                  const float overlap_threshold,
                                  const pgo::PoseGraph::Config& pose_graph_config,
                                  const std::vector<std::filesystem::path>& run_dirs,

@@ -8,7 +8,7 @@
 namespace rko_slam::core {
 
 void fill_sub_map(const VoxelHashMap& map, SubMap& sub_map) {
-  constexpr unsigned int kMinPointsForCovariance = 3;
+  constexpr unsigned int kMinPointsForCovariance = 10;
   sub_map.centroids.reserve(map.voxels.size());
   sub_map.normals.reserve(map.voxels.size());
 

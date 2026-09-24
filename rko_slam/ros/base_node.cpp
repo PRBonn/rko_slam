@@ -188,8 +188,8 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options) 
       node->declare_parameter<double>("density_threshold", slam_config.closure_detector.density_threshold));
   slam_config.closure_detector.hamming_distance_threshold = static_cast<int>(node->declare_parameter<std::int64_t>(
       "hamming_distance_threshold", slam_config.closure_detector.hamming_distance_threshold));
-  slam_config.closure_detector.inliers_threshold = static_cast<int>(
-      node->declare_parameter<std::int64_t>("inliers_threshold", slam_config.closure_detector.inliers_threshold));
+  slam_config.closure_detector.inliers_threshold = static_cast<std::size_t>(node->declare_parameter<std::int64_t>(
+      "inliers_threshold", static_cast<std::int64_t>(slam_config.closure_detector.inliers_threshold)));
   slam_config.closure_detector.no_of_sub_maps_to_skip = static_cast<int>(node->declare_parameter<std::int64_t>(
       "no_of_sub_maps_to_skip", slam_config.closure_detector.no_of_sub_maps_to_skip));
 

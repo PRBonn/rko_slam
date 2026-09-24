@@ -16,7 +16,8 @@
 #include <spdlog/spdlog.h>
 
 #include "rko_slam/align_sessions/align_sessions.hpp"
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
+#include "rko_slam/closures/refinement.hpp"
 #include "rko_slam/pgo/pose_graph.hpp"
 
 int main(int argc, char* const* argv) {
@@ -28,7 +29,7 @@ int main(int argc, char* const* argv) {
   spdlog::set_default_logger(std::move(logger));
 
   rko_slam::pgo::PoseGraph::Config pose_graph_config{.max_iterations = 100};
-  rko_slam::core::ClosureDetector::Config detector_config{.no_of_sub_maps_to_skip = 0};
+  rko_slam::closures::ClosureDetector::Config detector_config{.no_of_sub_maps_to_skip = 0};
 
   const std::vector<std::string> run_dirs = node->declare_parameter<std::vector<std::string>>("run_dirs"); // required
   const std::filesystem::path results_dir = node->declare_parameter<std::string>("results_dir", "results");
@@ -40,12 +41,12 @@ int main(int argc, char* const* argv) {
       static_cast<float>(node->declare_parameter<double>("density_threshold", detector_config.density_threshold));
   detector_config.hamming_distance_threshold = static_cast<int>(
       node->declare_parameter<std::int64_t>("hamming_distance_threshold", detector_config.hamming_distance_threshold));
-  detector_config.inliers_threshold =
-      static_cast<int>(node->declare_parameter<std::int64_t>("inliers_threshold", detector_config.inliers_threshold));
+  detector_config.inliers_threshold = static_cast<std::size_t>(node->declare_parameter<std::int64_t>(
+      "inliers_threshold", static_cast<std::int64_t>(detector_config.inliers_threshold)));
   detector_config.no_of_sub_maps_to_skip = static_cast<int>(
       node->declare_parameter<std::int64_t>("no_of_sub_maps_to_skip", detector_config.no_of_sub_maps_to_skip));
   const auto overlap_threshold = static_cast<float>(node->declare_parameter<double>(
-      "overlap_threshold", rko_slam::core::ClosureRefinement::kDefaultOverlapThreshold));
+      "overlap_threshold", rko_slam::closures::ClosureRefinement::kDefaultOverlapThreshold));
   pose_graph_config.rotation_info_scale =
       node->declare_parameter<double>("rotation_info_scale", pose_graph_config.rotation_info_scale);
   pose_graph_config.closure_info_scale =

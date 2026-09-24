@@ -17,6 +17,7 @@
   <depend>nanoflann</depend>
   <depend>robin-map-dev</depend>
   <depend>yaml-cpp</depend>
+  <depend>libopencv-dev</depend>
   <depend>rko_lio</depend>
 
   <test_depend>catch2</test_depend>

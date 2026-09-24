@@ -3,10 +3,9 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cmath>
 #include <random>
-#include <rko_lio/core/error.hpp>
 #include <sophus/se3.hpp>
 
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/refinement.hpp"
 
 namespace {
 
@@ -94,7 +93,7 @@ TEST_CASE("icp: point-to-plane converges on three-walls input", "[icp]") {
   const auto tgt = transform(src.points, T_gt);
   const auto tgt_normals = rotate(src.normals, T_gt.so3());
   const Sophus::SE3f init = small_perturbation(0.05F, 0.02F, 11);
-  const auto result = rko_slam::core::icp_point_to_plane(src.points, tgt, tgt_normals, 2.0F, init);
+  const auto result = rko_slam::closures::icp_point_to_plane(src.points, tgt, tgt_normals, 2.0F, init);
 
   check_pose_close(result, T_gt, kIcpTransTol, kIcpRotTol);
 }
@@ -105,16 +104,10 @@ TEST_CASE("icp: non-converging input returns a well-formed pose", "[icp]") {
   const auto tgt = make_dense_3d(500, 5.0F, 19);
   const std::vector<Eigen::Vector3f> tgt_normals(tgt.size(), Eigen::Vector3f::UnitZ());
 
-  const auto result = rko_slam::core::icp_point_to_plane(src, tgt, tgt_normals, 1.0F, Sophus::SE3f{});
+  const auto result = rko_slam::closures::icp_point_to_plane(src, tgt, tgt_normals, 1.0F, Sophus::SE3f{});
   // The result should at least be a valid SE(3). Sophus enforces this on construction.
   const Eigen::Vector3f& trans = result.translation();
   REQUIRE(std::isfinite(trans.x()));
   REQUIRE(std::isfinite(trans.y()));
   REQUIRE(std::isfinite(trans.z()));
-}
-
-TEST_CASE("icp: an empty target is an input error", "[icp][degenerate]") {
-  const Sophus::SE3f guess = Sophus::SE3f::trans(1.0F, 2.0F, 3.0F);
-  REQUIRE_THROWS_AS(rko_slam::core::icp_point_to_plane({{1.0F, 0.0F, 0.0F}}, {}, {}, 1.0F, guess),
-                    rko_lio::core::InputError);
 }

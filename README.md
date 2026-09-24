@@ -99,7 +99,7 @@ TUM file, what a run writes to disk, every parameter and what it does, and how t
 This work was developed as part of my thesis (published soon), and much of it is inspired by
 [KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2.
 rko_slam also relies heavily on [rko_lio](https://github.com/PRBonn/rko_lio), my lidar inertial odometry package, for
-much of its internals.
+much of its internals. Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures).
 
 If you find this package useful, consider leaving a star ⭐ here and on KISS-SLAM, and citing the original publication:
 

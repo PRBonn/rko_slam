@@ -15,7 +15,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
+#include "rko_slam/closures/refinement.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
 
 namespace rko_slam::core {
@@ -57,18 +58,20 @@ SLAM::process_finished_sub_map(std::unique_ptr<SubMap> sub_map, const std::vecto
   }
 
   std::optional<std::pair<std::size_t, std::size_t>> accepted;
-  const std::optional<ClosureCandidate> candidate = closure_detector.query(just_finished.id, points);
+  const std::optional<closures::ClosureCandidate> candidate = closure_detector.query(
+      {.sub_map = just_finished.id}, just_finished.measured_up,
+      {.centroids = just_finished.centroids, .normals = just_finished.normals, .points = points});
   if (candidate) {
-    const SubMap& source = *sub_maps.at(candidate->source_id);
-    const SubMap& target = *sub_maps.at(candidate->target_id);
-    if (!source.centroids.empty() && !target.centroids.empty()) {
-      const ClosureRefinement refinement =
-          refine_closure(sub_map_voxel_size, config.closure_detector.correspondence_distance(), source, target,
-                         candidate->target_T_source);
+    const SubMap& source = *sub_maps.at(candidate->source.sub_map);
+    // the detector matches on raw points, so a sub-map can be a candidate with no centroid for icp
+    if (!source.centroids.empty() && !just_finished.centroids.empty()) {
+      const closures::ClosureRefinement refinement = closures::refine_closure(
+          sub_map_voxel_size, config.closure_detector.correspondence_distance(), source.centroids,
+          just_finished.centroids, just_finished.normals, candidate->target_T_source);
       if (refinement.overlap >= config.closure_overlap_threshold) {
-        pose_graph.add_closure_edge(candidate->source_id, candidate->target_id,
+        pose_graph.add_closure_edge(candidate->source.sub_map, candidate->target.sub_map,
                                     refinement.refined_target_T_source.cast<double>().inverse());
-        accepted = {candidate->source_id, candidate->target_id};
+        accepted = {candidate->source.sub_map, candidate->target.sub_map};
       }
     }
   }

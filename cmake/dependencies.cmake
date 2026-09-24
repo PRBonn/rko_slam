@@ -10,6 +10,13 @@ set(BUILD_SHARED_LIBS OFF)
 # Eigen, Sophus, spdlog and tsl-robin-map arrive with rko_lio, which is found before this file. yaml-cpp arrives with
 # rosbag2_storage, which exports it, so it is found and never fetched
 find_package(yaml-cpp 0.8 REQUIRED CONFIG)
+find_package(
+  OpenCV REQUIRED
+  COMPONENTS core
+             features2d
+             imgcodecs
+             imgproc
+             CONFIG)
 
 if(RKO_SLAM_FETCH_CONTENT_DEPS)
   include(${CMAKE_CURRENT_LIST_DIR}/dependencies/nanoflann/nanoflann.cmake)
@@ -24,6 +31,5 @@ else()
 endif()
 
 # No usable system package exists for these, so they are fetched either way.
-include(${CMAKE_CURRENT_LIST_DIR}/dependencies/map_closures/map_closures.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies/utl/utl.cmake)
 endblock()
