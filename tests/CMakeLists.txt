@@ -1,3 +1,5 @@
+find_package(Catch2 3 REQUIRED CONFIG)
+
 include(Catch)
 
 add_subdirectory(closures)
