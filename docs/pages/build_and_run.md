@@ -23,9 +23,9 @@ Tests are off by default; add `-DRKO_SLAM_BUILD_TESTS=ON` to the cmake args and 
 
 ### Dependencies and quirks
 
-Two dependencies - MapClosures and the UTL profiler - are fetched and pinned by CMake, always; nanoflann and Catch2 are
-fetched too under `-DRKO_SLAM_FETCH_CONTENT_DEPS=ON` and found on the system otherwise. Sourcing Eigen, Sophus, spdlog
-and tsl-robin-map relies on rko_lio, however you configure that (check rko_lio's
+The UTL profiler is fetched and pinned by CMake, always; nanoflann and Catch2 are fetched too under
+`-DRKO_SLAM_FETCH_CONTENT_DEPS=ON` and found on the system otherwise. Sourcing Eigen, Sophus, spdlog and tsl-robin-map
+relies on rko_lio, however you configure that (check rko_lio's
 [ROS docs](https://prbonn.github.io/rko_lio/pages/ros.html)). Everything else resolves via rosdep.
 
 Steps are planned to clean up the dependency requirements and support pure rosdep installs.

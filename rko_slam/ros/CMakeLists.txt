@@ -14,13 +14,13 @@ target_link_libraries(
   rko_slam.ros
   PUBLIC rko_slam::core
          rko_lio::ros::utils
-         ${geometry_msgs_TARGETS}
-         ${sensor_msgs_TARGETS}
-         ${std_msgs_TARGETS}
-         ${visualization_msgs_TARGETS}
-         rclcpp::rclcpp
-         tf2::tf2
          tf2_ros::tf2_ros
+         tf2::tf2
+         rclcpp::rclcpp
+         ${visualization_msgs_TARGETS}
+         ${sensor_msgs_TARGETS}
+         ${geometry_msgs_TARGETS}
+         ${std_msgs_TARGETS}
          ${builtin_interfaces_TARGETS})
 
 set_target_properties(rko_slam.ros PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -32,4 +32,5 @@ add_library(rko_slam_online_node_component SHARED online_node.cpp)
 target_link_libraries(rko_slam_online_node_component PRIVATE rko_slam::ros rclcpp_components::component
                                                              rclcpp_components::component_manager)
 add_executable(align_sessions align_sessions_node.cpp)
-target_link_libraries(align_sessions PRIVATE rko_slam::align_sessions rko_lio::ros::utils rclcpp::rclcpp)
+target_link_libraries(align_sessions PRIVATE rko_slam::align_sessions rko_slam::closures rko_lio::ros::utils
+                                             rclcpp::rclcpp)

@@ -12,7 +12,8 @@
 #include <utility>
 #include <vector>
 
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
+#include "rko_slam/closures/refinement.hpp"
 #include "rko_slam/core/sub_map.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
 #include "rko_slam/pgo/pose_graph.hpp"
@@ -29,8 +30,8 @@ class SLAM {
 public:
   struct Config {
     pgo::PoseGraph::Config pose_graph = {};
-    ClosureDetector::Config closure_detector = {};
-    float closure_overlap_threshold = ClosureRefinement::kDefaultOverlapThreshold;
+    closures::ClosureDetector::Config closure_detector = {};
+    float closure_overlap_threshold = closures::ClosureRefinement::kDefaultOverlapThreshold;
   };
 
   SLAM(const Config slam_config, float sub_map_voxel_size);
@@ -52,7 +53,7 @@ public:
 
   const Config config;
   pgo::PoseGraph pose_graph;
-  ClosureDetector closure_detector;
+  closures::ClosureDetector closure_detector;
   // Finished sub-maps, indexed by id.
   std::vector<std::unique_ptr<SubMap>> sub_maps;
 

@@ -1,5 +1,5 @@
 // End-to-end coverage for align_sessions over a seeded pillar constellation,
-// texture-rich in BEV so MapClosures' ORB pipeline has keypoints to match.
+// texture-rich in BEV so the closure detector's ORB pipeline has keypoints to match.
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_exception.hpp>
@@ -18,8 +18,10 @@
 #include <string>
 
 #include "rko_slam/align_sessions/align_sessions.hpp"
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
+#include "rko_slam/closures/refinement.hpp"
 #include "rko_slam/core/run_artifacts.hpp"
+#include "rko_slam/core/sub_map.hpp"
 #include "rko_slam/core/sub_map_builder.hpp"
 #include "rko_slam/pgo/io.hpp"
 #include "rko_slam/pgo/pose_graph.hpp"
@@ -28,6 +30,9 @@ namespace fs = std::filesystem;
 using namespace rko_slam::core;
 using rko_slam::align_sessions::align;
 using rko_slam::align_sessions::AlignResult;
+using rko_slam::closures::ClosureDetector;
+using rko_slam::closures::ClosureRefinement;
+using rko_slam::closures::SubMapPoints;
 
 namespace {
 
@@ -41,7 +46,7 @@ fs::path temp_dir(const std::string& tag) {
   return dir;
 }
 
-// Repeated uniform shapes hit MapClosures' self-similarity filter, and the footprint must exceed
+// Repeated uniform shapes hit the closure detector's self-similarity filter, and the footprint must exceed
 // ORB's 31-px edge_threshold at 0.5 m/px to yield any keypoints.
 std::vector<Eigen::Vector3f> pillar_world(const unsigned seed) {
   std::mt19937 rng(seed);
@@ -53,14 +58,17 @@ std::vector<Eigen::Vector3f> pillar_world(const unsigned seed) {
   std::uniform_real_distribution<float> radius(0.2F, 1.4F);
   std::uniform_int_distribution<int> pillar_pts(100, 600);
   std::vector<Eigen::Vector3f> cloud;
-  // GroundAlign needs a dominant horizontal plane, or the fit latches onto a wall.
-  constexpr float kGroundSpacing = 0.45F;
-  constexpr int kGroundSamples = 334; // 150 m at kGroundSpacing
+  // align_to_ground needs a dominant horizontal plane, or the fit latches onto a wall. Dense enough for every ground
+  // voxel to clear fill_sub_map's per-voxel point minimum.
+  constexpr float kGroundSpacing = 0.125F;
+  constexpr int kGroundSamples = 1200; // 150 m at kGroundSpacing
+  // mid-voxel: points on a voxel boundary split between two voxels
+  constexpr float kGroundHeight = -0.25F;
   for (int index_x = 0; index_x < kGroundSamples; ++index_x) {
     const float ground_x = static_cast<float>(index_x) * kGroundSpacing;
     for (int index_y = 0; index_y < kGroundSamples; ++index_y) {
       const float ground_y = static_cast<float>(index_y) * kGroundSpacing;
-      cloud.emplace_back(ground_x + jitter(rng), ground_y + jitter(rng), 0.05F * jitter(rng));
+      cloud.emplace_back(ground_x, ground_y, kGroundHeight);
     }
   }
   for (int wall = 0; wall < 60; ++wall) {
@@ -91,7 +99,10 @@ std::vector<Eigen::Vector3f> pillar_world(const unsigned seed) {
       cloud.emplace_back(center_x + within(rng), center_y + within(rng), height(rng));
     }
   }
-  return cloud;
+  // What a session dumps: the sub-map's voxel map points.
+  VoxelHashMap voxel_map(SubMapBuilder::Config{}.voxel_map);
+  voxel_map.add_points(cloud);
+  return voxel_map.points();
 }
 
 // `clouds` are sub_map-local, `keyposes` session-frame, same count. The config records the builder
@@ -142,6 +153,18 @@ Sophus::SE3f yaw_xy(const double yaw, const double x_metres, const double y_metr
   return Sophus::SE3d{Sophus::SO3d::rotZ(yaw), Eigen::Vector3d{x_metres, y_metres, 0.0}}.cast<float>();
 }
 
+SubMap rebuilt_sub_map(const std::vector<Eigen::Vector3f>& cloud) {
+  VoxelHashMap voxel_map(SubMapBuilder::Config{}.voxel_map);
+  voxel_map.add_points(cloud);
+  SubMap sub_map;
+  fill_sub_map(voxel_map, sub_map);
+  return sub_map;
+}
+
+SubMapPoints points_of(const SubMap& sub_map, const std::vector<Eigen::Vector3f>& cloud) {
+  return {.centroids = sub_map.centroids, .normals = sub_map.normals, .points = cloud};
+}
+
 } // namespace
 
 TEST_CASE("align: cloud-replay parity - dumped+reloaded clouds reproduce the closure", "[align_sessions]") {
@@ -151,42 +174,32 @@ TEST_CASE("align: cloud-replay parity - dumped+reloaded clouds reproduce the clo
 
   ClosureDetector::Config detector_config;
   detector_config.no_of_sub_maps_to_skip = 0;
+  const SubMap shared_sub_map = rebuilt_sub_map(shared);
+  const SubMap other_sub_map = rebuilt_sub_map(other);
   ClosureDetector live(detector_config);
-  REQUIRE(live.query_all(0, shared).empty());
-  (void)live.query_all(1, other);
-  const auto live_candidates = live.query_all(2, shared); // revisit of map 0
+  REQUIRE(live.query_all({.sub_map = 0}, std::nullopt, points_of(shared_sub_map, shared)).empty());
+  (void)live.query_all({.sub_map = 1}, std::nullopt, points_of(other_sub_map, other));
+  const auto live_candidates =
+      live.query_all({.sub_map = 2}, std::nullopt, points_of(shared_sub_map, shared)); // revisit of map 0
   REQUIRE(!live_candidates.empty());
-  REQUIRE(live_candidates.front().source_id == 0);
+  REQUIRE(live_candidates.front().source.sub_map == 0);
 
   // Round-trip both clouds through the ply dump, replay into a fresh detector.
   REQUIRE(write_ply_xyz(dir / "shared.ply", shared));
   REQUIRE(write_ply_xyz(dir / "other.ply", other));
   const std::vector<Eigen::Vector3f> shared_back = read_ply_xyz(dir / "shared.ply");
   const std::vector<Eigen::Vector3f> other_back = read_ply_xyz(dir / "other.ply");
+  const SubMap shared_back_sub_map = rebuilt_sub_map(shared_back);
+  const SubMap other_back_sub_map = rebuilt_sub_map(other_back);
   ClosureDetector replay(detector_config);
-  (void)replay.query_all(0, shared_back);
-  (void)replay.query_all(1, other_back);
-  const auto replay_candidates = replay.query_all(2, shared_back);
+  (void)replay.query_all({.sub_map = 0}, std::nullopt, points_of(shared_back_sub_map, shared_back));
+  (void)replay.query_all({.sub_map = 1}, std::nullopt, points_of(other_back_sub_map, other_back));
+  const auto replay_candidates =
+      replay.query_all({.sub_map = 2}, std::nullopt, points_of(shared_back_sub_map, shared_back));
   REQUIRE(!replay_candidates.empty());
-  REQUIRE(replay_candidates.front().source_id == 0);
+  REQUIRE(replay_candidates.front().source.sub_map == 0);
   REQUIRE(std::cmp_greater_equal(replay_candidates.front().number_of_inliers, detector_config.inliers_threshold));
   fs::remove_all(dir);
-}
-
-TEST_CASE("closure detector: gapped caller ids are safe and translate back", "[align_sessions][map_closures]") {
-  // Non-contiguous ids, as an online split-drop produces: the dense-id mapping must survive the gap
-  // and report the caller's id 0, not an internal dense id.
-  const std::vector<Eigen::Vector3f> shared = pillar_world(7);
-  const std::vector<Eigen::Vector3f> other = pillar_world(99);
-  ClosureDetector::Config detector_config;
-  detector_config.no_of_sub_maps_to_skip = 0;
-  ClosureDetector detector(detector_config);
-  REQUIRE(detector.query_all(0, shared).empty());
-  (void)detector.query_all(1, other);
-  const auto candidates = detector.query_all(50, shared); // gap 2..49 never queried
-  REQUIRE(!candidates.empty());
-  REQUIRE(candidates.front().source_id == 0);
-  REQUIRE(candidates.front().target_id == 50);
 }
 
 TEST_CASE("align: two sessions with a shared place align to the known offset", "[align_sessions]") {

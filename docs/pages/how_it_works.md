@@ -2,7 +2,7 @@
 
 rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything locally
 consistent publishing `odom <- base`), reads the same IMU that odometry reads, and publishes a `map <- odom` correction.
-The pipeline is inspired by [KISS-SLAM](https://github.com/PRBonn/kiss-slam), uses
+The pipeline is inspired by [KISS-SLAM](https://github.com/PRBonn/kiss-slam), reimplements
 [MapClosures](https://github.com/PRBonn/MapClosures) for detecting revisits, and a pose graph.
 
 ## Sub-maps
@@ -33,12 +33,12 @@ translation and radian-scale rotation residuals.
 Whenever a sub-map is completed, the system searches for loop closures between it and all previously built sub-maps.
 That search runs on its own thread, so the scan stream keeps moving while it works.
 
-MapClosures identifies the ground points in the local map, projects the map onto the ground plane into a bird's eye view
-density image (`density_map_resolution` is its cell size, `density_threshold` decides when a cell counts as occupied),
-and computes binary ORB descriptors, which it matches against the descriptors of all previous sub-maps.
-`hamming_distance_threshold` is how different two descriptors may be and still be called a match, and
-`no_of_sub_maps_to_skip` keeps the most recent sub-maps out of the search so a sub-map does not match its own
-neighbours.
+The search levels the local map - onto the up the IMU measured for it, or onto the ground plane it identifies when there
+is no IMU - and projects it into a bird's eye view density image (`density_map_resolution` is its cell size,
+`density_threshold` decides when a cell counts as occupied), and computes binary ORB descriptors, which it matches
+against the descriptors of all previous sub-maps. `hamming_distance_threshold` is how different two descriptors may be
+and still be called a match, and `no_of_sub_maps_to_skip` keeps the most recent sub-maps out of the search so a sub-map
+does not match its own neighbours.
 
 RANSAC validates a matching candidate geometrically and gives an initial alignment, and `inliers_threshold` is how many
 of the feature matches must agree on that alignment for it to go further. Point-to-plane ICP then refines it between the

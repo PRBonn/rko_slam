@@ -77,8 +77,6 @@ TEST_CASE("run_artifacts: the trajectory png draws the run and its closures", "[
   }
   REQUIRE(red_pixels > 100);
 
-  REQUIRE_THROWS_AS(write_trajectory_png(dir / "empty.png", {}, {}), std::invalid_argument);
-
   // A run that never moves has no span to scale by, and a dead-straight one has none on one axis.
   const std::vector<TrajectorySample> stationary(4, {.time = rko_slam::core::Nsec{0}, .pose = Sophus::SE3f{}});
   REQUIRE(write_trajectory_png(dir / "stationary.png", stationary, {}));

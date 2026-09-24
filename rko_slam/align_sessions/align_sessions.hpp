@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-#include "rko_slam/core/closure.hpp"
+#include "rko_slam/closures/detector.hpp"
 #include "rko_slam/core/voxel_hash_map.hpp"
 #include "rko_slam/pgo/pose_graph.hpp"
 
@@ -26,7 +26,7 @@ struct AlignResult {
 // closure path to the reference are dropped. Sub-maps are read from each run_dir's own `sub_maps/`. Throws
 // rko_lio::core::InputError on bad input and std::runtime_error if the joint optimization fails; nothing is
 // written in either case.
-std::optional<AlignResult> align(const core::ClosureDetector::Config& detector_config,
+std::optional<AlignResult> align(const closures::ClosureDetector::Config& detector_config,
                                  const float overlap_threshold,
                                  const pgo::PoseGraph::Config& pose_graph_config,
                                  const std::vector<std::filesystem::path>& run_dirs,
