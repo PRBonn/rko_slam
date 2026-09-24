@@ -434,9 +434,9 @@ master into your workspace as shown above. <code class="docutils literal notrans
 <code class="docutils literal notranslate"><span class="pre">colcon</span> <span class="pre">test</span> <span class="pre">--packages-select</span> <span class="pre">rko_slam</span></code>.</p>
 <section id="dependencies-and-quirks">
 <h3>Dependencies and quirks<a class="headerlink" href="#dependencies-and-quirks" title="Link to this heading">#</a></h3>
-<p>Two dependencies - MapClosures and the UTL profiler - are fetched and pinned by CMake, always; nanoflann and Catch2 are
-fetched too under <code class="docutils literal notranslate"><span class="pre">-DRKO_SLAM_FETCH_CONTENT_DEPS=ON</span></code> and found on the system otherwise. Sourcing Eigen, Sophus, spdlog
-and tsl-robin-map relies on rko_lio, however you configure that (check rko_lio’s
+<p>The UTL profiler is fetched and pinned by CMake, always; nanoflann and Catch2 are fetched too under
+<code class="docutils literal notranslate"><span class="pre">-DRKO_SLAM_FETCH_CONTENT_DEPS=ON</span></code> and found on the system otherwise. Sourcing Eigen, Sophus, spdlog and tsl-robin-map
+relies on rko_lio, however you configure that (check rko_lio’s
 <a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html">ROS docs</a>). Everything else resolves via rosdep.</p>
 <p>Steps are planned to clean up the dependency requirements and support pure rosdep installs.</p>
 </section>

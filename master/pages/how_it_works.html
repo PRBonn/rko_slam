@@ -417,7 +417,7 @@
 <h1>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h1>
 <p>rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything locally
 consistent publishing <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">&lt;-</span> <span class="pre">base</span></code>), reads the same IMU that odometry reads, and publishes a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code> correction.
-The pipeline is inspired by <a class="reference external" href="https://github.com/PRBonn/kiss-slam">KISS-SLAM</a>, uses
+The pipeline is inspired by <a class="reference external" href="https://github.com/PRBonn/kiss-slam">KISS-SLAM</a>, reimplements
 <a class="reference external" href="https://github.com/PRBonn/MapClosures">MapClosures</a> for detecting revisits, and a pose graph.</p>
 <section id="sub-maps">
 <h2>Sub-maps<a class="headerlink" href="#sub-maps" title="Link to this heading">#</a></h2>
@@ -444,12 +444,12 @@ translation and radian-scale rotation residuals.</p>
 <h2>Finding a revisit<a class="headerlink" href="#finding-a-revisit" title="Link to this heading">#</a></h2>
 <p>Whenever a sub-map is completed, the system searches for loop closures between it and all previously built sub-maps.
 That search runs on its own thread, so the scan stream keeps moving while it works.</p>
-<p>MapClosures identifies the ground points in the local map, projects the map onto the ground plane into a bird’s eye view
-density image (<code class="docutils literal notranslate"><span class="pre">density_map_resolution</span></code> is its cell size, <code class="docutils literal notranslate"><span class="pre">density_threshold</span></code> decides when a cell counts as occupied),
-and computes binary ORB descriptors, which it matches against the descriptors of all previous sub-maps.
-<code class="docutils literal notranslate"><span class="pre">hamming_distance_threshold</span></code> is how different two descriptors may be and still be called a match, and
-<code class="docutils literal notranslate"><span class="pre">no_of_sub_maps_to_skip</span></code> keeps the most recent sub-maps out of the search so a sub-map does not match its own
-neighbours.</p>
+<p>The search levels the local map - onto the up the IMU measured for it, or onto the ground plane it identifies when there
+is no IMU - and projects it into a bird’s eye view density image (<code class="docutils literal notranslate"><span class="pre">density_map_resolution</span></code> is its cell size,
+<code class="docutils literal notranslate"><span class="pre">density_threshold</span></code> decides when a cell counts as occupied), and computes binary ORB descriptors, which it matches
+against the descriptors of all previous sub-maps. <code class="docutils literal notranslate"><span class="pre">hamming_distance_threshold</span></code> is how different two descriptors may be
+and still be called a match, and <code class="docutils literal notranslate"><span class="pre">no_of_sub_maps_to_skip</span></code> keeps the most recent sub-maps out of the search so a sub-map
+does not match its own neighbours.</p>
 <p>RANSAC validates a matching candidate geometrically and gives an initial alignment, and <code class="docutils literal notranslate"><span class="pre">inliers_threshold</span></code> is how many
 of the feature matches must agree on that alignment for it to go further. Point-to-plane ICP then refines it between the
 two sub-maps’ voxel centroids, into a relative closure transform that maps the keypose frame of one sub-map into that of
