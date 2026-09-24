@@ -15,20 +15,12 @@ cd <ws> && rosdep install --from-paths src --ignore-src -y
 colcon build --packages-select rko_lio rko_slam
 ```
 
-Please note, as of right now using `rko_lio` via `sudo apt install ros-<distro>-rko-lio` is not supported. Please clone
-master into your workspace as shown above. `apt` installs of both will be supported, same as with rko_lio today.
+`apt` installs of both will be supported, same as with rko_lio today.
 
 Tests are off by default; add `-DRKO_SLAM_BUILD_TESTS=ON` to the cmake args and run
 `colcon test --packages-select rko_slam`.
 
-### Dependencies and quirks
-
-The UTL profiler is fetched and pinned by CMake, always; nanoflann and Catch2 are fetched too under
-`-DRKO_SLAM_FETCH_CONTENT_DEPS=ON` and found on the system otherwise. Sourcing Eigen, Sophus, spdlog and tsl-robin-map
-relies on rko_lio, however you configure that (check rko_lio's
-[ROS docs](https://prbonn.github.io/rko_lio/pages/ros.html)). Everything else resolves via rosdep.
-
-Steps are planned to clean up the dependency requirements and support pure rosdep installs.
+Add `-DRKO_SLAM_ENABLE_PROFILING=ON` if you want a run to report where its time went, in `*_profile.txt`.
 
 ## Run
 
@@ -208,7 +200,7 @@ Nothing is written unless you ask for it. With `dump_results:=true`, a SLAM run 
 | `*_tum.txt`              | the trajectory                                                                                                                                                                                                      |
 | `*_keypose_graph.g2o`    | the keypose pose graph, in g2o text with rko_slam's own comment lines and gravity edges. The edge weights are not in it, they are in `*_config.yaml`, so reopening the graph in g2o does not reproduce our solution |
 | `*_config.yaml`          | the config the run used                                                                                                                                                                                             |
-| `*_profile.txt`          | profiling logs                                                                                                                                                                                                      |
+| `*_profile.txt`          | profiling logs, with `-DRKO_SLAM_ENABLE_PROFILING=ON`                                                                                                                                                               |
 | `*_trajectory.png`       | the trajectory as an image, loop closures in red                                                                                                                                                                    |
 | `sub_maps/sub_map_*.ply` | the sub-maps, in the frame of their keypose. Usable as a map for a localization system, and the input to `align.launch.py` (`dump_sub_maps`, on by default)                                                         |
 

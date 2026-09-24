@@ -18,7 +18,7 @@
   <depend>robin-map-dev</depend>
   <depend>yaml-cpp</depend>
   <depend>libopencv-dev</depend>
-  <depend>rko_lio</depend>
+  <depend version_gte="0.4.1">rko_lio</depend>
 
   <test_depend>catch2</test_depend>
 
