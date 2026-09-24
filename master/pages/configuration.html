@@ -548,9 +548,10 @@ false closures at 0.4, and 0.3 when merging sessions that barely overlap.</p>
 <h2>Pose graph<a class="headerlink" href="#pose-graph" title="Link to this heading">#</a></h2>
 <p>These can be left at their defaults.</p>
 <ul>
-<li><p><strong>rotation_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">100.0</span></code>)</p>
+<li><p><strong>rotation_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">25.0</span></code>)</p>
 <p>How much the optimizer trusts the rotation of a pose-graph edge against its translation. Higher holds the rotation of
-the odometry and closure edges more rigidly.</p>
+the odometry and closure edges more rigidly. It is the square of the range at which a rotation error and a translation
+error cost the same: the default corresponds to 5 m.</p>
 </li>
 <li><p><strong>closure_info_scale</strong> (<code class="docutils literal notranslate"><span class="pre">float</span></code>, default <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
 <p>How much the optimizer trusts closures against odometry. Above 1 trusts closures more.</p>

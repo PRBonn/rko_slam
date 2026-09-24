@@ -418,7 +418,7 @@
 <p>rko_slam consumes the scan stream and the odometry TF of a running odometry (rko_lio by default, or anything locally
 consistent publishing <code class="docutils literal notranslate"><span class="pre">odom</span> <span class="pre">&lt;-</span> <span class="pre">base</span></code>), reads the same IMU that odometry reads, and publishes a <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code> correction.
 The pipeline is inspired by <a class="reference external" href="https://github.com/PRBonn/kiss-slam">KISS-SLAM</a>, uses
-<a class="reference external" href="https://github.com/PRBonn/MapClosures">MapClosures</a> for detecting revisits, and a g2o pose graph.</p>
+<a class="reference external" href="https://github.com/PRBonn/MapClosures">MapClosures</a> for detecting revisits, and a pose graph.</p>
 <section id="sub-maps">
 <h2>Sub-maps<a class="headerlink" href="#sub-maps" title="Link to this heading">#</a></h2>
 <p>The system does not maintain a single global map but splits the trajectory into local maps, or sub-maps. Each sub-map is
@@ -460,8 +460,8 @@ the size of the smaller one, so 0 to 1. That is what <code class="docutils liter
 <section id="closing-the-loop">
 <h2>Closing the loop<a class="headerlink" href="#closing-the-loop" title="Link to this heading">#</a></h2>
 <p>The system inserts an accepted closure as a new edge, with a Cauchy robust kernel on it to down-weight inconsistent or
-outlier closures, and re-solves the graph immediately (Dogleg, Cholmod). The keyposes move, it rebuilds the trajectory
-from them and publishes the difference between where the odometry thinks you are and where the graph now says you are as
+outlier closures, and re-solves the graph immediately (Dogleg). The keyposes move, it rebuilds the trajectory from them
+and publishes the difference between where the odometry thinks you are and where the graph now says you are as
 <code class="docutils literal notranslate"><span class="pre">map</span> <span class="pre">&lt;-</span> <span class="pre">odom</span></code>.</p>
 </section>
 <section id="keeping-the-map-level">
