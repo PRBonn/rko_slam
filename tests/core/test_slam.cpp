@@ -11,7 +11,6 @@
 using rko_slam::core::Nsec;
 using rko_slam::core::SLAM;
 using rko_slam::core::SubMap;
-using rko_slam::core::VoxelHashMap;
 
 namespace {
 

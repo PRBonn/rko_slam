@@ -46,10 +46,12 @@ TEST_CASE("pgo: edge Jacobians match central differences", "[pgo]") {
       // An exact measurement, as a converged odometry edge has, and one up to 1.2 rad off, as an outlier closure can
       // be.
       for (const Sophus::SE3d& measurement_error : {Sophus::SE3d{}, pose_at(phase + 23.0, 1.2, 0.1 * scale)}) {
-        const PoseEdge edge{.from_id = 0,
-                            .to_id = 1,
-                            .from_T_to = from_keypose.inverse() * to_keypose * measurement_error,
-                            .kind = PoseEdge::Kind::odometry};
+        const PoseEdge edge{
+            .from_id = 0,
+            .to_id = 1,
+            .from_T_to = from_keypose.inverse() * to_keypose * measurement_error,
+            .kind = PoseEdge::Kind::odometry,
+        };
         const PoseEdge::Linearization linearization = edge.linearize({from_keypose, to_keypose});
         CHECK(worst_scaled_gap(linearization.from_jacobian, [&](const Sophus::Vector6d& delta) {
                 return edge.error({from_keypose * Sophus::SE3d::exp(delta), to_keypose});
