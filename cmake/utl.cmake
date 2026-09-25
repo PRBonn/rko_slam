@@ -4,7 +4,7 @@ if(RKO_SLAM_ENABLE_PROFILING)
     utl
     GIT_REPOSITORY https://github.com/DmitriBogdanov/UTL.git
     GIT_TAG v9.0.0
-    OVERRIDE_FIND_PACKAGE SYSTEM EXCLUDE_FROM_ALL)
+    SYSTEM EXCLUDE_FROM_ALL)
   FetchContent_MakeAvailable(utl)
 else()
   # the header UTL would have given us, with the profiler compiled out

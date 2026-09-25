@@ -4,7 +4,7 @@ project(rko_slam LANGUAGES C CXX)
 option(RKO_SLAM_BUILD_TESTS "Build rko_slam tests" OFF)
 option(RKO_SLAM_ENABLE_PROFILING "Fetch UTL and link it in, for the scoped profiler" OFF)
 
-include(cmake/dependencies.cmake)
+include(cmake/utl.cmake)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED CONFIG)
