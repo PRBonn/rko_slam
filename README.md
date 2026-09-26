@@ -1,5 +1,5 @@
 <h1 align="center">rko_slam</h1>
-<h3 align="center">ROS2 LiDAR-inertial SLAM for your odometry: drift correction and multi-session alignment</h3>
+<h3 align="center">ROS2 LiDAR-inertial SLAM and multi-session alignment</h3>
 
 <div align="center">
 
