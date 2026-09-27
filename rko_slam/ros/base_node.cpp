@@ -247,10 +247,10 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
   Scan scan;
   if (!deskew) {
     const OptionalPose odom_T_base =
-        get_transform(tf_buffer, base_frame, odom_frame, to_ns(msg->header.stamp), tf_lookup_timeout);
+        get_transform(tf_buffer, base_frame, odom_frame, to_ns(msg->header.stamp), tf_lookup_timeout, false);
     if (!odom_T_base) {
-      RCLCPP_WARN_STREAM(node->get_logger(),
-                         "dropping scan: no " << odom_frame << " <- " << base_frame << " at the scan stamp");
+      RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
+                                  "dropping scan: no " << odom_frame << " <- " << base_frame << " at the scan stamp");
       ++scans_dropped;
       return;
     }
@@ -272,12 +272,13 @@ void BaseNode::lidar_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPt
     }
 
     const OptionalPose odom_T_base_at_start =
-        get_transform(tf_buffer, base_frame, odom_frame, timestamps.min, tf_lookup_timeout);
+        get_transform(tf_buffer, base_frame, odom_frame, timestamps.min, tf_lookup_timeout, false);
     const OptionalPose odom_T_base_at_end =
-        get_transform(tf_buffer, base_frame, odom_frame, timestamps.max, tf_lookup_timeout);
+        get_transform(tf_buffer, base_frame, odom_frame, timestamps.max, tf_lookup_timeout, false);
     if (!odom_T_base_at_start || !odom_T_base_at_end) {
-      RCLCPP_WARN_STREAM(node->get_logger(), "dropping scan: no " << odom_frame << " <- " << base_frame
-                                                                  << " at one or both scan endpoints, cannot deskew");
+      RCLCPP_WARN_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 1000,
+                                  "dropping scan: no " << odom_frame << " <- " << base_frame
+                                                       << " at one or both scan endpoints, cannot deskew");
       ++scans_dropped;
       return;
     }

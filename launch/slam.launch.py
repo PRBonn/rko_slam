@@ -309,7 +309,8 @@ def launch_setup(context, *args, **kwargs):
     mode = LaunchConfiguration("mode").perform(context).lower()
     validate_mode(mode)
     merged = common.merge(
-        common.config_file_parameters(context), common.cli_parameters(context, configurable_parameters)
+        common.config_file_parameters(context, configurable_parameters),
+        common.cli_parameters(context, configurable_parameters),
     )
     return slam_nodes(context, configurable_parameters, mode, merged, extra_displays=[])
 

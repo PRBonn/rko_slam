@@ -59,12 +59,13 @@ def parse_run_dirs(value) -> list:
         entries = [str(entry).strip() for entry in value]
     else:
         entries = [entry.strip().strip("'\"") for entry in str(value).strip().strip("[]").split(",")]
-    return [entry for entry in entries if entry]
+    return [entry.rstrip("/") for entry in entries if entry]
 
 
 def launch_setup(context, *args, **kwargs):
     merged = common.merge(
-        common.config_file_parameters(context), common.cli_parameters(context, configurable_parameters)
+        common.config_file_parameters(context, configurable_parameters),
+        common.cli_parameters(context, configurable_parameters),
     )
     merged["run_dirs"] = parse_run_dirs(merged.get("run_dirs", ""))
     common.check_required(configurable_parameters, merged)

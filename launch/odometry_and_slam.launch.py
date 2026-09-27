@@ -3,7 +3,8 @@ from pathlib import Path
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, RegisterEventHandler, Shutdown
+from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration
 
 from launch import LaunchDescription
@@ -51,6 +52,7 @@ configurable_parameters = [
         "default": "",
         "description": "YAML config for the rko_lio settings this launch file does not set. Without it, rko_lio autodetects its topics and frames",
     },
+    next(param for param in rko_lio_odometry.configurable_parameters if param["name"] == "autodetect_timeout"),
 ]
 
 
@@ -75,14 +77,14 @@ def rko_lio_parameters(context, shared: dict, using_default_rviz: bool) -> dict:
         return {**odom_params, **shared, "publish_deskewed_scan": True}
 
     autodetect = load_module(rko_lio_launch / "autodetect.py")
-    timeout = common.default_for(rko_lio_odometry.configurable_parameters, "autodetect_timeout")
+    timeout = LaunchConfiguration("autodetect_timeout").perform(context)
     try:
         found = autodetect.autodetect(dict(shared), mode="online", bag_path=None, timeout=float(timeout))
     except autodetect.AutodetectError as error:
         common.fail(
             "[ERROR] rko_lio autodetect failed:",
             str(error),
-            "Pass rko_lio_config_file, or run rko_lio and slam.launch.py yourself.",
+            "Raise autodetect_timeout, pass rko_lio_config_file, or run rko_lio and slam.launch.py yourself.",
         )
     return {**found, "publish_deskewed_scan": True, "publish_local_map": using_default_rviz}
 
@@ -104,7 +106,8 @@ def point_cloud_display(name: str, topic: str, colour: str, size_m: float) -> di
 
 def launch_setup(context, *args, **kwargs):
     given = common.merge(
-        common.config_file_parameters(context), common.cli_parameters(context, configurable_parameters)
+        common.config_file_parameters(context, configurable_parameters),
+        common.cli_parameters(context, configurable_parameters),
     )
     for name, decided in FORCED.items():
         if name in given:
@@ -140,8 +143,15 @@ def launch_setup(context, *args, **kwargs):
     print("=" * 40 + "\n")
 
     log_level = LaunchConfiguration("log_level")
+    rko_lio_node = rko_lio_odometry.rko_lio_node(odom_params, "online_node", log_level)
     return [
-        rko_lio_odometry.rko_lio_node(odom_params, "online_node", log_level),
+        rko_lio_node,
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=rko_lio_node,
+                on_exit=lambda event, context: [Shutdown(reason=f"rko_lio exited with code {event.returncode}")],
+            )
+        ),
         *slam.slam_nodes(context, configurable_parameters, "online", slam_params, extra_displays),
     ]
 

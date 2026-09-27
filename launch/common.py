@@ -11,7 +11,7 @@ LAUNCH_PARAMETERS = [
         "launch_only": True,
         "name": "config_file",
         "default": "",
-        "description": "YAML file with any of these parameters; explicit CLI args override it",
+        "description": "YAML file with any of these parameters except the launch-only ones; explicit CLI args override it",
     },
     {
         "launch_only": True,
@@ -138,12 +138,20 @@ def cli_parameters(context, table):
     }
 
 
-def config_file_parameters(context):
+def config_file_parameters(context, table):
     path = LaunchConfiguration("config_file").perform(context)
     if path == "":
         return {}
     with open(path) as f:
-        return yaml.safe_load(f) or {}
+        file_params = yaml.safe_load(f) or {}
+    launch_only = sorted(set(file_params) & {param["name"] for param in table if param.get("launch_only")})
+    if launch_only:
+        fail(
+            "[ERROR] launch-only parameter(s) in config_file:",
+            *[f"  - {name}" for name in launch_only],
+            "Pass them on the command line (name:=value).",
+        )
+    return file_params
 
 
 def merge(file_params, cli_params):
