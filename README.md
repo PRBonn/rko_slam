@@ -16,27 +16,126 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/_static/img/readme_loop_closing_dark.png">
-    <img src="docs/_static/img/readme_loop_closing_light.png" alt="A 3 km drive with the odometry alone, and with rko_slam running on top of it" width="900">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/_static/img/readme_loop_closing_dark.gif">
+    <img src="docs/_static/img/readme_loop_closing_light.gif" alt="Sub-maps of a drive placed by the odometry, doubling the road where the drive returns, then snapping into one road with rko_slam running on top" width="900">
   </picture>
   <br />
-  <em>A 3 km drive that ends where it started, with rko_lio, and with rko_slam running on top of it</em>
+  <em>A drive that returns to where it started, with rko_lio, and with rko_slam running on top of it</em>
 </p>
 
-rko_slam is a ROS2 LiDAR-inertial SLAM system. It runs on top of a LiDAR-inertial odometry. An odometry tells you how
-you moved, and over a long enough run its estimate drifts: come back to a place you have been before and the two visits
-do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR and IMU, recognizes the revisit, and
-corrects the whole trajectory behind you. You keep the odometry as it is, and you additionally get a `map <- odom`
-correction on TF, a pose graph, and the sub-maps the system built along the way.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/_static/img/readme_platforms_dark.png">
+    <img src="docs/_static/img/readme_platforms_light.png" alt="Three closed maps: a vehicle run, a backpack run on Oxford Spires, and a backpack run in a DigiForests forest" width="900">
+  </picture>
+</p>
 
-The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry package,
-which is also a build dependency. At run time any odometry that publishes `odom <- base` on TF and is locally consistent
-will do - LiDAR-only odometry, wheel odometry, whatever you already run. The IMU is optional as well: leave `imu_topic`
-unset and rko_slam runs on the LiDAR alone.
+## Quick start
 
-The same revisit detector works across runs, not just within one, as an offline step. Give it the run directories of
-several sessions of the same place - different days, different directions, whatever - and it finds where they overlap
-and solves all of them into one frame.
+rko_slam runs on [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry, or on your own odometry.
+Build it with rko_lio:
+
+```bash
+cd <ws>/src
+git clone https://github.com/PRBonn/rko_lio
+git clone https://github.com/PRBonn/rko_slam
+cd <ws> && rosdep install --from-paths src --ignore-src -y
+colcon build --packages-select rko_lio rko_slam
+```
+
+### What it needs
+
+- A LiDAR (`sensor_msgs/PointCloud2` with per-point timestamps) and an IMU (`sensor_msgs/Imu`).
+- The LiDAR and IMU frames linked to your base frame on TF, e.g. by your URDF.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/_static/img/readme_tf_tree_dark.svg">
+    <img src="docs/_static/img/tf_tree_light.svg" alt="The TF tree: rko_slam publishes map from odom, your odometry odom from base_link, your URDF base_link from the LiDAR and, dashed as optional, the IMU frame" width="900">
+  </picture>
+</p>
+
+### Run
+
+`odometry_and_slam.launch.py` starts rko_lio and rko_slam together and finds the LiDAR and IMU topics and your base
+frame by itself. Start your robot, then:
+
+```bash
+ros2 launch rko_slam odometry_and_slam.launch.py rviz:=true
+```
+
+From a bag, in two terminals, bag first:
+
+```bash
+ros2 bag play <bag> --clock
+ros2 launch rko_slam odometry_and_slam.launch.py use_sim_time:=true rviz:=true
+```
+
+If your setup differs:
+
+| Your setup                                                                                                         | Do this                                                        |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Base frame named other than `base_link`, `base_footprint` or `base`                                                | `base_frame:=<yours>`                                          |
+| Several LiDAR or IMU topics, e.g. the LiDAR driver's own IMU                                                       | an rko_lio config file naming yours and your base frame, below |
+| LiDAR and IMU messages share one `frame_id` and no TF links it to a base frame, e.g. a Livox with its built-in IMU | an rko_lio config file with identity extrinsics, below         |
+| Topics or TF take over 10 s to appear                                                                              | `autodetect_timeout:=<seconds>`                                |
+| Something else already publishes `odom <- <your base frame>`, e.g. robot_localization or the bag's `/tf`           | turn it off, or run with your own odometry, below              |
+
+An rko_lio config file, passed with `rko_lio_config_file:=<file>`, replaces the autodetection
+([all keys](https://prbonn.github.io/rko_lio/pages/config.html)):
+
+```yaml
+lidar_topic: /livox/lidar
+imu_topic: /livox/imu
+# LiDAR and IMU in one frame, no TF
+base_frame: livox_frame
+extrinsic_lidar2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+extrinsic_imu2base_quat_xyzw_xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+```
+
+### With your own odometry
+
+`slam.launch.py` starts rko_slam alone, on any locally consistent odometry that publishes `odom <- base_link` on TF:
+
+```bash
+ros2 launch rko_slam slam.launch.py lidar_topic:=/points imu_topic:=/imu base_frame:=base_link deskew:=true
+```
+
+If your setup differs:
+
+| Your setup                                        | Do this                                                                    |
+| ------------------------------------------------- | -------------------------------------------------------------------------- |
+| Scans already deskewed                            | `deskew:=false`, the default                                               |
+| LiDAR and IMU in one frame, no TF to a base frame | `base_frame:=<that frame>`; your odometry publishes `odom <- <that frame>` |
+| Odometry frame named other than `odom`            | `odom_frame:=<name>`                                                       |
+| Odometry publishes `base_link <- odom`            | `invert_map_tf:=true`                                                      |
+| No IMU                                            | leave out `imu_topic`                                                      |
+
+With an IMU, gravity levelling improves the map:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/_static/img/readme_gravity_levelling_dark.png">
+    <img src="docs/_static/img/gravity_levelling_light.png" alt="The x-y track and the height along a 20 km drive against ground truth, without gravity levelling and with it" width="900">
+  </picture>
+  <br />
+  <em>A 20 km drive against ground truth, the same odometry under both runs: in height, the run without gravity levelling
+  swings through ±40 m, the one with it stays within a few metres</em>
+</p>
+
+### Settings
+
+- `dump_results:=true` writes the run to `results/<run_name>_<n>/`: each sub-map as it closes, then the trajectory and
+  pose graph on shutdown.
+- `splitting_distance` (50 m): a new sub-map starts at this straight-line distance from the last one's start, and a loop
+  closes against a sub-map four or more back, set by `no_of_sub_maps_to_skip` (3, at least 1): at the defaults, a loop
+  shorter than about 200 m never closes. For a small area, lower either, e.g. `splitting_distance:=30`.
+- `overlap_threshold` (0.4): how much two sub-maps must overlap for a closure. Raise it where places look alike.
+
+`ros2 launch rko_slam slam.launch.py -s` lists every rko_slam parameter. Offline processing, odometry from a TUM file,
+every output: [documentation](https://prbonn.github.io/rko_slam/).
+
+## Multi-session alignment
 
 <p align="center">
   <picture>
@@ -47,75 +146,20 @@ and solves all of them into one frame.
   <em>Three sessions of the same place, recorded on different days, and the one frame they end up in</em>
 </p>
 
-Documentation is at [prbonn.github.io/rko_slam](https://prbonn.github.io/rko_slam/).
-
-## Build
-
-Supported distros: Jazzy, Kilted, Lyrical, Rolling.
-
-For now, rko_lio has to be built in the same workspace.
+Run each session with `dump_results:=true run_name:=day_1` (`day_2`, ...), then:
 
 ```bash
-cd <ws>/src
-git clone https://github.com/PRBonn/rko_lio
-git clone https://github.com/PRBonn/rko_slam
-cd <ws> && rosdep install --from-paths src --ignore-src -y
-colcon build --packages-select rko_lio rko_slam
+ros2 launch rko_slam align.launch.py run_dirs:="[results/day_1_0, results/day_2_0]"
 ```
 
-`apt` installs will be supported, same as with rko_lio. Dependencies and build options are covered in the
-[docs](https://prbonn.github.io/rko_slam/master/pages/build_and_run.html).
+It writes each session's trajectory in the joint frame and the joint pose graph to `results/aligned_<n>/`.
 
-## Usage
+## Citation
 
-Three entrypoints: `slam.launch.py` (`mode:=online|offline`), `odometry_and_slam.launch.py`, and `align.launch.py`. `-s`
-lists every parameter with its documentation, and anything you leave unset keeps the node's own default.
+If rko_slam is useful to you, leave a star ⭐.
 
-Online, next to a running rko_lio, consuming its deskewed scan:
-
-```bash
-ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu rviz:=true
-```
-
-Offline, self-draining a bag, with the odometry from the bag's own `/tf`, and writing the run to disk:
-
-```bash
-ros2 launch rko_slam slam.launch.py mode:=offline bag_path:=/data/my_bag \
-  lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu dump_results:=true
-```
-
-Multi-session alignment of the run directories those runs wrote:
-
-```bash
-ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
-```
-
-Running with another odometry, running rko_lio alongside with `odometry_and_slam.launch.py`, taking the odometry from a
-TUM file, what a run writes to disk, every parameter and what it does, and how the system works are all in the
-[docs](https://prbonn.github.io/rko_slam/).
-
-## Acknowledgments and Citation
-
-This work was developed as part of my thesis (published soon), and much of it is inspired by
-[KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2.
-rko_slam also relies heavily on [rko_lio](https://github.com/PRBonn/rko_lio), my lidar inertial odometry package, for
-much of its internals. Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures).
-
-If you find this package useful, consider leaving a star ⭐ here and on KISS-SLAM, and citing the original publication:
-
-```bib
-@INPROCEEDINGS{kiss2025iros,
-  author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
-  booktitle = {2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-  title     = {{KISS-SLAM: A Simple, Robust, and Accurate 3D LiDAR SLAM System With Enhanced Generalization Capabilities}},
-  year      = {2025},
-  pages     = {5363-5370},
-  doi       = {10.1109/IROS60139.2025.11246613}
-}
-```
-
-If you found the default odometry, i.e., rko_lio useful, consider leaving a star ⭐ there and citing the corresponding
-publication:
+rko_slam is part of my PhD thesis. Until the thesis is published, please cite
+[rko_lio](https://github.com/PRBonn/rko_lio), which it shares its core with:
 
 ```bib
 @article{malladi2026ral,
@@ -127,6 +171,20 @@ publication:
   number      = {6},
   pages       = {7420--7427},
   doi         = {10.1109/LRA.2026.3685966},
+}
+```
+
+rko_slam builds on [KISS-SLAM](https://github.com/PRBonn/kiss-slam); its first version was a reimplementation for ROS2.
+Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures). Please cite KISS-SLAM as well:
+
+```bib
+@INPROCEEDINGS{kiss2025iros,
+  author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
+  booktitle = {2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  title     = {{KISS-SLAM: A Simple, Robust, and Accurate 3D LiDAR SLAM System With Enhanced Generalization Capabilities}},
+  year      = {2025},
+  pages     = {5363-5370},
+  doi       = {10.1109/IROS60139.2025.11246613}
 }
 ```
 

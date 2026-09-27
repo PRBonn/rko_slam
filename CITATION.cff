@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: "rko_slam is part of a PhD thesis that is not published yet. Until it is, please cite rko_lio, and KISS-SLAM, which rko_slam builds on."
+title: "rko_slam: ROS2 LiDAR-inertial SLAM and multi-session alignment"
+type: software
+authors:
+  - family-names: Malladi
+    given-names: Meher V. R.
+repository-code: "https://github.com/PRBonn/rko_slam"
+url: "https://prbonn.github.io/rko_slam/"
+license: MIT
+preferred-citation:
+  type: article
+  title: "A Robust Approach for LiDAR-Inertial Odometry Without Sensor-Specific Modeling"
+  authors:
+    - family-names: Malladi
+      given-names: Meher V. R.
+    - family-names: Guadagnino
+      given-names: Tiziano
+    - family-names: Lobefaro
+      given-names: Luca
+    - family-names: Stachniss
+      given-names: Cyrill
+  journal: "IEEE Robotics and Automation Letters"
+  year: 2026
+  volume: 11
+  issue: 6
+  start: 7420
+  end: 7427
+  doi: 10.1109/LRA.2026.3685966
+references:
+  - type: conference-paper
+    title: "KISS-SLAM: A Simple, Robust, and Accurate 3D LiDAR SLAM System With Enhanced Generalization Capabilities"
+    authors:
+      - family-names: Guadagnino
+        given-names: Tiziano
+      - family-names: Mersch
+        given-names: Benedikt
+      - family-names: Gupta
+        given-names: Saurabh
+      - family-names: Vizzo
+        given-names: Ignacio
+      - family-names: Grisetti
+        given-names: Giorgio
+      - family-names: Stachniss
+        given-names: Cyrill
+    collection-title: "2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"
+    year: 2025
+    start: 5363
+    end: 5370
+    doi: 10.1109/IROS60139.2025.11246613
