@@ -13,28 +13,22 @@ myst:
   <figure><figcaption>rko_lio</figcaption><img class="only-dark" src="_static/img/loop_closing_odometry_dark.png" alt="a drive with the odometry alone"><img class="only-light" src="_static/img/loop_closing_odometry_light.png" alt="a drive with the odometry alone"></figure>
   <figure><figcaption>rko_slam</figcaption><img class="only-dark" src="_static/img/loop_closing_slam_dark.png" alt="the same drive with rko_slam running on top"><img class="only-light" src="_static/img/loop_closing_slam_light.png" alt="the same drive with rko_slam running on top"></figure>
 </div>
-<p class="pair-caption">A 3 km drive that ends where it started, with rko_lio, and with rko_slam running on top of it.</p>
+<p class="pair-caption">Part of a 20 km drive that ends where it started, with rko_lio, and with rko_slam running on top of it.</p>
 
-An odometry tells you how you moved. Over a long enough run its estimate drifts, and when you come back to a place you
-have been before, the two visits do not land on the same spot. rko_slam runs next to the odometry, uses the LiDAR and
-IMU, recognizes the revisit, and corrects the whole trajectory behind you. You keep the odometry as it is, and you
-additionally get a `map <- odom` correction on TF, a pose graph, and the sub-maps the system built along the way.
+<figure>
+  <img class="only-dark" src="_static/img/platforms_dark.png" alt="Three closed maps: a vehicle run, a backpack run on Oxford Spires, and a backpack run in a DigiForests forest">
+  <img class="only-light" src="_static/img/readme_platforms_light.png" alt="Three closed maps: a vehicle run, a backpack run on Oxford Spires, and a backpack run in a DigiForests forest">
+</figure>
 
-The odometry it assumes by default is [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry package.
-rko_lio is also a build dependency, rko_slam uses its voxel map and deskewing internally. At run time though, any
-odometry that publishes `odom <- base` on TF and is locally consistent will do - LiDAR-only odometry, wheel odometry,
-whatever you already run. The IMU is optional as well: leave `imu_topic` unset and rko_slam runs on the LiDAR alone.
+rko_slam runs on [rko_lio](https://github.com/PRBonn/rko_lio), my LiDAR-inertial odometry, or on your own odometry, and
+publishes `map <- odom` on TF. With a LiDAR with per-point timestamps, an IMU, and a TF tree from both to your base
+frame:
 
 ```bash
-ros2 launch rko_slam slam.launch.py lidar_topic:=/rko_lio/deskewed_scan imu_topic:=/your/imu rviz:=true
+ros2 launch rko_slam odometry_and_slam.launch.py rviz:=true
 ```
 
 ## Multi-session alignment
-
-The same revisit detector works across runs, not just within one, as an offline step. Give it the run directories of
-several sessions of the same place - different days, different directions, whatever - and it finds where they overlap
-and solves all of them into one frame. No bags and no live topics, it only reads what the runs already dumped. Merging
-can also tighten each session's own trajectory, not only place them in one frame.
 
 <div class="pair">
   <figure><figcaption>as recorded</figcaption><img class="only-dark" src="_static/img/multi_session_recorded_dark.png" alt="three sessions, each in its own frame"><img class="only-light" src="_static/img/multi_session_recorded_light.png" alt="three sessions, each in its own frame"></figure>
@@ -42,8 +36,10 @@ can also tighten each session's own trajectory, not only place them in one frame
 </div>
 <p class="pair-caption">Three sessions of the same place, recorded on different days, and the one frame they end up in.</p>
 
+Run each session with `dump_results:=true run_name:=day_1` (`day_2`, ...), then:
+
 ```bash
-ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
+ros2 launch rko_slam align.launch.py run_dirs:="[results/day_1_0, results/day_2_0]"
 ```
 
 ## Where to go
@@ -55,24 +51,10 @@ ros2 launch rko_slam align.launch.py run_dirs:="[results/run_1, results/run_2]"
 
 ## Citation
 
-This work was developed as part of my thesis (published soon), and much of it is inspired by
-[KISS-SLAM](https://github.com/PRBonn/kiss-slam) - the initial version was essentially a reimplementation for ROS2.
-Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures). If you find it useful, consider
-leaving a star on [rko_slam](https://github.com/PRBonn/rko_slam) and on KISS-SLAM, and citing the original publication:
+If rko_slam is useful to you, leave a star on [GitHub](https://github.com/PRBonn/rko_slam).
 
-```bibtex
-@INPROCEEDINGS{kiss2025iros,
-  author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
-  booktitle = {2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-  title     = {{KISS-SLAM: A Simple, Robust, and Accurate 3D LiDAR SLAM System With Enhanced Generalization Capabilities}},
-  year      = {2025},
-  pages     = {5363-5370},
-  doi       = {10.1109/IROS60139.2025.11246613}
-}
-```
-
-If the default odometry, [rko_lio](https://github.com/PRBonn/rko_lio), was useful to you, consider a star there and
-citing its paper:
+rko_slam is part of my PhD thesis. Until the thesis is published, please cite
+[rko_lio](https://github.com/PRBonn/rko_lio), which it shares its core with:
 
 ```bibtex
 @article{malladi2026ral,
@@ -84,6 +66,20 @@ citing its paper:
   number      = {6},
   pages       = {7420--7427},
   doi         = {10.1109/LRA.2026.3685966},
+}
+```
+
+rko_slam builds on [KISS-SLAM](https://github.com/PRBonn/kiss-slam); its first version was a reimplementation for ROS2.
+Closure detection reimplements [MapClosures](https://github.com/PRBonn/MapClosures). Please cite KISS-SLAM as well:
+
+```bibtex
+@INPROCEEDINGS{kiss2025iros,
+  author    = {Guadagnino, Tiziano and Mersch, Benedikt and Gupta, Saurabh and Vizzo, Ignacio and Grisetti, Giorgio and Stachniss, Cyrill},
+  booktitle = {2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  title     = {{KISS-SLAM: A Simple, Robust, and Accurate 3D LiDAR SLAM System With Enhanced Generalization Capabilities}},
+  year      = {2025},
+  pages     = {5363-5370},
+  doi       = {10.1109/IROS60139.2025.11246613}
 }
 ```
 
