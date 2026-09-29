@@ -135,7 +135,8 @@ true and `base_frame`, `odom_frame` and `use_sim_time`, when given to this launc
 Without the file, rko_lio configures itself with its
 [autodetection](https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection), which needs:
 
-- exactly one `sensor_msgs/PointCloud2` and exactly one `sensor_msgs/Imu` topic in the graph;
+- exactly one `sensor_msgs/PointCloud2` and exactly one `sensor_msgs/Imu` topic in the graph. With no `PointCloud2`
+  topic, exactly one `point_cloud_interfaces/CompressedPointCloud2` topic is used instead;
 - a non-empty TF tree, in which both sensor frames transform to the base frame once a message has arrived on each topic,
   so the static transforms must already be up. With `base_frame` passed, only the topics are looked up.
 
@@ -163,7 +164,7 @@ For anything this does not allow, run rko_lio with its own launch file and rko_s
 </figure>
 
 rko_slam works in one frame, `base_frame`: the sub-maps, keyposes and trajectory are expressed in it. Left unset, it is
-the scan's frame, the `frame_id` of the `PointCloud2`.
+the scan's frame, its `frame_id`.
 
 The odometry is the pose of `base_frame` in `odom_frame`, read from TF at each scan's timestamp. A static transform on
 TF connects `base_frame` to the scan's frame, read once on the first scan. A second static transform connects
@@ -178,13 +179,13 @@ rko_slam publishes `map_frame <- odom_frame`, which makes `map_frame <- base_fra
 
 Subscribed:
 
-| Topic / transform                         | What                                                                         |
-| ----------------------------------------- | ---------------------------------------------------------------------------- |
-| `lidar_topic` (`sensor_msgs/PointCloud2`) | the scans, taken as already deskewed unless you set `deskew:=true`           |
-| `imu_topic` (`sensor_msgs/Imu`)           | the IMU whose accelerometer levels the map, the same one your odometry reads |
-| `odom_frame <- base_frame` on TF          | the odometry, looked up at each scan's timestamp                             |
-| `base_frame <- the scan's frame` on TF    | static, read once on the first scan to bring every scan into `base_frame`    |
-| `base_frame <- the IMU's frame` on TF     | static, read once on the first IMU message                                   |
+| Topic / transform                                                                           | What                                                                         |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `lidar_topic` (`sensor_msgs/PointCloud2` or `point_cloud_interfaces/CompressedPointCloud2`) | the scans, taken as already deskewed unless you set `deskew:=true`           |
+| `imu_topic` (`sensor_msgs/Imu`)                                                             | the IMU whose accelerometer levels the map, the same one your odometry reads |
+| `odom_frame <- base_frame` on TF                                                            | the odometry, looked up at each scan's timestamp                             |
+| `base_frame <- the scan's frame` on TF                                                      | static, read once on the first scan to bring every scan into `base_frame`    |
+| `base_frame <- the IMU's frame` on TF                                                       | static, read once on the first IMU message                                   |
 
 Published:
 

@@ -449,8 +449,9 @@ the ones worth changing first are <code class="docutils literal notranslate"><sp
 <h2>Input<a class="headerlink" href="#input" title="Link to this heading">#</a></h2>
 <ul>
 <li><p><strong>lidar_topic</strong> (required)</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>.
-<code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it to rko_lio’s deskewed scan and refuses it as an argument.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code> topic with the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew</span></code>. It can also be a
+<code class="docutils literal notranslate"><span class="pre">point_cloud_interfaces/CompressedPointCloud2</span></code> topic, decoded by the <code class="docutils literal notranslate"><span class="pre">point_cloud_transport</span></code> plugin named in its
+<code class="docutils literal notranslate"><span class="pre">format</span></code> field. <code class="docutils literal notranslate"><span class="pre">odometry_and_slam.launch.py</span></code> sets it to rko_lio’s deskewed scan and refuses it as an argument.</p>
 </li>
 <li><p><strong>base_frame</strong> (optional)</p>
 <p>The frame rko_slam works in, usually <code class="docutils literal notranslate"><span class="pre">base_link</span></code>, see <a class="reference internal" href="build_and_run.html#frames"><span class="std std-ref">Frames</span></a>. Under

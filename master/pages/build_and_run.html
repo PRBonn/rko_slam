@@ -541,7 +541,8 @@ true and <code class="docutils literal notranslate"><span class="pre">base_frame
 <p>Without the file, rko_lio configures itself with its
 <a class="reference external" href="https://prbonn.github.io/rko_lio/pages/ros.html#launch-parameter-autodetection">autodetection</a>, which needs:</p>
 <ul class="simple">
-<li><p>exactly one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code> and exactly one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/Imu</span></code> topic in the graph;</p></li>
+<li><p>exactly one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code> and exactly one <code class="docutils literal notranslate"><span class="pre">sensor_msgs/Imu</span></code> topic in the graph. With no <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>
+topic, exactly one <code class="docutils literal notranslate"><span class="pre">point_cloud_interfaces/CompressedPointCloud2</span></code> topic is used instead;</p></li>
 <li><p>a non-empty TF tree, in which both sensor frames transform to the base frame once a message has arrived on each topic,
 so the static transforms must already be up. With <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> passed, only the topics are looked up.</p></li>
 </ul>
@@ -567,7 +568,7 @@ identity extrinsics:</p>
   <img class="only-light" src="../_static/img/tf_tree_light.svg" alt="The TF tree: rko_slam publishes map from odom, your odometry odom from base_link, your URDF base_link from the LiDAR and, dashed as optional, the IMU frame">
 </figure>
 <p>rko_slam works in one frame, <code class="docutils literal notranslate"><span class="pre">base_frame</span></code>: the sub-maps, keyposes and trajectory are expressed in it. Left unset, it is
-the scan’s frame, the <code class="docutils literal notranslate"><span class="pre">frame_id</span></code> of the <code class="docutils literal notranslate"><span class="pre">PointCloud2</span></code>.</p>
+the scan’s frame, its <code class="docutils literal notranslate"><span class="pre">frame_id</span></code>.</p>
 <p>The odometry is the pose of <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> in <code class="docutils literal notranslate"><span class="pre">odom_frame</span></code>, read from TF at each scan’s timestamp. A static transform on
 TF connects <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the scan’s frame, read once on the first scan. A second static transform connects
 <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> to the IMU’s frame, read once on the first IMU message, after the first scan when <code class="docutils literal notranslate"><span class="pre">base_frame</span></code> is unset.</p>
@@ -585,7 +586,7 @@ TF connects <code class="docutils literal notranslate"><span class="pre">base_fr
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code>)</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lidar_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/PointCloud2</span></code> or <code class="docutils literal notranslate"><span class="pre">point_cloud_interfaces/CompressedPointCloud2</span></code>)</p></td>
 <td><p>the scans, taken as already deskewed unless you set <code class="docutils literal notranslate"><span class="pre">deskew:=true</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">imu_topic</span></code> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/Imu</span></code>)</p></td>
