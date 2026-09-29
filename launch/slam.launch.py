@@ -43,7 +43,7 @@ configurable_parameters = [
     {
         "name": "lidar_topic",
         "default": "",
-        "description": "PointCloud2 input topic (required), taken as already deskewed unless you set deskew",
+        "description": "PointCloud2 or CompressedPointCloud2 input topic (required), taken as already deskewed unless you set deskew",
         "required": True,
     },
     {

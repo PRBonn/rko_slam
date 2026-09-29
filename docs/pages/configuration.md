@@ -39,8 +39,9 @@ the ones worth changing first are `splitting_distance` and `overlap_threshold`.
 
 - **lidar_topic** (required)
 
-  The `PointCloud2` topic with the scans, taken as already deskewed unless you set `deskew`.
-  `odometry_and_slam.launch.py` sets it to rko_lio's deskewed scan and refuses it as an argument.
+  The `PointCloud2` topic with the scans, taken as already deskewed unless you set `deskew`. It can also be a
+  `point_cloud_interfaces/CompressedPointCloud2` topic, decoded by the `point_cloud_transport` plugin named in its
+  `format` field. `odometry_and_slam.launch.py` sets it to rko_lio's deskewed scan and refuses it as an argument.
 
 - **base_frame** (optional)
 
