@@ -164,11 +164,9 @@ public:
         if (!cloud_msg) {
           continue;
         }
-        if (!odom_trajectory.empty()) {
-          if (!inject_trajectory_up_to(cloud_msg->header)) {
-            ++scans_skipped_out_of_trajectory;
-            continue;
-          }
+        if (!odom_trajectory.empty() && !inject_trajectory_up_to(cloud_msg->header)) {
+          ++scans_skipped_out_of_trajectory;
+          continue;
         }
         lidar_callback(cloud_msg);
       } else if (bag_msg.topic_name == imu_topic) {
