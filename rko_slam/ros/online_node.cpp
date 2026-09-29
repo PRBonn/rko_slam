@@ -9,7 +9,9 @@
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/subscription.hpp>
+#include <rclcpp/subscription_base.hpp>
 #include <rclcpp/version.h>
+#include <rko_lio/ros/utils/point_cloud_read.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_listener.hpp>
@@ -22,7 +24,7 @@ namespace {
 
 class OnlineNode : public BaseNode {
 public:
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr scan_sub;
+  rclcpp::SubscriptionBase::SharedPtr scan_sub;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener;
   OnlineNode(OnlineNode&&) = delete;
@@ -39,15 +41,15 @@ public:
 #else
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer, node);
 #endif
+    const auto qos_imu = rclcpp::SensorDataQoS().keep_last(1000);
     const auto qos_lidar = rclcpp::SensorDataQoS().keep_last(50);
-    scan_sub = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        lidar_topic, qos_lidar,
-        [this](const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) { lidar_callback(msg); });
     if (!imu_topic.empty()) {
       imu_sub = node->create_subscription<sensor_msgs::msg::Imu>(
-          imu_topic, rclcpp::SensorDataQoS().keep_last(1000),
-          [this](const sensor_msgs::msg::Imu::ConstSharedPtr& msg) { imu_callback(msg); });
+          imu_topic, qos_imu, [this](const sensor_msgs::msg::Imu::ConstSharedPtr& msg) { imu_callback(msg); });
     }
+    scan_sub = rko_lio::ros::utils::create_lidar_subscription(
+        node, lidar_topic, qos_lidar,
+        [this](const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) { lidar_callback(msg); });
 
     RCLCPP_INFO_STREAM(
         node->get_logger(),

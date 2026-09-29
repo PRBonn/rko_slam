@@ -14,8 +14,9 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node_options.hpp>
-#include <rclcpp/serialization.hpp>
+#include <rclcpp/serialized_message.hpp>
 #include <rclcpp/utilities.hpp>
+#include <rko_lio/ros/utils/point_cloud_read.hpp>
 #include <rko_lio/ros/utils/rosbag.hpp>
 #include <rko_lio/ros/utils/time.hpp>
 #include <rko_lio/ros/utils/transforms.hpp>
@@ -49,8 +50,6 @@ public:
   std::chrono::steady_clock::time_point bag_start_time;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr bag_progress_pub;
 
-  rclcpp::Serialization<sensor_msgs::msg::PointCloud2> lidar_serializer;
-  rclcpp::Serialization<sensor_msgs::msg::Imu> imu_serializer;
   std::size_t odom_trajectory_cursor = 0;
   std::size_t scans_skipped_out_of_trajectory = 0;
 
@@ -108,36 +107,6 @@ public:
     }
   }
 
-  void dispatch_lidar_message(const rosbag2_storage::SerializedBagMessage& bag_msg) {
-    UTL_PROFILER_SCOPE("OfflineNode::dispatch_lidar_message");
-    const auto cloud_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
-    const rclcpp::SerializedMessage serialized(*bag_msg.serialized_data);
-    lidar_serializer.deserialize_message(&serialized, cloud_msg.get());
-
-    if (!odom_trajectory.empty()) {
-      const core::Nsec scan_stamp = to_ns(cloud_msg->header.stamp);
-      if (scan_stamp < odom_trajectory.front().time || scan_stamp > odom_trajectory.back().time) {
-        ++scans_skipped_out_of_trajectory;
-        return;
-      }
-      if (base_frame.empty()) {
-        base_frame = cloud_msg->header.frame_id;
-      }
-      if (!base_frame.empty()) {
-        inject_trajectory_up_to(scan_stamp + trajectory_inject_lookahead);
-      }
-    }
-
-    lidar_callback(cloud_msg);
-  }
-
-  void dispatch_imu_message(const rosbag2_storage::SerializedBagMessage& bag_msg) {
-    const auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
-    const rclcpp::SerializedMessage serialized(*bag_msg.serialized_data);
-    imu_serializer.deserialize_message(&serialized, imu_msg.get());
-    imu_callback(imu_msg);
-  }
-
   void publish_bag_progress() const {
     const auto now = std::chrono::steady_clock::now();
     const float elapsed_seconds = std::chrono::duration<float>(now - bag_start_time).count();
@@ -155,7 +124,19 @@ public:
     bag_progress_pub->publish(progress_msg);
   }
 
-  void inject_trajectory_up_to(const core::Nsec until) {
+  // false if the scan lies outside the odometry trajectory
+  bool inject_trajectory_up_to(const std_msgs::msg::Header& scan_header) {
+    const core::Nsec scan_stamp = to_ns(scan_header.stamp);
+    if (scan_stamp < odom_trajectory.front().time || scan_stamp > odom_trajectory.back().time) {
+      return false;
+    }
+    if (base_frame.empty()) {
+      base_frame = scan_header.frame_id;
+    }
+    if (!base_T_lidar) {
+      base_T_lidar = resolve_extrinsic(scan_header, tf_lookup_timeout);
+    }
+    const core::Nsec until = scan_stamp + trajectory_inject_lookahead;
     geometry_msgs::msg::TransformStamped tf_msg;
     tf_msg.header.frame_id = odom_frame;
     tf_msg.child_frame_id = base_frame;
@@ -167,18 +148,32 @@ public:
       tf_buffer->setTransform(tf_msg, "tum_file", /*is_static=*/false);
       ++odom_trajectory_cursor;
     }
+    return true;
   }
 
   void run() {
+    const rko_lio::ros::utils::LidarDeserializer deserialize_lidar(bag->topic_type(lidar_topic));
     while (rclcpp::ok() && !bag->finished()) {
       UTL_PROFILER_SCOPE("OfflineNode::run::per_bag_msg");
       const rosbag2_storage::SerializedBagMessage bag_msg = bag->PopNextMessage();
       ++processed_bag_msgs;
       publish_bag_progress();
       if (bag_msg.topic_name == lidar_topic) {
-        dispatch_lidar_message(bag_msg);
+        UTL_PROFILER_SCOPE("OfflineNode::run::lidar_msg");
+        const auto cloud_msg = deserialize_lidar(std::make_shared<rclcpp::SerializedMessage>(*bag_msg.serialized_data));
+        if (!cloud_msg) {
+          continue;
+        }
+        if (!odom_trajectory.empty()) {
+          if (!inject_trajectory_up_to(cloud_msg->header)) {
+            ++scans_skipped_out_of_trajectory;
+            continue;
+          }
+        }
+        lidar_callback(cloud_msg);
       } else if (bag_msg.topic_name == imu_topic) {
-        dispatch_imu_message(bag_msg);
+        imu_callback(rko_lio::ros::utils::deserialize<sensor_msgs::msg::Imu>(
+            rclcpp::SerializedMessage(*bag_msg.serialized_data)));
       }
     }
 
