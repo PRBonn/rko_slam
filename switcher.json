@@ -2,7 +2,12 @@
   {
     "name": "master",
     "version": "master",
-    "url": "https://prbonn.github.io/rko_slam/master/",
+    "url": "https://prbonn.github.io/rko_slam/master/"
+  },
+  {
+    "name": "v0.0.7",
+    "version": "v0.0.7",
+    "url": "https://prbonn.github.io/rko_slam/v0.0.7/",
     "preferred": true
   }
 ]
