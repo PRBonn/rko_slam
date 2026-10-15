@@ -2,8 +2,8 @@
 Changelog for package rko_slam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.7 (2026-10-15)
+------------------
 * support compressed cloud input (`#8 <https://github.com/PRBonn/rko_slam/issues/8>`_)
 * build cleanup: rosdep everything, profiling behind a flag (`#7 <https://github.com/PRBonn/rko_slam/issues/7>`_)
 * reimplement closure detection, drop map closures from the package (`#6 <https://github.com/PRBonn/rko_slam/issues/6>`_)
